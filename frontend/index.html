@@ -50,6 +50,14 @@
     </style>
   </head>
   <body class="text-white relative overflow-hidden">
+    <div 
+      id="faixa-homologacao" 
+      class="fixed top-0 left-0 w-full bg-orange-600 text-white text-center text-[10px] sm:text-xs font-bold py-1 z-[9999] tracking-widest hidden shadow-md"
+    >
+      ⚠️ AMBIENTE DE HOMOLOGAÇÃO - MAJB SISTEMAS ⚠️
+    </div>
+
+    <div id="tela-apresentacao" class="...">
     <div
       id="tela-apresentacao"
       class="w-full h-full min-h-screen flex flex-col items-center justify-center relative overflow-y-auto"
@@ -132,16 +140,21 @@
 
     <script>
       function abrirSistema() {
-        // 1. Esconde a sua landing page bonita
+        // 1. Esconde a landing page
         document.getElementById("tela-apresentacao").style.display = "none";
 
-        // 2. Coloca o seu link longo do Google Script no iframe (Isso faz carregar o sistema apenas quando clica)
-        const linkGoogleScript =
-          "https://script.google.com/macros/s/AKfycbzbPDfxejE5XgEy9a0SO9QmnB7iz2IHXvrZR6R7-2HwOzaC0LXrKMP4pHxLc7TKlx2R/exec";
+        // 2. Coloca o link do Google Script no iframe
+        const linkGoogleScript = "https://script.google.com/macros/s/AKfycbzbPDfxejE5XgEy9a0SO9QmnB7iz2IHXvrZR6R7-2HwOzaC0LXrKMP4pHxLc7TKlx2R/exec"; // Mantenha o seu link real aqui
         document.getElementById("meu-iframe").src = linkGoogleScript;
 
-        // 3. Mostra o iframe na tela ocupando tudo e cortando o topo (-36px)
+        // 3. Mostra o iframe na tela
         document.getElementById("tela-sistema").style.display = "block";
+        
+        // 4. Mostra a faixa de homologação por cima de tudo
+        document.getElementById("faixa-homologacao").style.display = "block";
+        
+        // 5. Opcional: Desce o iframe alguns pixels para a faixa laranja não cobrir o topo do seu sistema
+        document.getElementById("tela-sistema").style.paddingTop = "24px"; 
       }
     </script>
   </body>
