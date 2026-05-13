@@ -598,23 +598,6 @@ function excluirLancamentoFinanceiro(idVenda) {
     let vendasExcluidas = 0;
     let parcelasExcluidas = 0;
 
-    // 1. LIMPEZA NA ABA VENDAS (Aba principal)
-    const abaVendas = ss.getSheetByName("Vendas");
-    if (abaVendas) {
-      const dadosVendas = abaVendas.getDataRange().getValues();
-      const idProcurado = String(idVenda).trim().toUpperCase();
-
-      for (let i = 1; i < dadosVendas.length; i++) {
-        const idNaPlanilha = String(dadosVendas[i][0]).trim().toUpperCase();
-        
-        if (idNaPlanilha === idProcurado) {
-          abaVendas.deleteRow(i + 1);
-          vendasExcluidas++;
-          break;
-        }
-      }
-    }
-
     // TRAVA DE SEGURANÇA: Se não achou a Venda, aborta tudo e avisa o usuário
     if (vendasExcluidas === 0) {
       return { 
@@ -622,8 +605,7 @@ function excluirLancamentoFinanceiro(idVenda) {
         mensagem: "ERRO: O sistema não encontrou a venda " + idVenda + " na aba Vendas." 
       };
     }
-
-    // 2. LIMPEZA NA ABA PARCELAS (As "filhas" da venda)
+    // 1. LIMPEZA NA ABA PARCELAS (As "filhas" da venda)
     const abaParcelas = ss.getSheetByName("Parcelas");
     if (abaParcelas) {
       const dadosParcelas = abaParcelas.getDataRange().getValues();
@@ -636,6 +618,23 @@ function excluirLancamentoFinanceiro(idVenda) {
         if (idNaPlanilha === idProcurado) {
           abaParcelas.deleteRow(i + 1);
           parcelasExcluidas++;
+        }
+      }
+    }
+    
+    // 2. LIMPEZA NA ABA VENDAS (Aba principal)
+    const abaVendas = ss.getSheetByName("Vendas");
+    if (abaVendas) {
+      const dadosVendas = abaVendas.getDataRange().getValues();
+      const idProcurado = String(idVenda).trim().toUpperCase();
+
+      for (let i = 1; i < dadosVendas.length; i++) {
+        const idNaPlanilha = String(dadosVendas[i][0]).trim().toUpperCase();
+        
+        if (idNaPlanilha === idProcurado) {
+          abaVendas.deleteRow(i + 1);
+          vendasExcluidas++;
+          break;
         }
       }
     }
