@@ -1,0 +1,49 @@
+name: Deploy MAJB CRM (Homologação)
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  # 1. Envia APENAS o Frontend para a Hostinger
+  deploy-hostinger-homologacao:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Deploy via FTP para Hostinger (Subdomínio)
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USER_HOMOLOG }}
+          password: ${{ secrets.FTP_PASS_HOMOLOG }}
+          local-dir: ./frontend/
+          server-dir: /public_html/homologacao/ # Ajuste caso a pasta do subdomínio tenha outro nome
+
+  # 2. Envia APENAS o Backend para o Google Apps Script
+  deploy-google-homologacao:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Instalar Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Instalar Clasp
+        run: npm install -g @google/clasp
+
+      - name: Autenticar Clasp
+        run: |
+          echo '${{ secrets.CLASP_TOKEN }}' > ~/.clasprc.json
+
+      - name: Deploy para Apps Script (Homologação)
+        run: |
+          cd backend
+          # Injeta o ID do projeto de testes e envia o código
+          echo '{"scriptId":"${{ secrets.SCRIPT_ID_HOMOLOG }}"}' > .clasp.json
+          clasp push --force

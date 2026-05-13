@@ -1,0 +1,164 @@
+<section id="view-clientes" class="page-view">
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold text-slate-800">Clientes</h2>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Formulário -->
+    <div class="finance-card lg:col-span-1">
+      <h3 class="text-lg font-bold text-slate-800 mb-4 border-b pb-2">
+        Detalhes do Cliente
+      </h3>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
+            >ID (Automático ou CPF/CNPJ)</label
+          >
+          <input
+            type="text"
+            id="cli-id"
+            class="input-field font-mono font-bold text-blue-600"
+            placeholder="Ex: CLI-1"
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
+            >Nome / Descrição</label
+          >
+          <input
+            type="text"
+            id="cli-nome"
+            class="input-field"
+            placeholder="Nome completo"
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
+            >Celular</label
+          >
+          <input
+            type="text"
+            id="cli-celular"
+            class="input-field"
+            placeholder="(12) 99999-9999"
+          />
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
+              >Cidade</label
+            >
+            <input
+              type="text"
+              id="cli-cidade"
+              class="input-field"
+              value="Taubaté"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
+              >Bairro</label
+            >
+            <input type="text" id="cli-bairro" class="input-field" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
+            >Endereço</label
+          >
+          <input type="text" id="cli-endereco" class="input-field" />
+        </div>
+        <div class="flex gap-2 mt-4">
+          <div id="botoes-cliente-standard">
+            <button
+              onclick="confirmarSalvarCliente()"
+              class="w-full bg-emerald-600 text-white font-bold py-3 rounded-lg hover:bg-emerald-700 shadow-md transition-all flex items-center justify-center gap-2"
+            >
+              <i data-lucide="plus-circle" class="w-5 h-5"></i>
+              Cadastrar Cliente
+            </button>
+          </div>
+
+          <div id="botoes-cliente-edicao" class="hidden space-y-3">
+            <button
+              onclick="confirmarSalvarCliente()"
+              class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 shadow-md transition-all flex items-center justify-center gap-2"
+            >
+              <i data-lucide="check-circle" class="w-5 h-5"></i>
+              Alterar Cliente
+            </button>
+
+            <div class="grid grid-cols-2 gap-3">
+              <button
+                onclick="cancelarEdicaoCliente()"
+                class="bg-slate-200 text-slate-600 font-bold py-2 rounded-lg hover:bg-slate-300 transition-all text-sm"
+              >
+                Cancelar
+              </button>
+              <button
+                onclick="confirmarExclusaoCliente()"
+                class="bg-red-100 text-red-600 font-bold py-2 rounded-lg hover:bg-red-200 transition-all text-sm flex items-center justify-center gap-1"
+              >
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                Excluir
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lista -->
+    <div class="finance-card lg:col-span-2">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-bold text-slate-800">Cadastrados</h3>
+        <button
+          onclick="carregarListaClientes()"
+          class="text-blue-600 hover:text-blue-800 text-sm font-medium"
+        >
+          <i data-lucide="refresh-cw" class="w-4 h-4 inline-block mr-1"></i>
+          Atualizar Lista
+        </button>
+      </div>
+
+      <!-- CAMPO DE FILTRO -->
+      <div class="mb-4">
+        <input
+          type="text"
+          id="filtro-cli"
+          onkeyup="filtrarClientes()"
+          placeholder="Pesquisar por Nome, ID ou Cidade..."
+          class="input-field w-full"
+        />
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-slate-50 border-y border-slate-200">
+              <th class="p-3 text-xs font-bold text-slate-500 uppercase">ID</th>
+              <th class="p-3 text-xs font-bold text-slate-500 uppercase">
+                Nome
+              </th>
+              <th class="p-3 text-xs font-bold text-slate-500 uppercase">
+                Cidade
+              </th>
+              <th
+                class="p-3 text-xs font-bold text-slate-500 uppercase text-center"
+              >
+                Ações
+              </th>
+            </tr>
+          </thead>
+          <tbody id="tabela-cli">
+            <tr>
+              <td colspan="4" class="p-4 text-center text-slate-400 text-sm">
+                Carregando dados...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>

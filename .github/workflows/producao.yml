@@ -1,0 +1,49 @@
+name: Producao MAJB CRM
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  # 1. Envia APENAS o Frontend para a Hostinger (Domínio Principal)
+  deploy-hostinger-producao:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Deploy via FTP para Hostinger
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USER_PROD }}
+          password: ${{ secrets.FTP_PASS_PROD }}
+          local-dir: ./frontend/
+          server-dir: /public_html/
+
+  # 2. Envia APENAS o Backend para o Google Apps Script
+  deploy-google-producao:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Instalar Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Instalar Clasp
+        run: npm install -g @google/clasp
+
+      - name: Autenticar Clasp
+        run: |
+          echo '${{ secrets.CLASP_TOKEN }}' > ~/.clasprc.json
+
+      - name: Deploy para Apps Script (Produção)
+        run: |
+          cd backend
+          # Injeta o ID do projeto oficial e envia o código
+          echo '{"scriptId":"${{ secrets.SCRIPT_ID_PROD }}"}' > .clasp.json
+          clasp push --force
