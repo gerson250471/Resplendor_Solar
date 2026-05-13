@@ -151,7 +151,7 @@ function salvarVendaNoServidor(venda, parcelas) {
     // 2. Grava todas as Parcelas de uma vez respeitando a nova coluna "Pago em"
     parcelas.forEach(p => {
       // Estrutura: [ID, N° Parcela, Vencimento, Valor, Pago em (vazio), Status]
-      abaParcelas.appendRow([venda.id, venda.parcela, p.vencimento, p.valor, "", "EM ABERTO"]);
+      abaParcelas.appendRow([venda.id, venda.parcelas, p.vencimento, p.valor, "", "EM ABERTO"]);
     });
 
     // --- BLOCO DE CONTROLE DE VERSÃO ---
