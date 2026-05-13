@@ -432,7 +432,10 @@
           carregarProximoIdCliente();
           carregarListaClientes();
         }
-        if (tela === "financeiro") carregarDadosFinanceiro();
+        if (tela === "financeiro") {
+          carregarDadosFinanceiro();
+          carregarListaClientes();
+        }
         if (tela === "pagamentos") carregarParcelasPendentes();
         // Tela Usuarios
         if (tela === "usuarios") carregarListaUsuarios();
