@@ -149,9 +149,17 @@ function salvarVendaNoServidor(venda, parcelas) {
     abaVendas.appendRow([venda.id, venda.cliente, venda.data, venda.valor, venda.metodo, venda.valor, "EM ABERTO"]);
 
     // 2. Grava todas as Parcelas de uma vez respeitando a nova coluna "Pago em"
-    parcelas.forEach(p => {
-      // Estrutura: [ID, N° Parcela, Vencimento, Valor, Pago em (vazio), Status]
-      abaParcelas.appendRow([venda.id, venda.parcelas, p.vencimento, p.valor, "", "EM ABERTO"]);
+    // Adicionamos o 'index' como segundo parâmetro da função
+    parcelas.forEach((p, index) => {
+      
+      // O index em JavaScript começa sempre em 0. 
+      // Somamos 1 para que a contagem das parcelas seja 1, 2, 3...
+      let numeroDaParcela = index + 1;
+      
+      // Estrutura: [ID, Nº Parcela, Vencimento, Valor, Pago em (vazio), Status]
+      // Substituímos o 'venda.parcelas' pela nova variável 'numeroDaParcela'
+      abaParcelas.appendRow([venda.id, numeroDaParcela, p.vencimento, p.valor, "", "EM ABERTO"]);
+      
     });
 
     // --- BLOCO DE CONTROLE DE VERSÃO ---
