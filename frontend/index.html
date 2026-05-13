@@ -143,18 +143,19 @@
         document.getElementById("tela-apresentacao").style.display = "none";
 
         // 2. Coloca o link do Google Script no iframe
-        const linkGoogleScript =
-          "https://script.google.com/macros/s/AKfycbzbPDfxejE5XgEy9a0SO9QmnB7iz2IHXvrZR6R7-2HwOzaC0LXrKMP4pHxLc7TKlx2R/exec"; // Mantenha o seu link real aqui
+        const linkGoogleScript = "COLOQUE_SEU_LINK_AQUI"; // Mantenha o seu link real aqui
         document.getElementById("meu-iframe").src = linkGoogleScript;
 
-        // 3. Mostra o iframe na tela
-        document.getElementById("tela-sistema").style.display = "block";
+        // 3. Seleciona o container do sistema
+        const telaSistema = document.getElementById("tela-sistema");
 
-        // 4. Mostra a faixa de homologação por cima de tudo
+        // 4. Mostra o iframe e a faixa
+        telaSistema.style.display = "block";
         document.getElementById("faixa-homologacao").style.display = "block";
 
-        // 5. Opcional: Desce o iframe alguns pixels para a faixa laranja não cobrir o topo do seu sistema
-        document.getElementById("tela-sistema").style.paddingTop = "24px";
+        // 5. CORREÇÃO: Empurra o container para baixo da faixa e ajusta a altura
+        telaSistema.style.marginTop = "28px";
+        telaSistema.style.height = "calc(100vh - 28px)";
       }
     </script>
   </body>
