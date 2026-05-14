@@ -796,32 +796,39 @@ function obterDadosRelatorioVendasAbertas() {
   for (let i = 1; i < dadosVendas.length; i++) {
     let idVenda = dadosVendas[i][0];
     let cliente = dadosVendas[i][1];
-    let dataVenda = dadosVendas[i][2]; // Supondo que a data está na coluna 3
-    let valorTotal = dadosVendas[i][3]; // Supondo que o valor está na coluna 4
     
+    // --- A CORREÇÃO: Converte a Data Nativa para Texto Seguro ---
+    let dataRaw = dadosVendas[i][2]; 
+    let dataVendaSegura = "";
+    if (dataRaw instanceof Date) {
+      // Formata direto no servidor para o padrão brasileiro
+      dataVendaSegura = Utilities.formatDate(dataRaw, "America/Sao_Paulo", "dd/MM/yyyy");
+    } else {
+      dataVendaSegura = String(dataRaw);
+    }
+    // -------------------------------------------------------------
+    
+    let valorTotal = dadosVendas[i][3]; 
     let saldoDevedor = 0;
     
     // Varre as parcelas buscando por esse ID
     for (let j = 1; j < dadosParcelas.length; j++) {
       if (dadosParcelas[j][0] === idVenda) {
-        // Se a parcela não estiver "PAGO", entra no saldo devedor
         if (dadosParcelas[j][5] !== "PAGO") {
           saldoDevedor += parseFloat(dadosParcelas[j][3]);
         }
       }
     }
     
-    // Se a venda tem saldo devedor, entra no relatório
     if (saldoDevedor > 0) {
       relatorio.push({
         idVenda: idVenda,
         cliente: cliente,
-        dataVenda: dataVenda,
+        dataVenda: dataVendaSegura, // Envia o texto formatado!
         valorTotal: valorTotal,
         saldoDevedor: saldoDevedor
       });
     }
+    // ADICIONE ESTA LINHA: 
+    return { sucesso: true, dados: relatorio };
   }
-  
-  return { sucesso: true, dados: relatorio };
-}
