@@ -829,6 +829,7 @@ function obterDadosRelatorioVendasAbertas() {
         saldoDevedor: saldoDevedor
       });
     }
-    // ADICIONE ESTA LINHA: 
-    return { sucesso: true, dados: relatorio };
   }
+  // ADICIONE ESTA LINHA: 
+  return { sucesso: true, dados: relatorio };
+}
