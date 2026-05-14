@@ -237,7 +237,6 @@
           </div>
         </div>
       </section>
-
       <datalist id="clientes-list"></datalist>
     </main>
 
@@ -434,6 +433,7 @@
         }
         if (tela === "financeiro") {
           carregarDadosFinanceiro();
+          atualizarDatalistClientes();
         }
         if (tela === "pagamentos") carregarParcelasPendentes();
         // Tela Usuarios
