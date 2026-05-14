@@ -185,45 +185,24 @@
         >
           <i data-lucide="sun" class="w-4 h-4 text-orange-400"></i> Projetos
         </button>
-        <div
-          id="view-relatorios"
-          class="hidden max-w-6xl mx-auto p-6 animate-fade-in"
+        <button
+          onclick="navegarPara('relatorios')"
+          class="w-full flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-blue-700 transition-colors group text-left"
         >
-          <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold text-slate-800">
-              Central de Relatórios
-            </h2>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div
-              class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col h-full hover:shadow-md transition-shadow"
-            >
-              <div class="flex-1">
-                <h3 class="text-lg font-bold text-slate-800 mb-2">
-                  Vendas em Aberto
-                </h3>
-                <p class="text-sm text-slate-500 mb-4">
-                  Relatório detalhado de todas as vendas que possuem saldo
-                  devedor pendente, sumarizado por cliente.
-                </p>
-              </div>
-              <button
-                onclick="gerarRelatorioVendasEmAberto()"
-                class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors flex justify-center items-center gap-2"
-              >
-                <i data-lucide="file-down" class="w-4 h-4"></i> Gerar PDF
-              </button>
-            </div>
-          </div>
-        </div>
+          <i
+            data-lucide="file-bar-chart"
+            class="w-5 h-5 text-blue-200 group-hover:text-white"
+          ></i>
+          <span class="font-medium text-white">Relatórios</span>
+        </button>
       </nav>
     </aside>
 
     <main class="flex-1 overflow-y-auto p-6 md:p-10">
       <?!= include('dashboard'); ?> <?!= include('clientes'); ?> <?!=
       include('financeiro'); ?> <?!= include('pagamentos'); ?><?!=
-      include('usuario'); ?><?!= include('projetos'); ?>
+      include('usuario'); ?><?!= include('projetos'); ?><?!=
+      include('relatorios'); ?>
 
       <section id="view-troca-senha" class="page-view">
         <div class="finance-card max-w-md mx-auto mt-10">

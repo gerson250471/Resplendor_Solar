@@ -1,0 +1,52 @@
+<div class="p-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="mb-8">
+      <h2 class="text-2xl font-bold text-slate-800">Central de Relatórios</h2>
+      <p class="text-slate-500">
+        Gerencie e exporte os dados financeiros da Resplendor Solar.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div
+        class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col hover:shadow-md transition-all border-l-4 border-l-blue-600"
+      >
+        <div class="flex-1">
+          <div
+            class="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center mb-4"
+          >
+            <i data-lucide="file-text" class="w-6 h-6 text-blue-600"></i>
+          </div>
+          <h3 class="text-lg font-bold text-slate-800 mb-2">
+            Vendas em Aberto
+          </h3>
+          <p class="text-sm text-slate-500 mb-6">
+            Lista completa de vendas com parcelas pendentes, exibindo o saldo
+            devedor atualizado por cliente.
+          </p>
+        </div>
+
+        <button
+          onclick="gerarRelatorioVendasEmAberto()"
+          class="w-full bg-slate-800 text-white font-bold py-2.5 px-4 rounded-lg hover:bg-slate-900 transition-colors flex items-center justify-center gap-2"
+        >
+          <i data-lucide="download" class="w-4 h-4"></i>
+          Gerar Relatório PDF
+        </button>
+      </div>
+
+      <div
+        class="bg-slate-50 rounded-xl border-2 border-dashed border-slate-200 p-6 flex items-center justify-center"
+      >
+        <p class="text-slate-400 text-sm italic">Em breve: Novos Relatórios</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Garante que os ícones do Lucide sejam carregados nesta página
+  if (typeof lucide !== "undefined") {
+    lucide.createIcons();
+  }
+</script>
