@@ -783,7 +783,7 @@ function salvarProjetoNoServidor(obj) {
 
 // --- NO ARQUIVO MAIN.GS ---
 function obterDadosRelatorioVendasAbertas() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = SpreadsheetApp.openById(getSpreadsheetId()); 
   const abaVendas = ss.getSheetByName("Vendas");
   const abaParcelas = ss.getSheetByName("Parcelas");
   
