@@ -35,6 +35,19 @@
         <option value="URGENTE">Urgente</option>
         <option value="EM ATRASO">Em Atraso</option>
       </select>
+      <div
+        class="ml-auto bg-emerald-50 border border-emerald-200 px-4 py-2 rounded-lg shadow-sm"
+      >
+        <span class="text-xs font-bold text-emerald-600 uppercase"
+          >Total Filtrado</span
+        >
+        <div
+          id="valor-total-filtrado"
+          class="text-lg font-extrabold text-slate-800 leading-none"
+        >
+          R$ 0,00
+        </div>
+      </div>
     </div>
 
     <div class="overflow-x-auto">
@@ -49,6 +62,9 @@
             </th>
             <th class="p-3 text-xs font-bold text-slate-500 uppercase">
               Parcela
+            </th>
+            <th class="p-3 text-xs font-bold text-slate-500 uppercase">
+              Status
             </th>
             <th class="p-3 text-xs font-bold text-slate-500 uppercase">
               Vencimento

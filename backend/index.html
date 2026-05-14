@@ -821,20 +821,39 @@
 
         const filtradas = parcelasGlobais.filter((p) => {
           const matchStatus = filtroSelect === "" || p.status === filtroSelect;
-
-          // CORREÇÃO: Força a transformação em Texto (String) antes de procurar
           const clienteTexto = String(p.cliente).toUpperCase();
           const idTexto = String(p.idVenda).toUpperCase();
-
           const matchTexto =
             clienteTexto.includes(filtroTexto) || idTexto.includes(filtroTexto);
 
           return matchStatus && matchTexto;
         });
 
+        // =======================================================
+        // NOVO: CALCULAR A SOMA DOS VALORES FILTRADOS
+        // =======================================================
+        let somaTotal = 0;
+        filtradas.forEach((p) => {
+          // Transforma a string "571,48" em número real 571.48 para o cálculo
+          const valorNumerico = parseFloat(
+            String(p.valor).replace(/\./g, "").replace(",", "."),
+          );
+          if (!isNaN(valorNumerico)) somaTotal += valorNumerico;
+        });
+
+        // Atualiza o valor na tela
+        const displaySoma = document.getElementById("valor-total-filtrado");
+        if (displaySoma) {
+          displaySoma.innerText =
+            "R$ " +
+            somaTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+        }
+        // =======================================================
+
         if (filtradas.length === 0) {
+          // Ajustei o colspan para 7 por causa da nova coluna
           tabela.innerHTML =
-            '<tr><td colspan="6" class="p-4 text-center text-slate-500">Nenhuma parcela pendente encontrada.</td></tr>';
+            '<tr><td colspan="7" class="p-4 text-center text-slate-500">Nenhuma parcela pendente encontrada.</td></tr>';
           return;
         }
 
@@ -846,24 +865,25 @@
           if (p.status === "EM ATRASO") corStatus = "text-red-600 font-bold";
           if (p.status === "URGENTE") corStatus = "text-amber-600 font-bold";
 
+          // NOVO: HTML da linha com a coluna Parcela exibindo número e a nova coluna de Status
           tr.innerHTML = `
-            <td class="p-3 text-sm font-mono">${p.idVenda}</td>
-            <td class="p-3 text-sm uppercase font-medium text-slate-700">${p.cliente}</td>
-            <td class="p-3 text-sm"><span class="${corStatus} bg-slate-100 px-2 py-1 rounded-full text-xs">${p.status}</span></td>
-            <td class="p-3 text-sm">${p.vencimento}</td>
-            <td class="p-3 text-sm font-bold text-right">R$ ${p.valor}</td>
-            <td class="p-3 text-center flex items-center justify-center gap-2">
-              
-              <button onclick="iniciarBaixa(${p.linha}, '${p.valor}')" class="bg-blue-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-blue-700 shadow-md transition-colors">
-                BAIXAR
-              </button>
-              
-              <button onclick="abrirModalExcluirLancamento('${p.idVenda}')" class="bg-red-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-red-700 shadow-md transition-colors">
-                Excluir
-              </button>
-
-            </td>
-          `;
+      <td class="p-3 text-sm font-mono">${p.idVenda}</td>
+      <td class="p-3 text-sm uppercase font-medium text-slate-700">${p.cliente}</td>
+      <td class="p-3 text-sm font-bold text-slate-500 text-center">${p.parcela}º</td>
+      <td class="p-3 text-sm text-center">
+        <span class="${corStatus} bg-slate-100 px-2 py-1 rounded-full text-[10px] tracking-wide">${p.status}</span>
+      </td>
+      <td class="p-3 text-sm text-center">${p.vencimento}</td>
+      <td class="p-3 text-sm font-bold text-right">R$ ${p.valor}</td>
+      <td class="p-3 text-center flex items-center justify-center gap-2">
+        <button onclick="iniciarBaixa(${p.linha}, '${p.valor}')" class="bg-blue-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-blue-700 shadow-md transition-colors">
+          BAIXAR
+        </button>
+        <button onclick="abrirModalExcluirLancamento('${p.idVenda}')" class="bg-red-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-red-700 shadow-md transition-colors">
+          Excluir
+        </button>
+      </td>
+    `;
           tabela.appendChild(tr);
         });
       }
