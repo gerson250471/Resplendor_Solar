@@ -780,4 +780,48 @@ function salvarProjetoNoServidor(obj) {
     return { sucesso: false, mensagem: e.message };
   }
 }
-// Lançar no Homolog
+
+// --- NO ARQUIVO MAIN.GS ---
+function obterDadosRelatorioVendasAbertas() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const abaVendas = ss.getSheetByName("Vendas");
+  const abaParcelas = ss.getSheetByName("Parcelas");
+  
+  const dadosVendas = abaVendas.getDataRange().getValues();
+  const dadosParcelas = abaParcelas.getDataRange().getValues();
+  
+  let relatorio = [];
+  
+  // Ignora o cabeçalho
+  for (let i = 1; i < dadosVendas.length; i++) {
+    let idVenda = dadosVendas[i][0];
+    let cliente = dadosVendas[i][1];
+    let dataVenda = dadosVendas[i][2]; // Supondo que a data está na coluna 3
+    let valorTotal = dadosVendas[i][3]; // Supondo que o valor está na coluna 4
+    
+    let saldoDevedor = 0;
+    
+    // Varre as parcelas buscando por esse ID
+    for (let j = 1; j < dadosParcelas.length; j++) {
+      if (dadosParcelas[j][0] === idVenda) {
+        // Se a parcela não estiver "PAGO", entra no saldo devedor
+        if (dadosParcelas[j][5] !== "PAGO") {
+          saldoDevedor += parseFloat(dadosParcelas[j][3]);
+        }
+      }
+    }
+    
+    // Se a venda tem saldo devedor, entra no relatório
+    if (saldoDevedor > 0) {
+      relatorio.push({
+        idVenda: idVenda,
+        cliente: cliente,
+        dataVenda: dataVenda,
+        valorTotal: valorTotal,
+        saldoDevedor: saldoDevedor
+      });
+    }
+  }
+  
+  return { sucesso: true, dados: relatorio };
+}

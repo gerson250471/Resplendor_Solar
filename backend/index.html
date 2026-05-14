@@ -185,6 +185,38 @@
         >
           <i data-lucide="sun" class="w-4 h-4 text-orange-400"></i> Projetos
         </button>
+        <div
+          id="view-relatorios"
+          class="hidden max-w-6xl mx-auto p-6 animate-fade-in"
+        >
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-slate-800">
+              Central de Relatórios
+            </h2>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div
+              class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col h-full hover:shadow-md transition-shadow"
+            >
+              <div class="flex-1">
+                <h3 class="text-lg font-bold text-slate-800 mb-2">
+                  Vendas em Aberto
+                </h3>
+                <p class="text-sm text-slate-500 mb-4">
+                  Relatório detalhado de todas as vendas que possuem saldo
+                  devedor pendente, sumarizado por cliente.
+                </p>
+              </div>
+              <button
+                onclick="gerarRelatorioVendasEmAberto()"
+                class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors flex justify-center items-center gap-2"
+              >
+                <i data-lucide="file-down" class="w-4 h-4"></i> Gerar PDF
+              </button>
+            </div>
+          </div>
+        </div>
       </nav>
     </aside>
 
@@ -433,7 +465,7 @@
         }
         if (tela === "financeiro") {
           carregarDadosFinanceiro();
-          atualizarDatalistClientes();
+          carregarListaClientes();
         }
         if (tela === "pagamentos") carregarParcelasPendentes();
         // Tela Usuarios
@@ -1452,6 +1484,78 @@
           })
           .salvarProjetoNoServidor(obj);
       };
+      function gerarRelatorioVendasEmAberto() {
+        // Opcional: mostrar um loading no botão
+        google.script.run
+          .withSuccessHandler(function (resposta) {
+            if (resposta.sucesso) {
+              montarEImprimirPDF(resposta.dados);
+            } else {
+              mostrarToast("Erro ao buscar dados do relatório.", "erro");
+            }
+          })
+          .obterDadosRelatorioVendasAbertas();
+      }
+
+      function montarEImprimirPDF(dados) {
+        // Abre uma nova janela invisível
+        const janelaPdf = window.open("", "_blank");
+
+        // Começa a montar o HTML do PDF
+        let htmlString = `
+    <html>
+      <head>
+        <title>Relatório de Vendas em Aberto</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+          th { background-color: #1e3a8a; color: white; }
+          .text-right { text-align: right; }
+          .text-red { color: #dc2626; font-weight: bold; }
+        </style>
+      </head>
+      <body>
+        <h2>Relatório de Vendas com Saldo Devedor</h2>
+        <hr>
+        <table>
+          <tr>
+            <th>ID Venda</th>
+            <th>Cliente</th>
+            <th>Data Venda</th>
+            <th class="text-right">Valor Total</th>
+            <th class="text-right">Saldo Devedor</th>
+          </tr>
+  `;
+
+        // Preenche as linhas com os dados
+        dados.forEach((venda) => {
+          htmlString += `
+      <tr>
+        <td>${venda.idVenda}</td>
+        <td>${venda.cliente}</td>
+        <td>${venda.dataVenda}</td>
+        <td class="text-right">R$ ${parseFloat(venda.valorTotal).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
+        <td class="text-right text-red">R$ ${parseFloat(venda.saldoDevedor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
+      </tr>
+    `;
+        });
+
+        htmlString += `
+        </table>
+      </body>
+    </html>
+  `;
+
+        // Escreve na janela e chama a impressão do navegador
+        janelaPdf.document.write(htmlString);
+        janelaPdf.document.close();
+
+        // Aguarda o navegador renderizar e abre a caixa de "Salvar como PDF"
+        setTimeout(() => {
+          janelaPdf.print();
+        }, 500);
+      }
     </script>
   </body>
 </html>
