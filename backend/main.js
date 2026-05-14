@@ -833,3 +833,34 @@ function obterDadosRelatorioVendasAbertas() {
   // ADICIONE ESTA LINHA: 
   return { sucesso: true, dados: relatorio };
 }
+
+function obterDadosRelatorioRecebidosMes(mesAno) {
+  const ss = SpreadsheetApp.openById(getSpreadsheetId()); 
+  const abaParcelas = ss.getSheetByName("Parcelas");
+  const dados = abaParcelas.getDataRange().getValues();
+  
+  let relatorio = [];
+  let [anoAlvo, mesAlvo] = mesAno.split("-"); // "2026-05" -> ["2026", "05"]
+
+  for (let i = 1; i < dados.length; i++) {
+    let status = dados[i][5]; // Coluna F
+    let dataPgto = dados[i][6]; // ASSUMINDO Coluna G (Data do Pagamento)
+
+    if (status === "PAGO" && dataPgto instanceof Date) {
+      let mesPgto = (dataPgto.getMonth() + 1).toString().padStart(2, '0');
+      let anoPgto = dataPgto.getFullYear().toString();
+
+      if (mesPgto === mesAlvo && anoPgto === anoAlvo) {
+        relatorio.push({
+          dataPgto: Utilities.formatDate(dataPgto, "America/Sao_Paulo", "dd/MM/yyyy"),
+          cliente: dados[i][1], // Coluna B
+          idVenda: dados[i][0], // Coluna A
+          parcela: dados[i][2], // Coluna C
+          valor: dados[i][3]    // Coluna D
+        });
+      }
+    }
+  }
+  
+  return { sucesso: true, dados: relatorio, periodo: `${mesAlvo}/${anoAlvo}` };
+}

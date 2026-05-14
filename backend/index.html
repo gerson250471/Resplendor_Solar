@@ -1535,6 +1535,91 @@
           janelaPdf.print();
         }, 500);
       }
+
+      function gerarRelatorioRecebidosMes() {
+        const mesAno = document.getElementById("mes-relatorio-recebidos").value;
+        if (!mesAno) {
+          mostrarToast("Selecione o mês e o ano primeiro.", "erro");
+          return;
+        }
+
+        mostrarToast("Processando recebimentos...", "info");
+
+        google.script.run
+          .withSuccessHandler(function (res) {
+            if (res.sucesso && res.dados.length > 0) {
+              montarEImprimirPDFRecebidos(res.dados, res.periodo);
+            } else {
+              mostrarToast(
+                "Nenhum recebimento encontrado para este período.",
+                "erro",
+              );
+            }
+          })
+          .obterDadosRelatorioRecebidosMes(mesAno);
+      }
+
+      function montarEImprimirPDFRecebidos(dados, periodo) {
+        const janela = window.open("", "_blank");
+        let totalGeral = 0;
+
+        let html = `
+    <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; }
+          .header { border-bottom: 2px solid #059669; padding-bottom: 10px; margin-bottom: 20px; }
+          table { width: 100%; border-collapse: collapse; }
+          th { background: #059669; color: white; padding: 10px; text-align: left; font-size: 12px; }
+          td { padding: 8px; border-bottom: 1px solid #eee; font-size: 11px; }
+          .total-box { margin-top: 20px; text-align: right; font-size: 18px; font-weight: bold; color: #059669; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>Relatório de Recebidos - ${periodo}</h1>
+          <p>MAJB SISTEMAS - Resplendor Solar</p>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Data Pgto</th>
+              <th>Cliente</th>
+              <th>ID Venda</th>
+              <th>Parcela</th>
+              <th style="text-align: right;">Valor Recebido</th>
+            </tr>
+          </thead>
+          <tbody>
+  `;
+
+        dados.forEach((item) => {
+          totalGeral += parseFloat(item.valor);
+          html += `
+      <tr>
+        <td>${item.dataPgto}</td>
+        <td style="text-transform: uppercase;">${item.cliente}</td>
+        <td>${item.idVenda}</td>
+        <td>${item.parcela}º</td>
+        <td style="text-align: right;">R$ ${parseFloat(item.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
+      </tr>
+    `;
+        });
+
+        html += `
+          </tbody>
+        </table>
+        <div class="total-box">TOTAL RECEBIDO: R$ ${totalGeral.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
+      </body>
+    </html>
+  `;
+
+        janela.document.write(html);
+        janela.document.close();
+        setTimeout(() => {
+          janela.print();
+        }, 500);
+      }
     </script>
   </body>
 </html>

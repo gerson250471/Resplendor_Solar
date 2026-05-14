@@ -34,7 +34,43 @@
           Gerar Relatório PDF
         </button>
       </div>
+      <div
+        class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col hover:shadow-md transition-all border-l-4 border-l-emerald-500"
+      >
+        <div class="flex-1">
+          <div
+            class="w-12 h-12 bg-emerald-50 rounded-lg flex items-center justify-center mb-4"
+          >
+            <i data-lucide="hand-coins" class="w-6 h-6 text-emerald-600"></i>
+          </div>
+          <h3 class="text-lg font-bold text-slate-800 mb-2">
+            Recebidos no Mês
+          </h3>
+          <p class="text-sm text-slate-500 mb-4">
+            Consulte todas as parcelas que foram pagas dentro de um mês
+            específico.
+          </p>
 
+          <div class="mb-6">
+            <label class="text-xs font-bold text-slate-400 uppercase mb-1 block"
+              >Selecionar Período</label
+            >
+            <input
+              type="month"
+              id="mes-relatorio-recebidos"
+              class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm text-slate-700 font-bold focus:ring-2 focus:ring-emerald-500 outline-none"
+            />
+          </div>
+        </div>
+
+        <button
+          onclick="gerarRelatorioRecebidosMes()"
+          class="w-full bg-emerald-600 text-white font-bold py-2.5 px-4 rounded-lg hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2"
+        >
+          <i data-lucide="download" class="w-4 h-4"></i>
+          Gerar PDF Recebidos
+        </button>
+      </div>
       <div
         class="bg-slate-50 rounded-xl border-2 border-dashed border-slate-200 p-6 flex items-center justify-center"
       >
