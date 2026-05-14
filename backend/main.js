@@ -835,67 +835,71 @@ function obterDadosRelatorioVendasAbertas() {
 }
 
 function obterDadosRelatorioRecebidosMes(mesAno) {
-  const ss = SpreadsheetApp.openById(getSpreadsheetId()); 
-  const abaParcelas = ss.getSheetByName("Parcelas");
-  const abaVendas = ss.getSheetByName("Vendas"); // Necessário para cruzar os nomes
+  try { // INICIAMOS A BLINDAGEM DO SERVIDOR
+    const ss = SpreadsheetApp.openById(getSpreadsheetId()); 
+    const abaParcelas = ss.getSheetByName("Parcelas");
+    const abaVendas = ss.getSheetByName("Vendas");
 
-  const dadosParcelas = abaParcelas.getDataRange().getValues();
-  const dadosVendas = abaVendas.getDataRange().getValues();
-  
-  // 1. CRIAR O DICIONÁRIO DE CLIENTES (Cruza ID com o Nome)
-  const mapaClientes = {};
-  for (let v = 1; v < dadosVendas.length; v++) {
-    let idVenda = String(dadosVendas[v][0]).trim();
-    let nomeCliente = String(dadosVendas[v][1]).trim();
-    if (idVenda !== "") {
-      mapaClientes[idVenda] = nomeCliente;
-    }
-  }
-
-  let relatorio = [];
-  let [anoAlvo, mesAlvo] = mesAno.split("-"); // Ex: "2026-05" -> ["2026", "05"]
-
-  // 2. FILTRAR AS PARCELAS
-  for (let i = 1; i < dadosParcelas.length; i++) {
-    let status = (dadosParcelas[i][5] || "").toString().toUpperCase().trim(); // Coluna F
-    let dataPgto = dadosParcelas[i][4]; // Coluna E (Pago em)
-
-    if (status === "PAGO" && dataPgto) {
-      let mesPgto = "";
-      let anoPgto = "";
-      let dataFormatada = "";
-
-      // Cenário A: Se a data for um objeto Data nativo do Google
-      if (dataPgto instanceof Date) {
-        mesPgto = (dataPgto.getMonth() + 1).toString().padStart(2, '0');
-        anoPgto = dataPgto.getFullYear().toString();
-        dataFormatada = Utilities.formatDate(dataPgto, "America/Sao_Paulo", "dd/MM/yyyy");
+    const dadosParcelas = abaParcelas.getDataRange().getValues();
+    const dadosVendas = abaVendas.getDataRange().getValues();
+    
+    // 1. CRIAR O DICIONÁRIO DE CLIENTES
+    const mapaClientes = {};
+    for (let v = 1; v < dadosVendas.length; v++) {
+      let idVenda = String(dadosVendas[v][0] || "").trim();
+      let nomeCliente = String(dadosVendas[v][1] || "").trim();
+      if (idVenda !== "") {
+        mapaClientes[idVenda] = nomeCliente;
       }
-      // Cenário B: Se a data for um Texto ("24/05/2026") que nós gravámos na Baixa
-      else if (typeof dataPgto === "string" && dataPgto.includes("/")) {
-        let partes = dataPgto.split("/"); // Separa em ["24", "05", "2026"]
-        if (partes.length === 3) {
-          mesPgto = partes[1];
-          anoPgto = partes[2].substring(0, 4); // Garante que capta só o ano
-          dataFormatada = dataPgto;
+    }
+
+    let relatorio = [];
+    let [anoAlvo, mesAlvo] = String(mesAno).split("-"); 
+
+    // 2. FILTRAR AS PARCELAS
+    for (let i = 1; i < dadosParcelas.length; i++) {
+      let status = String(dadosParcelas[i][5] || "").toUpperCase().trim(); 
+      let dataPgto = dadosParcelas[i][4]; 
+
+      if (status === "PAGO" && dataPgto) {
+        let mesPgto = "";
+        let anoPgto = "";
+        let dataFormatada = "";
+
+        if (dataPgto instanceof Date) {
+          mesPgto = (dataPgto.getMonth() + 1).toString().padStart(2, '0');
+          anoPgto = dataPgto.getFullYear().toString();
+          dataFormatada = Utilities.formatDate(dataPgto, "America/Sao_Paulo", "dd/MM/yyyy");
+        }
+        else if (typeof dataPgto === "string" && dataPgto.includes("/")) {
+          let partes = dataPgto.split("/"); 
+          if (partes.length === 3) {
+            mesPgto = partes[1].padStart(2, '0'); // Garante que o mês tem sempre 2 dígitos
+            anoPgto = partes[2].substring(0, 4); 
+            dataFormatada = dataPgto;
+          }
+        }
+
+        if (mesPgto === mesAlvo && anoPgto === anoAlvo) {
+          let idVendaPk = String(dadosParcelas[i][0] || "").trim(); 
+          
+          // BLINDAGEM DE DADOS: Tudo convertido rigorosamente para String (Texto)
+          relatorio.push({
+            dataPgto: String(dataFormatada),
+            cliente: String(mapaClientes[idVendaPk] || "Não Identificado"), 
+            idVenda: String(idVendaPk),
+            parcela: String(dadosParcelas[i][1] || "0"), 
+            valor: String(dadosParcelas[i][3] || "0")    
+          });
         }
       }
-
-      // Se o mês e o ano coincidirem com o filtro do ecrã, adiciona ao PDF!
-      if (mesPgto === mesAlvo && anoPgto === anoAlvo) {
-        let idVendaPk = String(dadosParcelas[i][0]).trim(); // ID da Venda
-        
-        relatorio.push({
-          dataPgto: dataFormatada,
-          cliente: mapaClientes[idVendaPk] || "Não Identificado", // Busca o nome real!
-          idVenda: idVendaPk,
-          parcela: dadosParcelas[i][1], // Coluna B (Nº da Parcela)
-          valor: dadosParcelas[i][3]    // Coluna D (Valor)
-        });
-      }
     }
+    
+    // 3. ENVIA O PACOTE BLINDADO
+    return { sucesso: true, dados: relatorio, periodo: `${mesAlvo}/${anoAlvo}` };
+    
+  } catch (erro) {
+    // Se ocorrer um erro crítico, o servidor avisa o ecrã em vez de enviar null
+    return { sucesso: false, mensagem: "Falha interna no motor: " + erro.message };
   }
-  
-  // 3. ENVIA O PACOTE DE VOLTA (Fora do laço para não dar null)
-  return { sucesso: true, dados: relatorio, periodo: `${mesAlvo}/${anoAlvo}` };
 }
