@@ -844,7 +844,7 @@ function obterDadosRelatorioRecebidosMes(mesAno) {
 
   for (let i = 1; i < dados.length; i++) {
     let status = dados[i][5]; // Coluna F
-    let dataPgto = dados[i][6]; // ASSUMINDO Coluna G (Data do Pagamento)
+    let dataPgto = dados[i][4]; // ASSUMINDO Coluna G (Data do Pagamento)
 
     if (status === "PAGO" && dataPgto instanceof Date) {
       let mesPgto = (dataPgto.getMonth() + 1).toString().padStart(2, '0');
