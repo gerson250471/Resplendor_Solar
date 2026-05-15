@@ -450,7 +450,10 @@
         // Tela Usuarios
         if (tela === "usuarios") carregarListaUsuarios();
         // Tela dos Projetos
-        if (tela === "projetos") carregarListaProjetos();
+        if (tela === "projetos") {
+          carregarListaProjetos();
+          carregarParametrosProjetos();
+        }
       }
 
       /**
@@ -1289,29 +1292,51 @@
       };
 
       function calcularRentabilidade() {
+        // Trava de segurança: Aguarda carregar os parâmetros do banco
+        if (!parametrosProjetos) {
+          mostrarToast("Aguarde, carregando parâmetros financeiros...", "info");
+          return;
+        }
+
         const total =
           parseFloat(document.getElementById("proj-total").value) || 0;
         const kit = parseFloat(document.getElementById("proj-kit").value) || 0;
-        const servico =
-          parseFloat(document.getElementById("proj-servico").value) || 0;
-        const impostos =
-          parseFloat(document.getElementById("proj-impostos").value) || 0;
-        const outros =
-          parseFloat(document.getElementById("proj-outros").value) || 0;
-        const comissao =
-          parseFloat(document.getElementById("proj-comissao").value) || 0;
-        const maq =
-          parseFloat(document.getElementById("proj-maquininha").value) || 0;
         const entrada =
           parseFloat(document.getElementById("proj-entrada").value) || 0;
 
-        // Saldo Líquido = Total - Custos
-        const liquido =
-          total - (kit + servico + impostos + outros + comissao + maq);
+        // 1° Regra: Serviço = Total - Kit
+        const servico = total > 0 ? total - kit : 0;
+        document.getElementById("proj-servico").value = servico.toFixed(2);
+
+        // 2° Regra: Impostos = Total * Aba F11
+        const impostos = total * parametrosProjetos.imposto;
+        document.getElementById("proj-impostos").value = impostos.toFixed(2);
+
+        // 3° Regra: Outros Custos (Condicional do Kit de 20k)
+        let outros = 0;
+        if (kit > 0) {
+          outros =
+            kit < 20000
+              ? parametrosProjetos.custoMenor20k
+              : parametrosProjetos.custoMaior20k;
+        }
+        document.getElementById("proj-outros").value = outros.toFixed(2);
+
+        // 4° Regra: Comissão = Total * Aba F7
+        const comissao = total * parametrosProjetos.comissao;
+        document.getElementById("proj-comissao").value = comissao.toFixed(2);
+
+        // 5° Regra: Maquininha = Total * Aba F9
+        const maquininha = total * parametrosProjetos.maquininha;
+        document.getElementById("proj-maquininha").value =
+          maquininha.toFixed(2);
+
+        // 6° Regra: Saldo Líquido
+        const liquido = servico - impostos - outros - comissao - maquininha;
         document.getElementById("proj-liquido").value =
           "R$ " + liquido.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
 
-        // Valor Residual = Total - Entrada
+        // Regra Extra (Residual)
         const residual = total - entrada;
         document.getElementById("proj-residual").value =
           "R$ " +
@@ -1619,6 +1644,16 @@
         setTimeout(() => {
           janela.print();
         }, 500);
+      }
+
+      let parametrosProjetos = null;
+
+      function carregarParametrosProjetos() {
+        google.script.run
+          .withSuccessHandler((res) => {
+            if (res.sucesso) parametrosProjetos = res;
+          })
+          .obterParametrosProjetos();
       }
     </script>
   </body>

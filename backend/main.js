@@ -903,3 +903,78 @@ function obterDadosRelatorioRecebidosMes(mesAno) {
     return { sucesso: false, mensagem: "Falha interna no motor: " + erro.message };
   }
 }
+
+function obterParametrosProjetos() {
+  try {
+    const ss = SpreadsheetApp.openById(getSpreadsheetId());
+    const aba = ss.getSheetByName("ControleVersao");
+
+    // Retorna todos os valores exatos configurados nas células
+    return {
+      sucesso: true,
+      comissao: parseFloat(aba.getRange("F7").getValue()) || 0,
+      maquininha: parseFloat(aba.getRange("F9").getValue()) || 0,
+      imposto: parseFloat(aba.getRange("F11").getValue()) || 0,
+      custoMenor20k: parseFloat(aba.getRange("F13").getValue()) || 0,
+      custoMaior20k: parseFloat(aba.getRange("F15").getValue()) || 0
+    };
+  } catch (e) {
+    return { sucesso: false, mensagem: e.message };
+  }
+}
+
+/**
+ * SCRIPT DE MIGRAÇÃO (RODAR APENAS UMA VEZ)
+ * Recalcula todos os projetos antigos baseados nas novas regras da aba ControleVersao
+ */
+function corrigirProjetosEmMassa() {
+  const ss = SpreadsheetApp.openById(getSpreadsheetId());
+  const abaProjetos = ss.getSheetByName("Projetos");
+  const abaControle = ss.getSheetByName("ControleVersao");
+
+  // 1. Busca os parâmetros financeiros atuais
+  const comissao = parseFloat(abaControle.getRange("F7").getValue()) || 0;
+  const maquininha = parseFloat(abaControle.getRange("F9").getValue()) || 0;
+  const imposto = parseFloat(abaControle.getRange("F11").getValue()) || 0;
+  const custoMenor20k = parseFloat(abaControle.getRange("F13").getValue()) || 0;
+  const custoMaior20k = parseFloat(abaControle.getRange("F15").getValue()) || 0;
+
+  // 2. Pega todos os dados da aba Projetos de uma vez (muito mais rápido)
+  const range = abaProjetos.getDataRange();
+  const dados = range.getValues();
+
+  // 3. Varre todas as linhas (ignorando o cabeçalho na linha 0)
+  for (let i = 1; i < dados.length; i++) {
+    // Lê as variáveis base que foram digitadas manualmente (Total, Kit e Entrada)
+    let total = parseFloat(dados[i][2]) || 0;    // Coluna C (Índice 2)
+    let kit = parseFloat(dados[i][3]) || 0;      // Coluna D (Índice 3)
+    let entrada = parseFloat(dados[i][10]) || 0; // Coluna K (Índice 10)
+
+    // Aplica a Matemática (As 6 Regras de Negócio)
+    let servico = total > 0 ? (total - kit) : 0;
+    let valorImposto = total * imposto;
+    
+    let outros = 0;
+    if (kit > 0) {
+      outros = (kit < 20000) ? custoMenor20k : custoMaior20k;
+    }
+    
+    let valorComissao = total * comissao;
+    let valorMaquininha = total * maquininha;
+    
+    let liquido = servico - valorImposto - outros - valorComissao - valorMaquininha;
+    let residual = total - entrada;
+
+    // 4. Substitui os valores antigos pelos calculados na memória
+    dados[i][4] = servico;        // Coluna E (Valor Serviço)
+    dados[i][5] = valorImposto;   // Coluna F (Impostos)
+    dados[i][6] = outros;         // Coluna G (Outros Custos)
+    dados[i][7] = valorComissao;  // Coluna H (Comissão)
+    dados[i][8] = valorMaquininha;// Coluna I (Taxa Maquininha)
+    dados[i][9] = liquido;        // Coluna J (Saldo Líquido)
+    dados[i][11] = residual;      // Coluna L (Residual)
+  }
+
+  // 5. Despeja os dados corrigidos de volta na planilha de uma só vez!
+  range.setValues(dados);
+}
