@@ -415,282 +415,287 @@
     </div>
 
     <script>
-          lucide.createIcons();
-          google.charts.load("current", { packages: ["corechart"] });
+      lucide.createIcons();
+      google.charts.load("current", { packages: ["corechart"] });
 
-          /**
-           * ============================================================================
-           * 1. NAVEGAÇÃO E MENSAGENS DO SISTEMA
-           * ============================================================================
-           */
+      /**
+       * ============================================================================
+       * 1. NAVEGAÇÃO E MENSAGENS DO SISTEMA
+       * ============================================================================
+       */
 
-          function mostrarToast(msg, tipo = "sucesso") {
-            const container = document.getElementById("toast-container");
-            const toast = document.createElement("div");
+      function mostrarToast(msg, tipo = "sucesso") {
+        const container = document.getElementById("toast-container");
+        const toast = document.createElement("div");
 
-            let corDeFundo = "bg-emerald-600";
-            if (tipo === "erro") corDeFundo = "bg-red-600";
-            if (tipo === "info") corDeFundo = "bg-blue-600";
+        let corDeFundo = "bg-emerald-600";
+        if (tipo === "erro") corDeFundo = "bg-red-600";
+        if (tipo === "info") corDeFundo = "bg-blue-600";
 
-            toast.className = `p-4 text-white rounded-xl shadow-2xl font-semibold text-sm ${corDeFundo} animate-bounce transition-all`;
-            toast.innerText = msg;
+        toast.className = `p-4 text-white rounded-xl shadow-2xl font-semibold text-sm ${corDeFundo} animate-bounce transition-all`;
+        toast.innerText = msg;
 
-            container.appendChild(toast);
-            setTimeout(() => toast.remove(), 4000);
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 4000);
+      }
+
+      function navegarPara(tela) {
+        // --- INÍCIO DA TRAVA DE SEGURANÇA ---
+        if (perfilUsuarioAtual === "COLABORADOR") {
+          // Removido o 'financeiro' e corrigido 'usuario' para 'usuarios'
+          if (
+            tela === "dashboard" ||
+            tela === "relatorios" ||
+            tela === "usuarios" ||
+            tela === "pagamentos"
+          ) {
+            mostrarToast("Acesso restrito a administradores.", "erro");
+            return;
           }
+        }
+        // --- FIM DA TRAVA DE SEGURANÇA ---
+        // Esconde todas as telas
+        document
+          .querySelectorAll(".page-view")
+          .forEach((el) => el.classList.remove("active"));
 
-          function navegarPara(tela) {
-            // --- INÍCIO DA TRAVA DE SEGURANÇA ---
-            if (perfilUsuarioAtual === "COLABORADOR") {
-              // Removido o 'financeiro' e corrigido 'usuario' para 'usuarios'
-              if (
-                tela === "dashboard" ||
-                tela === "relatorios" ||
-                tela === "usuarios" ||
-                tela === "pagamentos"
-              ) {
-                mostrarToast("Acesso restrito a administradores.", "erro");
-                return;
-              }
-            }
-            // --- FIM DA TRAVA DE SEGURANÇA ---
-            // Esconde todas as telas
-            document
-              .querySelectorAll(".page-view")
-              .forEach((el) => el.classList.remove("active"));
+        // Mostra apenas a tela clicada
+        const view = document.getElementById(`view-${tela}`);
+        if (view) view.classList.add("active");
 
-            // Mostra apenas a tela clicada
-            const view = document.getElementById(`view-${tela}`);
-            if (view) view.classList.add("active");
+        // Dispara os eventos corretos conforme a aba aberta
+        if (tela === "dashboard") carregarDashboard();
+        if (tela === "clientes") {
+          carregarProximoIdCliente();
+          carregarListaClientes();
+        }
+        if (tela === "financeiro") {
+          carregarDadosFinanceiro();
+          carregarListaClientes();
+        }
+        if (tela === "pagamentos") carregarParcelasPendentes();
+        // Tela Usuarios
+        if (tela === "usuarios") carregarListaUsuarios();
+        // Tela dos Projetos
+        if (tela === "projetos") {
+          carregarListaProjetos();
+          carregarParametrosProjetos();
+        }
+      }
 
-            // Dispara os eventos corretos conforme a aba aberta
-            if (tela === "dashboard") carregarDashboard();
-            if (tela === "clientes") {
-              carregarProximoIdCliente();
-              carregarListaClientes();
-            }
-            if (tela === "financeiro") {
-              carregarDadosFinanceiro();
-              carregarListaClientes();
-            }
-            if (tela === "pagamentos") carregarParcelasPendentes();
-            // Tela Usuarios
-            if (tela === "usuarios") carregarListaUsuarios();
-            // Tela dos Projetos
-            if (tela === "projetos") {
-              carregarListaProjetos();
-              carregarParametrosProjetos();
-            }
-          }
+      /**
+       * ============================================================================
+       * 2. LÓGICA DE LOGIN E SEGURANÇA
+       * ============================================================================
+       */
 
-          /**
-           * ============================================================================
-           * 2. LÓGICA DE LOGIN E SEGURANÇA
-           * ============================================================================
-           */
+      function fazerLogin() {
+        const usuario = document.getElementById("user-login").value;
+        const senha = document.getElementById("pass-login").value;
 
-          function fazerLogin() {
-            const usuario = document.getElementById("user-login").value;
-            const senha = document.getElementById("pass-login").value;
+        if (!usuario || !senha) {
+          mostrarToast("Preencha todos os campos", "erro");
+          return;
+        }
 
-            if (!usuario || !senha) {
-              mostrarToast("Preencha todos os campos", "erro");
-              return;
-            }
+        mostrarToast("Validando acesso no banco de dados...", "info");
 
-            mostrarToast("Validando acesso no banco de dados...", "info");
+        google.script.run
+          .withSuccessHandler((res) => {
+            if (res.sucesso) {
+              // 1. APLICA A BLINDAGEM IMEDIATAMENTE (Para todos!)
+              aplicarPermissoes(res.nivel);
 
-            google.script.run
-              .withSuccessHandler((res) => {
-                if (res.sucesso) {
-                  // 1. APLICA A BLINDAGEM IMEDIATAMENTE (Para todos!)
-                  aplicarPermissoes(res.nivel);
-
-                  if (res.precisaTrocar) {
-                    // Menu já está bloqueado lá no fundo, agora pede a troca
-                    navegarPara("troca-senha");
-                    mostrarToast(
-                      "Alerta de Segurança: Altere sua senha inicial.",
-                      "info",
-                    );
-                  } else {
-                    // Fluxo normal
-                    if (res.nivel === "COLABORADOR") {
-                      navegarPara("clientes");
-                      mostrarToast("Bem-vindo, " + res.nome);
-                    } else {
-                      navegarPara("dashboard");
-                      mostrarToast("Bem-vindo, " + res.nome);
-                    }
-                  }
-                } else {
-                  mostrarToast(res.mensagem, "erro");
-                }
-              })
-              .validarAcesso(usuario, senha);
-          }
-
-          function salvarNovaSenha() {
-            const nova = document.getElementById("nova-senha").value;
-            const confirma = document.getElementById("confirma-senha").value;
-            const usuario = sessionStorage.getItem("usuarioAtivo");
-
-            if (nova.length < 4) {
-              mostrarToast("A senha deve ter no mínimo 4 caracteres.", "erro");
-              return;
-            }
-            if (nova !== confirma) {
-              mostrarToast("As senhas digitadas não coincidem.", "erro");
-              return;
-            }
-
-            mostrarToast("Atualizando segurança...", "info");
-
-            google.script.run
-              .withSuccessHandler((sucesso) => {
-                if (res.sucesso) {
-                mostrarToast("Senha atualizada com segurança!", "sucesso");
-
-                // 2. DIRECIONAMENTO SEGURO PÓS-TROCA
-                if (perfilUsuarioAtual === "COLABORADOR") {
+              if (res.precisaTrocar) {
+                // Menu já está bloqueado lá no fundo, agora pede a troca
+                navegarPara("troca-senha");
+                mostrarToast(
+                  "Alerta de Segurança: Altere sua senha inicial.",
+                  "info",
+                );
+              } else {
+                // Fluxo normal
+                if (res.nivel === "COLABORADOR") {
                   navegarPara("clientes");
+                  mostrarToast("Bem-vindo, " + res.nome);
                 } else {
                   navegarPara("dashboard");
+                  mostrarToast("Bem-vindo, " + res.nome);
                 }
-              })
-              .atualizarSenhaDefinitiva(usuario, nova);
-          }
-
-          /**
-           * ============================================================================
-           * 3. LÓGICA DO DASHBOARD E GRÁFICOS
-           * ============================================================================
-           */
-
-          function carregarDashboard() {
-            document.getElementById("dash-total").innerText = "Processando...";
-
-            google.script.run
-              .withSuccessHandler((res) => {
-                if (res.sucesso) {
-                  document.getElementById("dash-total").innerText =
-                    "R$ " + res.dados.total;
-                  document.getElementById("dash-vendas").innerText =
-                    res.dados.vendasMes;
-                  document.getElementById("dash-aberto").innerText =
-                    res.dados.aberto;
-                  document.getElementById("dash-urgente").innerText =
-                    res.dados.urgente;
-                  document.getElementById("dash-atraso").innerText =
-                    res.dados.atraso;
-
-                  if (
-                    google.visualization &&
-                    google.visualization.arrayToDataTable
-                  ) {
-                    const dataPagas = google.visualization.arrayToDataTable(
-                      res.graficos.pagas,
-                    );
-                    const chartPagas = new google.visualization.ColumnChart(
-                      document.getElementById("grafico_pagas"),
-                    );
-                    chartPagas.draw(dataPagas, {
-                      legend: "none",
-                      animation: { startup: true, duration: 1000, easing: "out" },
-                    });
-
-                    const dataReceber = google.visualization.arrayToDataTable(
-                      res.graficos.receber,
-                    );
-                    const chartReceber = new google.visualization.ColumnChart(
-                      document.getElementById("grafico_receber"),
-                    );
-                    chartReceber.draw(dataReceber, {
-                      legend: "none",
-                      animation: { startup: true, duration: 1000, easing: "out" },
-                    });
-                  }
-                }
-              })
-              .getResumoFinanceiro();
-          }
-
-          window.abrirFiltroStatus = function (status) {
-            navegarPara("pagamentos");
-            setTimeout(() => {
-              const combo = document.getElementById("filtro-status-pagamentos");
-              if (combo) {
-                combo.value = status;
-                renderizarTabelaPagamentos();
               }
-            }, 150);
-          };
-
-          /**
-           * ============================================================================
-           * 4. LÓGICA DE CADASTRO DE CLIENTES
-           * ============================================================================
-           */
-
-          let clientesGlobais = [];
-
-          function carregarListaClientes() {
-            google.script.run
-              .withSuccessHandler((res) => {
-                if (res.sucesso) {
-                  clientesGlobais = res.dados;
-                  renderizarTabelaClientes();
-                  atualizarDatalistClientes();
-                }
-              })
-              .carregarListaClientes();
-          }
-
-          function salvarNovoCliente() {
-            const clienteObj = {
-              id: document.getElementById("cli-id").value,
-              nome: document.getElementById("cli-nome").value,
-              celular: document.getElementById("cli-celular").value,
-              cidade: document.getElementById("cli-cidade").value,
-              bairro: document.getElementById("cli-bairro").value,
-              endereco: document.getElementById("cli-endereco").value,
-            };
-
-            if (!clienteObj.nome) {
-              mostrarToast("O Nome é obrigatório", "erro");
-              return;
+            } else {
+              mostrarToast(res.mensagem, "erro");
             }
+          })
+          .validarAcesso(usuario, senha);
+      }
 
-            mostrarToast("Salvando cliente...", "info");
+      function salvarNovaSenha() {
+        const nova = document.getElementById("nova-senha").value;
+        const confirma = document.getElementById("confirma-senha").value;
+        // Lê o utilizador diretamente do campo de login que ficou preenchido no fundo
+        const usuario = document.getElementById("user-login").value;
 
-            google.script.run
-              .withSuccessHandler((res) => {
-                if (res.sucesso) {
-                  mostrarToast("Cliente salvo com sucesso!");
-                  limparFormularioCliente();
-                  carregarListaClientes();
-                }
-              })
-              .salvarClienteNoServidor(clienteObj);
+        if (nova.length < 4) {
+          mostrarToast("A senha deve ter no mínimo 4 caracteres.", "erro");
+          return;
+        }
+        if (nova !== confirma) {
+          mostrarToast("As senhas digitadas não coincidem.", "erro");
+          return;
+        }
+
+        mostrarToast("Atualizando segurança...", "info");
+
+        google.script.run
+          .withSuccessHandler((sucesso) => {
+            if (sucesso) {
+              // Corrigido para 'sucesso'
+              mostrarToast("Senha atualizada com segurança!", "sucesso");
+
+              // DIRECIONAMENTO SEGURO PÓS-TROCA
+              if (perfilUsuarioAtual === "COLABORADOR") {
+                navegarPara("clientes");
+              } else {
+                navegarPara("dashboard");
+              }
+            } else {
+              mostrarToast("Erro ao atualizar a senha.", "erro");
+            } // Chave que faltava fechada aqui!
+          })
+          .atualizarSenhaDefinitiva(usuario, nova);
+      }
+
+      /**
+       * ============================================================================
+       * 3. LÓGICA DO DASHBOARD E GRÁFICOS
+       * ============================================================================
+       */
+
+      function carregarDashboard() {
+        document.getElementById("dash-total").innerText = "Processando...";
+
+        google.script.run
+          .withSuccessHandler((res) => {
+            if (res.sucesso) {
+              document.getElementById("dash-total").innerText =
+                "R$ " + res.dados.total;
+              document.getElementById("dash-vendas").innerText =
+                res.dados.vendasMes;
+              document.getElementById("dash-aberto").innerText =
+                res.dados.aberto;
+              document.getElementById("dash-urgente").innerText =
+                res.dados.urgente;
+              document.getElementById("dash-atraso").innerText =
+                res.dados.atraso;
+
+              if (
+                google.visualization &&
+                google.visualization.arrayToDataTable
+              ) {
+                const dataPagas = google.visualization.arrayToDataTable(
+                  res.graficos.pagas,
+                );
+                const chartPagas = new google.visualization.ColumnChart(
+                  document.getElementById("grafico_pagas"),
+                );
+                chartPagas.draw(dataPagas, {
+                  legend: "none",
+                  animation: { startup: true, duration: 1000, easing: "out" },
+                });
+
+                const dataReceber = google.visualization.arrayToDataTable(
+                  res.graficos.receber,
+                );
+                const chartReceber = new google.visualization.ColumnChart(
+                  document.getElementById("grafico_receber"),
+                );
+                chartReceber.draw(dataReceber, {
+                  legend: "none",
+                  animation: { startup: true, duration: 1000, easing: "out" },
+                });
+              }
+            }
+          })
+          .getResumoFinanceiro();
+      }
+
+      window.abrirFiltroStatus = function (status) {
+        navegarPara("pagamentos");
+        setTimeout(() => {
+          const combo = document.getElementById("filtro-status-pagamentos");
+          if (combo) {
+            combo.value = status;
+            renderizarTabelaPagamentos();
           }
+        }, 150);
+      };
 
-          function renderizarTabelaClientes() {
-            const tabela = document.getElementById("tabela-cli");
-            const filtro = document
-              .getElementById("filtro-cli")
-              .value.toUpperCase();
-            if (!tabela) return;
+      /**
+       * ============================================================================
+       * 4. LÓGICA DE CADASTRO DE CLIENTES
+       * ============================================================================
+       */
 
-            tabela.innerHTML = "";
+      let clientesGlobais = [];
 
-            const filtrados = clientesGlobais.filter((c) => {
-              const nomeTexto = String(c.nome).toUpperCase();
-              const idTexto = String(c.id).toUpperCase();
-              return nomeTexto.includes(filtro) || idTexto.includes(filtro);
-            });
+      function carregarListaClientes() {
+        google.script.run
+          .withSuccessHandler((res) => {
+            if (res.sucesso) {
+              clientesGlobais = res.dados;
+              renderizarTabelaClientes();
+              atualizarDatalistClientes();
+            }
+          })
+          .carregarListaClientes();
+      }
 
-            filtrados.forEach((c) => {
-              tabela.innerHTML += `
+      function salvarNovoCliente() {
+        const clienteObj = {
+          id: document.getElementById("cli-id").value,
+          nome: document.getElementById("cli-nome").value,
+          celular: document.getElementById("cli-celular").value,
+          cidade: document.getElementById("cli-cidade").value,
+          bairro: document.getElementById("cli-bairro").value,
+          endereco: document.getElementById("cli-endereco").value,
+        };
+
+        if (!clienteObj.nome) {
+          mostrarToast("O Nome é obrigatório", "erro");
+          return;
+        }
+
+        mostrarToast("Salvando cliente...", "info");
+
+        google.script.run
+          .withSuccessHandler((res) => {
+            if (res.sucesso) {
+              mostrarToast("Cliente salvo com sucesso!");
+              limparFormularioCliente();
+              carregarListaClientes();
+            }
+          })
+          .salvarClienteNoServidor(clienteObj);
+      }
+
+      function renderizarTabelaClientes() {
+        const tabela = document.getElementById("tabela-cli");
+        const filtro = document
+          .getElementById("filtro-cli")
+          .value.toUpperCase();
+        if (!tabela) return;
+
+        tabela.innerHTML = "";
+
+        const filtrados = clientesGlobais.filter((c) => {
+          const nomeTexto = String(c.nome).toUpperCase();
+          const idTexto = String(c.id).toUpperCase();
+          return nomeTexto.includes(filtro) || idTexto.includes(filtro);
+        });
+
+        filtrados.forEach((c) => {
+          tabela.innerHTML += `
                 <tr class="border-b hover:bg-slate-50 transition-colors">
                   <td class="p-3 text-sm font-mono font-bold text-blue-600">${c.id}</td>
                   <td class="p-3 text-sm uppercase font-medium text-slate-700">${c.nome}</td>
@@ -705,68 +710,68 @@
                   </td>
                 </tr>
               `;
-            });
-          }
+        });
+      }
 
-          function limparFormularioCliente() {
-            document
-              .querySelectorAll("#view-clientes input")
-              .forEach((input) => (input.value = ""));
-          }
+      function limparFormularioCliente() {
+        document
+          .querySelectorAll("#view-clientes input")
+          .forEach((input) => (input.value = ""));
+      }
 
-          window.filtrarClientes = () => renderizarTabelaClientes();
+      window.filtrarClientes = () => renderizarTabelaClientes();
 
-          /**
-           * ============================================================================
-           * 5. LÓGICA DE LANÇAMENTOS FINANCEIROS (VENDAS)
-           * ============================================================================
-           */
+      /**
+       * ============================================================================
+       * 5. LÓGICA DE LANÇAMENTOS FINANCEIROS (VENDAS)
+       * ============================================================================
+       */
 
-          function carregarDadosFinanceiro() {
-            google.script.run
-              .withSuccessHandler((idGerado) => {
-                document.getElementById("fin-idVenda").value = idGerado;
-              })
-              .obterProximoIdVenda();
+      function carregarDadosFinanceiro() {
+        google.script.run
+          .withSuccessHandler((idGerado) => {
+            document.getElementById("fin-idVenda").value = idGerado;
+          })
+          .obterProximoIdVenda();
 
-            atualizarDatalistClientes();
-          }
+        atualizarDatalistClientes();
+      }
 
-          function atualizarDatalistClientes() {
-            const dataList = document.getElementById("clientes-list");
-            if (!dataList) return;
+      function atualizarDatalistClientes() {
+        const dataList = document.getElementById("clientes-list");
+        if (!dataList) return;
 
-            dataList.innerHTML = "";
-            clientesGlobais.forEach((c) => {
-              dataList.innerHTML += `<option value="${c.nome}">`;
-            });
-          }
+        dataList.innerHTML = "";
+        clientesGlobais.forEach((c) => {
+          dataList.innerHTML += `<option value="${c.nome}">`;
+        });
+      }
 
-          function gerarParcelas() {
-            const total =
-              parseFloat(document.getElementById("fin-valor").value) || 0;
-            const qtdParcelas = parseInt(
-              document.getElementById("fin-parcelas").value,
-            );
-            const dataInicial = document.getElementById(
-              "fin-data-primeiro-venc",
-            ).value;
-            const listaHtml = document.getElementById("lista-parcelas");
+      function gerarParcelas() {
+        const total =
+          parseFloat(document.getElementById("fin-valor").value) || 0;
+        const qtdParcelas = parseInt(
+          document.getElementById("fin-parcelas").value,
+        );
+        const dataInicial = document.getElementById(
+          "fin-data-primeiro-venc",
+        ).value;
+        const listaHtml = document.getElementById("lista-parcelas");
 
-            if (!total || !dataInicial) return;
+        if (!total || !dataInicial) return;
 
-            listaHtml.innerHTML = "";
+        listaHtml.innerHTML = "";
 
-            // Cálculo de Arredondamento Bancário
-            const valorBase = Math.floor((total / qtdParcelas) * 100) / 100;
-            const resto = parseFloat((total - valorBase * qtdParcelas).toFixed(2));
+        // Cálculo de Arredondamento Bancário
+        const valorBase = Math.floor((total / qtdParcelas) * 100) / 100;
+        const resto = parseFloat((total - valorBase * qtdParcelas).toFixed(2));
 
-            let dataProvisoria = new Date(dataInicial + "T12:00:00");
+        let dataProvisoria = new Date(dataInicial + "T12:00:00");
 
-            for (let i = 1; i <= qtdParcelas; i++) {
-              let valorDestaParcela = i === 1 ? valorBase + resto : valorBase;
+        for (let i = 1; i <= qtdParcelas; i++) {
+          let valorDestaParcela = i === 1 ? valorBase + resto : valorBase;
 
-              listaHtml.innerHTML += `
+          listaHtml.innerHTML += `
                 <tr class="border-b">
                   <td class="py-2 text-slate-500">${i}º</td>
                   <td class="text-slate-800 font-medium">${dataProvisoria.toLocaleDateString("pt-BR")}</td>
@@ -774,149 +779,149 @@
                 </tr>
               `;
 
-              dataProvisoria.setMonth(dataProvisoria.getMonth() + 1);
+          dataProvisoria.setMonth(dataProvisoria.getMonth() + 1);
+        }
+      }
+
+      function salvarVenda() {
+        const venda = {
+          id: document.getElementById("fin-idVenda").value,
+          cliente: document.getElementById("fin-cliente").value,
+          valor: document.getElementById("fin-valor").value,
+          data: new Date().toLocaleDateString("pt-BR"),
+          metodo: document.getElementById("fin-metodo").value,
+        };
+
+        const qtdParcelas = parseInt(
+          document.getElementById("fin-parcelas").value,
+        );
+        const dataInicial = document.getElementById(
+          "fin-data-primeiro-venc",
+        ).value;
+
+        if (!venda.valor || !venda.cliente || !dataInicial) {
+          mostrarToast("Preencha o cliente, valor e o 1º vencimento.", "erro");
+          return;
+        }
+
+        mostrarToast("Gravando lançamento no servidor...", "info");
+
+        let arrayDeParcelas = [];
+        let dataLoop = new Date(dataInicial + "T12:00:00");
+        const valorBase = Math.floor((venda.valor / qtdParcelas) * 100) / 100;
+        const restoCentavos = parseFloat(
+          (venda.valor - valorBase * qtdParcelas).toFixed(2),
+        );
+
+        for (let i = 1; i <= qtdParcelas; i++) {
+          arrayDeParcelas.push({
+            vencimento: new Date(dataLoop).toLocaleDateString("pt-BR"),
+            valor: i === 1 ? valorBase + restoCentavos : valorBase,
+          });
+          dataLoop.setMonth(dataLoop.getMonth() + 1);
+        }
+
+        google.script.run
+          .withSuccessHandler((res) => {
+            if (res.sucesso) {
+              mostrarToast("Venda e Parcelas gravadas com sucesso!");
+              limparFormularioFinanceiro(); // <-- NOVA LINHA QUE LIMPA O ECRÃ
+              navegarPara("dashboard");
+            } else {
+              mostrarToast("Erro ao gravar: " + res.mensagem, "erro");
             }
-          }
+          })
+          .salvarVendaNoServidor(venda, arrayDeParcelas);
+      }
 
-          function salvarVenda() {
-            const venda = {
-              id: document.getElementById("fin-idVenda").value,
-              cliente: document.getElementById("fin-cliente").value,
-              valor: document.getElementById("fin-valor").value,
-              data: new Date().toLocaleDateString("pt-BR"),
-              metodo: document.getElementById("fin-metodo").value,
-            };
+      /**
+       * ============================================================================
+       * 6. LÓGICA DE BAIXAS E PAGAMENTOS
+       * ============================================================================
+       */
 
-            const qtdParcelas = parseInt(
-              document.getElementById("fin-parcelas").value,
-            );
-            const dataInicial = document.getElementById(
-              "fin-data-primeiro-venc",
-            ).value;
+      let parcelasGlobais = [];
 
-            if (!venda.valor || !venda.cliente || !dataInicial) {
-              mostrarToast("Preencha o cliente, valor e o 1º vencimento.", "erro");
-              return;
+      function carregarParcelasPendentes() {
+        const tabela = document.getElementById("tabela-pagamentos");
+        if (tabela) {
+          tabela.innerHTML =
+            '<tr><td colspan="6" class="p-4 text-center text-slate-500 font-medium animate-pulse">Consultando banco de dados...</td></tr>';
+        }
+
+        google.script.run
+          .withSuccessHandler((res) => {
+            if (res.sucesso) {
+              parcelasGlobais = res.dados;
+              renderizarTabelaPagamentos();
             }
+          })
+          .obterListaParcelas();
+      }
 
-            mostrarToast("Gravando lançamento no servidor...", "info");
+      window.mudarStatusCombobox = () => renderizarTabelaPagamentos();
+      window.filtrarPagamentos = () => renderizarTabelaPagamentos();
 
-            let arrayDeParcelas = [];
-            let dataLoop = new Date(dataInicial + "T12:00:00");
-            const valorBase = Math.floor((venda.valor / qtdParcelas) * 100) / 100;
-            const restoCentavos = parseFloat(
-              (venda.valor - valorBase * qtdParcelas).toFixed(2),
-            );
+      function renderizarTabelaPagamentos() {
+        const tabela = document.getElementById("tabela-pagamentos");
+        const filtroSelect = document
+          .getElementById("filtro-status-pagamentos")
+          .value.toUpperCase();
+        const filtroTexto = document
+          .getElementById("filtro-pagamentos")
+          .value.toUpperCase();
 
-            for (let i = 1; i <= qtdParcelas; i++) {
-              arrayDeParcelas.push({
-                vencimento: new Date(dataLoop).toLocaleDateString("pt-BR"),
-                valor: i === 1 ? valorBase + restoCentavos : valorBase,
-              });
-              dataLoop.setMonth(dataLoop.getMonth() + 1);
-            }
+        if (!tabela) return;
+        tabela.innerHTML = "";
 
-            google.script.run
-              .withSuccessHandler((res) => {
-                if (res.sucesso) {
-                  mostrarToast("Venda e Parcelas gravadas com sucesso!");
-                  limparFormularioFinanceiro(); // <-- NOVA LINHA QUE LIMPA O ECRÃ
-                  navegarPara("dashboard");
-                } else {
-                  mostrarToast("Erro ao gravar: " + res.mensagem, "erro");
-                }
-              })
-              .salvarVendaNoServidor(venda, arrayDeParcelas);
-          }
+        const filtradas = parcelasGlobais.filter((p) => {
+          const matchStatus = filtroSelect === "" || p.status === filtroSelect;
+          const clienteTexto = String(p.cliente).toUpperCase();
+          const idTexto = String(p.idVenda).toUpperCase();
+          const matchTexto =
+            clienteTexto.includes(filtroTexto) || idTexto.includes(filtroTexto);
 
-          /**
-           * ============================================================================
-           * 6. LÓGICA DE BAIXAS E PAGAMENTOS
-           * ============================================================================
-           */
+          return matchStatus && matchTexto;
+        });
 
-          let parcelasGlobais = [];
+        // =======================================================
+        // NOVO: CALCULAR A SOMA DOS VALORES FILTRADOS
+        // =======================================================
+        let somaTotal = 0;
+        filtradas.forEach((p) => {
+          // Transforma a string "571,48" em número real 571.48 para o cálculo
+          const valorNumerico = parseFloat(
+            String(p.valor).replace(/\./g, "").replace(",", "."),
+          );
+          if (!isNaN(valorNumerico)) somaTotal += valorNumerico;
+        });
 
-          function carregarParcelasPendentes() {
-            const tabela = document.getElementById("tabela-pagamentos");
-            if (tabela) {
-              tabela.innerHTML =
-                '<tr><td colspan="6" class="p-4 text-center text-slate-500 font-medium animate-pulse">Consultando banco de dados...</td></tr>';
-            }
+        // Atualiza o valor na tela
+        const displaySoma = document.getElementById("valor-total-filtrado");
+        if (displaySoma) {
+          displaySoma.innerText =
+            "R$ " +
+            somaTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+        }
+        // =======================================================
 
-            google.script.run
-              .withSuccessHandler((res) => {
-                if (res.sucesso) {
-                  parcelasGlobais = res.dados;
-                  renderizarTabelaPagamentos();
-                }
-              })
-              .obterListaParcelas();
-          }
+        if (filtradas.length === 0) {
+          // Ajustei o colspan para 7 por causa da nova coluna
+          tabela.innerHTML =
+            '<tr><td colspan="7" class="p-4 text-center text-slate-500">Nenhuma parcela pendente encontrada.</td></tr>';
+          return;
+        }
 
-          window.mudarStatusCombobox = () => renderizarTabelaPagamentos();
-          window.filtrarPagamentos = () => renderizarTabelaPagamentos();
+        filtradas.forEach((p) => {
+          const tr = document.createElement("tr");
+          tr.className = "border-b hover:bg-slate-50 transition-colors";
 
-          function renderizarTabelaPagamentos() {
-            const tabela = document.getElementById("tabela-pagamentos");
-            const filtroSelect = document
-              .getElementById("filtro-status-pagamentos")
-              .value.toUpperCase();
-            const filtroTexto = document
-              .getElementById("filtro-pagamentos")
-              .value.toUpperCase();
+          let corStatus = "text-emerald-600 font-bold";
+          if (p.status === "EM ATRASO") corStatus = "text-red-600 font-bold";
+          if (p.status === "URGENTE") corStatus = "text-amber-600 font-bold";
 
-            if (!tabela) return;
-            tabela.innerHTML = "";
-
-            const filtradas = parcelasGlobais.filter((p) => {
-              const matchStatus = filtroSelect === "" || p.status === filtroSelect;
-              const clienteTexto = String(p.cliente).toUpperCase();
-              const idTexto = String(p.idVenda).toUpperCase();
-              const matchTexto =
-                clienteTexto.includes(filtroTexto) || idTexto.includes(filtroTexto);
-
-              return matchStatus && matchTexto;
-            });
-
-            // =======================================================
-            // NOVO: CALCULAR A SOMA DOS VALORES FILTRADOS
-            // =======================================================
-            let somaTotal = 0;
-            filtradas.forEach((p) => {
-              // Transforma a string "571,48" em número real 571.48 para o cálculo
-              const valorNumerico = parseFloat(
-                String(p.valor).replace(/\./g, "").replace(",", "."),
-              );
-              if (!isNaN(valorNumerico)) somaTotal += valorNumerico;
-            });
-
-            // Atualiza o valor na tela
-            const displaySoma = document.getElementById("valor-total-filtrado");
-            if (displaySoma) {
-              displaySoma.innerText =
-                "R$ " +
-                somaTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
-            }
-            // =======================================================
-
-            if (filtradas.length === 0) {
-              // Ajustei o colspan para 7 por causa da nova coluna
-              tabela.innerHTML =
-                '<tr><td colspan="7" class="p-4 text-center text-slate-500">Nenhuma parcela pendente encontrada.</td></tr>';
-              return;
-            }
-
-            filtradas.forEach((p) => {
-              const tr = document.createElement("tr");
-              tr.className = "border-b hover:bg-slate-50 transition-colors";
-
-              let corStatus = "text-emerald-600 font-bold";
-              if (p.status === "EM ATRASO") corStatus = "text-red-600 font-bold";
-              if (p.status === "URGENTE") corStatus = "text-amber-600 font-bold";
-
-              // NOVO: HTML da linha com a coluna Parcela exibindo número e a nova coluna de Status
-              tr.innerHTML = `
+          // NOVO: HTML da linha com a coluna Parcela exibindo número e a nova coluna de Status
+          tr.innerHTML = `
           <td class="p-3 text-sm font-mono">${p.idVenda}</td>
           <td class="p-3 text-sm uppercase font-medium text-slate-700">${p.cliente}</td>
           <td class="p-3 text-sm font-bold text-slate-500 text-center">${p.parcela}º</td>
@@ -934,318 +939,318 @@
             </button>
           </td>
         `;
-              tabela.appendChild(tr);
-            });
-          }
+          tabela.appendChild(tr);
+        });
+      }
 
-          // --- LÓGICA DO MODAL DE BAIXA DE PARCELAS ---
+      // --- LÓGICA DO MODAL DE BAIXA DE PARCELAS ---
 
-          // 1. Abre o modal e preenche com os dados da parcela clicada
-          window.iniciarBaixa = function (linhaPlanilha, valorOriginalString) {
-            document.getElementById("modal-linha-planilha").value = linhaPlanilha;
-            document.getElementById("modal-valor-pago").value = valorOriginalString;
+      // 1. Abre o modal e preenche com os dados da parcela clicada
+      window.iniciarBaixa = function (linhaPlanilha, valorOriginalString) {
+        document.getElementById("modal-linha-planilha").value = linhaPlanilha;
+        document.getElementById("modal-valor-pago").value = valorOriginalString;
 
-            // Remove a classe 'hidden' para o modal aparecer na tela
-            document.getElementById("modal-baixa").classList.remove("hidden");
+        // Remove a classe 'hidden' para o modal aparecer na tela
+        document.getElementById("modal-baixa").classList.remove("hidden");
 
-            // Recarrega os ícones Lucide para o 'X' aparecer
-            lucide.createIcons();
-          };
+        // Recarrega os ícones Lucide para o 'X' aparecer
+        lucide.createIcons();
+      };
 
-          // 2. Fecha o modal
-          window.fecharModalBaixa = function () {
-            document.getElementById("modal-baixa").classList.add("hidden");
-          };
+      // 2. Fecha o modal
+      window.fecharModalBaixa = function () {
+        document.getElementById("modal-baixa").classList.add("hidden");
+      };
 
-          // 3. Executa a gravação quando clica em "Confirmar"
-          window.confirmarBaixaModal = function () {
-            const linhaPlanilha = document.getElementById(
-              "modal-linha-planilha",
-            ).value;
-            const inputValor = document.getElementById("modal-valor-pago").value;
+      // 3. Executa a gravação quando clica em "Confirmar"
+      window.confirmarBaixaModal = function () {
+        const linhaPlanilha = document.getElementById(
+          "modal-linha-planilha",
+        ).value;
+        const inputValor = document.getElementById("modal-valor-pago").value;
 
-            if (!inputValor || inputValor.trim() === "") {
-              mostrarToast("Informe o valor recebido.", "erro");
-              return;
+        if (!inputValor || inputValor.trim() === "") {
+          mostrarToast("Informe o valor recebido.", "erro");
+          return;
+        }
+
+        // Converte a string "1.250,00" para número real do computador: 1250.00
+        let valorPago = parseFloat(
+          inputValor.replace(/\./g, "").replace(",", "."),
+        );
+
+        if (isNaN(valorPago) || valorPago <= 0) {
+          mostrarToast("Valor inválido. Operação cancelada.", "erro");
+          return;
+        }
+
+        // Fecha o modal antes de começar a processar
+        fecharModalBaixa();
+        mostrarToast("A processar pagamento no banco de dados...", "info");
+
+        google.script.run
+          .withSuccessHandler((res) => {
+            if (res.sucesso) {
+              if (res.parcial) {
+                mostrarToast(
+                  "Baixa parcial efetuada! Nova parcela para o próximo mês.",
+                  "info",
+                );
+              } else {
+                mostrarToast("Parcela liquidada integralmente!");
+              }
+              carregarParcelasPendentes(); // Atualiza a tabela
+            } else {
+              mostrarToast(res.mensagem, "erro");
             }
+          })
+          .withFailureHandler((err) => {
+            mostrarToast("Erro de comunicação: " + err.message, "erro");
+          })
+          .registrarBaixaParcela(linhaPlanilha, valorPago);
+      };
 
-            // Converte a string "1.250,00" para número real do computador: 1250.00
-            let valorPago = parseFloat(
-              inputValor.replace(/\./g, "").replace(",", "."),
-            );
+      // 1. Ao clicar na Lupa
+      window.editarCliente = function (id) {
+        // Busca todas as informações do cliente na nossa lista global
+        const cliente = clientesGlobais.find((c) => c.id === id);
+        if (!cliente) return;
 
-            if (isNaN(valorPago) || valorPago <= 0) {
-              mostrarToast("Valor inválido. Operação cancelada.", "erro");
-              return;
+        // Preenche TODOS os campos do formulário
+        document.getElementById("cli-id").value = cliente.id;
+        document.getElementById("cli-nome").value = cliente.nome;
+        document.getElementById("cli-celular").value = cliente.celular;
+        document.getElementById("cli-cidade").value = cliente.cidade;
+        document.getElementById("cli-bairro").value = cliente.bairro;
+        document.getElementById("cli-endereco").value = cliente.endereco;
+
+        document.getElementById("cli-id").readOnly = true;
+
+        document
+          .getElementById("botoes-cliente-standard")
+          .classList.add("hidden");
+        document
+          .getElementById("botoes-cliente-edicao")
+          .classList.remove("hidden");
+
+        document.getElementById("cli-nome").focus();
+        lucide.createIcons();
+      };
+
+      // 2. Coleta todos os dados para salvar
+      window.confirmarSalvarCliente = function () {
+        const obj = {
+          id: document.getElementById("cli-id").value.trim(),
+          nome: document.getElementById("cli-nome").value.trim(),
+          celular: document.getElementById("cli-celular").value.trim(),
+          cidade: document.getElementById("cli-cidade").value.trim(),
+          bairro: document.getElementById("cli-bairro").value.trim(),
+          endereco: document.getElementById("cli-endereco").value.trim(),
+        };
+
+        if (!obj.id || !obj.nome) {
+          mostrarToast("ID e Nome são obrigatórios!", "erro");
+          return;
+        }
+
+        mostrarToast("A salvar dados...", "info");
+
+        google.script.run
+          .withSuccessHandler((res) => {
+            if (res.sucesso) {
+              mostrarToast(res.mensagem);
+              cancelarEdicaoCliente(); // Limpa a tela e volta os botões
+              carregarListaClientes(); // Atualiza a tabela
+            } else {
+              mostrarToast(res.mensagem, "erro");
             }
+          })
+          .salvarCliente(obj);
+      };
 
-            // Fecha o modal antes de começar a processar
-            fecharModalBaixa();
-            mostrarToast("A processar pagamento no banco de dados...", "info");
+      // 3. Limpa todos os campos ao cancelar
+      window.cancelarEdicaoCliente = function () {
+        document.getElementById("cli-nome").value = "";
+        document.getElementById("cli-celular").value = "";
+        document.getElementById("cli-cidade").value = "";
+        document.getElementById("cli-bairro").value = "";
+        document.getElementById("cli-endereco").value = "";
 
-            google.script.run
-              .withSuccessHandler((res) => {
-                if (res.sucesso) {
-                  if (res.parcial) {
-                    mostrarToast(
-                      "Baixa parcial efetuada! Nova parcela para o próximo mês.",
-                      "info",
-                    );
-                  } else {
-                    mostrarToast("Parcela liquidada integralmente!");
-                  }
-                  carregarParcelasPendentes(); // Atualiza a tabela
-                } else {
-                  mostrarToast(res.mensagem, "erro");
-                }
-              })
-              .withFailureHandler((err) => {
-                mostrarToast("Erro de comunicação: " + err.message, "erro");
-              })
-              .registrarBaixaParcela(linhaPlanilha, valorPago);
-          };
+        carregarProximoIdCliente(); // Gera novo ID
 
-          // 1. Ao clicar na Lupa
-          window.editarCliente = function (id) {
-            // Busca todas as informações do cliente na nossa lista global
-            const cliente = clientesGlobais.find((c) => c.id === id);
-            if (!cliente) return;
+        document
+          .getElementById("botoes-cliente-standard")
+          .classList.remove("hidden");
+        document
+          .getElementById("botoes-cliente-edicao")
+          .classList.add("hidden");
 
-            // Preenche TODOS os campos do formulário
-            document.getElementById("cli-id").value = cliente.id;
-            document.getElementById("cli-nome").value = cliente.nome;
-            document.getElementById("cli-celular").value = cliente.celular;
-            document.getElementById("cli-cidade").value = cliente.cidade;
-            document.getElementById("cli-bairro").value = cliente.bairro;
-            document.getElementById("cli-endereco").value = cliente.endereco;
+        lucide.createIcons();
+      };
+      function carregarProximoIdCliente() {
+        google.script.run
+          .withSuccessHandler((novoId) => {
+            document.getElementById("cli-id").value = novoId;
+            document.getElementById("cli-id").readOnly = true; // Evita que o usuário altere manualmente
+          })
+          .gerarProximoIdCliente();
+      }
 
-            document.getElementById("cli-id").readOnly = true;
+      // --- LÓGICA DO MODAL DE EXCLUSÃO DE CLIENTES ---
 
-            document
-              .getElementById("botoes-cliente-standard")
-              .classList.add("hidden");
-            document
-              .getElementById("botoes-cliente-edicao")
-              .classList.remove("hidden");
+      // 1. Abre o modal de confirmação
+      window.confirmarExclusaoCliente = function () {
+        const id = document.getElementById("cli-id").value;
+        const nome = document.getElementById("cli-nome").value;
 
-            document.getElementById("cli-nome").focus();
-            lucide.createIcons();
-          };
+        // Preenche os dados no modal
+        document.getElementById("modal-exclusao-id").value = id;
+        document.getElementById("texto-modal-exclusao").innerText =
+          `Tem certeza que deseja excluir o cliente ${nome} (ID: ${id})? Esta ação não poderá ser desfeita.`;
 
-          // 2. Coleta todos os dados para salvar
-          window.confirmarSalvarCliente = function () {
-            const obj = {
-              id: document.getElementById("cli-id").value.trim(),
-              nome: document.getElementById("cli-nome").value.trim(),
-              celular: document.getElementById("cli-celular").value.trim(),
-              cidade: document.getElementById("cli-cidade").value.trim(),
-              bairro: document.getElementById("cli-bairro").value.trim(),
-              endereco: document.getElementById("cli-endereco").value.trim(),
-            };
+        // Mostra o modal
+        document.getElementById("modal-exclusao").classList.remove("hidden");
+        lucide.createIcons();
+      };
 
-            if (!obj.id || !obj.nome) {
-              mostrarToast("ID e Nome são obrigatórios!", "erro");
-              return;
+      // 2. Fecha o modal se o usuário desistir
+      window.fecharModalExclusao = function () {
+        document.getElementById("modal-exclusao").classList.add("hidden");
+      };
+
+      // 3. Executa a exclusão no servidor se confirmar
+      window.executarExclusaoModal = function () {
+        const id = document.getElementById("modal-exclusao-id").value;
+
+        // Esconde o modal imediatamente
+        fecharModalExclusao();
+        mostrarToast("A excluir cliente...", "info");
+
+        google.script.run
+          .withSuccessHandler((res) => {
+            if (res.sucesso) {
+              mostrarToast(res.mensagem);
+              cancelarEdicaoCliente(); // Limpa o formulário e volta os botões
+              carregarListaClientes(); // Atualiza a tabela
+            } else {
+              mostrarToast(res.mensagem, "erro");
             }
+          })
+          .withFailureHandler((err) => {
+            mostrarToast("Erro de comunicação: " + err.message, "erro");
+          })
+          .excluirCliente(id);
+      };
 
-            mostrarToast("A salvar dados...", "info");
+      // Limpa o formulário de Lançamentos Financeiros após gravar
+      function limparFormularioFinanceiro() {
+        document.getElementById("fin-cliente").value = "";
+        document.getElementById("fin-valor").value = "";
+        document.getElementById("fin-data-primeiro-venc").value = "";
 
-            google.script.run
-              .withSuccessHandler((res) => {
-                if (res.sucesso) {
-                  mostrarToast(res.mensagem);
-                  cancelarEdicaoCliente(); // Limpa a tela e volta os botões
-                  carregarListaClientes(); // Atualiza a tabela
-                } else {
-                  mostrarToast(res.mensagem, "erro");
-                }
-              })
-              .salvarCliente(obj);
-          };
+        // Volta os selects para a primeira opção
+        document.getElementById("fin-metodo").selectedIndex = 0;
+        document.getElementById("fin-parcelas").value = "1";
 
-          // 3. Limpa todos os campos ao cancelar
-          window.cancelarEdicaoCliente = function () {
-            document.getElementById("cli-nome").value = "";
-            document.getElementById("cli-celular").value = "";
-            document.getElementById("cli-cidade").value = "";
-            document.getElementById("cli-bairro").value = "";
-            document.getElementById("cli-endereco").value = "";
-
-            carregarProximoIdCliente(); // Gera novo ID
-
-            document
-              .getElementById("botoes-cliente-standard")
-              .classList.remove("hidden");
-            document
-              .getElementById("botoes-cliente-edicao")
-              .classList.add("hidden");
-
-            lucide.createIcons();
-          };
-          function carregarProximoIdCliente() {
-            google.script.run
-              .withSuccessHandler((novoId) => {
-                document.getElementById("cli-id").value = novoId;
-                document.getElementById("cli-id").readOnly = true; // Evita que o usuário altere manualmente
-              })
-              .gerarProximoIdCliente();
-          }
-
-          // --- LÓGICA DO MODAL DE EXCLUSÃO DE CLIENTES ---
-
-          // 1. Abre o modal de confirmação
-          window.confirmarExclusaoCliente = function () {
-            const id = document.getElementById("cli-id").value;
-            const nome = document.getElementById("cli-nome").value;
-
-            // Preenche os dados no modal
-            document.getElementById("modal-exclusao-id").value = id;
-            document.getElementById("texto-modal-exclusao").innerText =
-              `Tem certeza que deseja excluir o cliente ${nome} (ID: ${id})? Esta ação não poderá ser desfeita.`;
-
-            // Mostra o modal
-            document.getElementById("modal-exclusao").classList.remove("hidden");
-            lucide.createIcons();
-          };
-
-          // 2. Fecha o modal se o usuário desistir
-          window.fecharModalExclusao = function () {
-            document.getElementById("modal-exclusao").classList.add("hidden");
-          };
-
-          // 3. Executa a exclusão no servidor se confirmar
-          window.executarExclusaoModal = function () {
-            const id = document.getElementById("modal-exclusao-id").value;
-
-            // Esconde o modal imediatamente
-            fecharModalExclusao();
-            mostrarToast("A excluir cliente...", "info");
-
-            google.script.run
-              .withSuccessHandler((res) => {
-                if (res.sucesso) {
-                  mostrarToast(res.mensagem);
-                  cancelarEdicaoCliente(); // Limpa o formulário e volta os botões
-                  carregarListaClientes(); // Atualiza a tabela
-                } else {
-                  mostrarToast(res.mensagem, "erro");
-                }
-              })
-              .withFailureHandler((err) => {
-                mostrarToast("Erro de comunicação: " + err.message, "erro");
-              })
-              .excluirCliente(id);
-          };
-
-          // Limpa o formulário de Lançamentos Financeiros após gravar
-          function limparFormularioFinanceiro() {
-            document.getElementById("fin-cliente").value = "";
-            document.getElementById("fin-valor").value = "";
-            document.getElementById("fin-data-primeiro-venc").value = "";
-
-            // Volta os selects para a primeira opção
-            document.getElementById("fin-metodo").selectedIndex = 0;
-            document.getElementById("fin-parcelas").value = "1";
-
-            // Reseta a tabela de previsão
-            document.getElementById("lista-parcelas").innerHTML = `
+        // Reseta a tabela de previsão
+        document.getElementById("lista-parcelas").innerHTML = `
               <tr>
                 <td colspan="3" class="pt-2 text-center text-slate-400">
                   Informe o valor total para calcular.
                 </td>
               </tr>
             `;
-          }
+      }
 
-          // Função para ser chamada no botão de excluir lançamento
-          window.confirmarExclusaoLancamento = function (idVenda) {
-            if (
-              confirm(
-                `Tem certeza que deseja EXCLUIR TOTALMENTE o lançamento ${idVenda} e todas as suas parcelas?`,
-              )
-            ) {
-              mostrarToast("A excluir lançamento e parcelas...", "info");
+      // Função para ser chamada no botão de excluir lançamento
+      window.confirmarExclusaoLancamento = function (idVenda) {
+        if (
+          confirm(
+            `Tem certeza que deseja EXCLUIR TOTALMENTE o lançamento ${idVenda} e todas as suas parcelas?`,
+          )
+        ) {
+          mostrarToast("A excluir lançamento e parcelas...", "info");
 
-              google.script.run
-                .withSuccessHandler((res) => {
-                  if (res.sucesso) {
-                    mostrarToast(res.mensagem);
-                    // Chame aqui a sua função que recarrega a tabela na tela
-                    // Exemplo: carregarListaParcelas();
-                  } else {
-                    mostrarToast(res.mensagem, "erro");
-                  }
-                })
-                .excluirLancamentoFinanceiro(idVenda);
+          google.script.run
+            .withSuccessHandler((res) => {
+              if (res.sucesso) {
+                mostrarToast(res.mensagem);
+                // Chame aqui a sua função que recarrega a tabela na tela
+                // Exemplo: carregarListaParcelas();
+              } else {
+                mostrarToast(res.mensagem, "erro");
+              }
+            })
+            .excluirLancamentoFinanceiro(idVenda);
+        }
+      };
+
+      // Variável global para guardar qual lançamento estamos apagando
+      let idLancamentoParaExcluir = null;
+
+      function abrirModalExcluirLancamento(idVenda) {
+        idLancamentoParaExcluir = idVenda;
+        document.getElementById("venda-id-display").innerText = idVenda;
+        document
+          .getElementById("modal-excluir-lancamento")
+          .classList.remove("hidden");
+      }
+
+      function fecharModalExcluirLancamento() {
+        idLancamentoParaExcluir = null;
+        document
+          .getElementById("modal-excluir-lancamento")
+          .classList.add("hidden");
+      }
+
+      function efetivarExclusaoLancamento() {
+        if (!idLancamentoParaExcluir) return;
+
+        const btn = document.getElementById("btn-confirmar-exclusao");
+        btn.innerHTML = "A processar...";
+        btn.disabled = true;
+
+        google.script.run
+          .withSuccessHandler((res) => {
+            btn.innerHTML = "Sim, Excluir Tudo";
+            btn.disabled = false;
+            fecharModalExcluirLancamento();
+
+            if (res.sucesso) {
+              // 1. Usa o Toast elegante em vez do alert()
+              mostrarToast(res.mensagem);
+
+              // 2. Chama a SUA função com o nome correto para atualizar a tabela
+              carregarParcelasPendentes();
+            } else {
+              // Usa o Toast vermelho para erro
+              mostrarToast("Erro: " + res.mensagem, "erro");
             }
-          };
+          })
+          .excluirLancamentoFinanceiro(idLancamentoParaExcluir);
+      }
 
-          // Variável global para guardar qual lançamento estamos apagando
-          let idLancamentoParaExcluir = null;
+      let listaUsuariosGlobais = [];
 
-          function abrirModalExcluirLancamento(idVenda) {
-            idLancamentoParaExcluir = idVenda;
-            document.getElementById("venda-id-display").innerText = idVenda;
-            document
-              .getElementById("modal-excluir-lancamento")
-              .classList.remove("hidden");
-          }
+      function carregarListaUsuarios() {
+        google.script.run
+          .withSuccessHandler((res) => {
+            listaUsuariosGlobais = res;
+            renderizarTabelaUsuarios();
+          })
+          .obterUsuarios();
+      }
 
-          function fecharModalExcluirLancamento() {
-            idLancamentoParaExcluir = null;
-            document
-              .getElementById("modal-excluir-lancamento")
-              .classList.add("hidden");
-          }
+      function renderizarTabelaUsuarios() {
+        const tbody = document.getElementById("tabela-usuarios-body");
+        tbody.innerHTML = "";
 
-          function efetivarExclusaoLancamento() {
-            if (!idLancamentoParaExcluir) return;
-
-            const btn = document.getElementById("btn-confirmar-exclusao");
-            btn.innerHTML = "A processar...";
-            btn.disabled = true;
-
-            google.script.run
-              .withSuccessHandler((res) => {
-                btn.innerHTML = "Sim, Excluir Tudo";
-                btn.disabled = false;
-                fecharModalExcluirLancamento();
-
-                if (res.sucesso) {
-                  // 1. Usa o Toast elegante em vez do alert()
-                  mostrarToast(res.mensagem);
-
-                  // 2. Chama a SUA função com o nome correto para atualizar a tabela
-                  carregarParcelasPendentes();
-                } else {
-                  // Usa o Toast vermelho para erro
-                  mostrarToast("Erro: " + res.mensagem, "erro");
-                }
-              })
-              .excluirLancamentoFinanceiro(idLancamentoParaExcluir);
-          }
-
-          let listaUsuariosGlobais = [];
-
-          function carregarListaUsuarios() {
-            google.script.run
-              .withSuccessHandler((res) => {
-                listaUsuariosGlobais = res;
-                renderizarTabelaUsuarios();
-              })
-              .obterUsuarios();
-          }
-
-          function renderizarTabelaUsuarios() {
-            const tbody = document.getElementById("tabela-usuarios-body");
-            tbody.innerHTML = "";
-
-            listaUsuariosGlobais.forEach((u) => {
-              const corNivel =
-                u.nivel === "ADMIN"
-                  ? "text-blue-600 bg-blue-50"
-                  : "text-slate-600 bg-slate-50";
-              tbody.innerHTML += `
+        listaUsuariosGlobais.forEach((u) => {
+          const corNivel =
+            u.nivel === "ADMIN"
+              ? "text-blue-600 bg-blue-50"
+              : "text-slate-600 bg-slate-50";
+          tbody.innerHTML += `
           <tr class="border-b hover:bg-slate-50 transition-colors">
             <td class="p-3 text-sm font-medium text-slate-700">${u.nome}</td>
             <td class="p-3 text-sm font-mono">${u.login}</td>
@@ -1256,162 +1261,162 @@
             </td>
           </tr>
         `;
-            });
-            lucide.createIcons();
-          }
+        });
+        lucide.createIcons();
+      }
 
-          // Funções de abrir/fechar modal e salvar...
-          function abrirModalUsuario() {
-            // 1. Reseta o título e desbloqueia o campo de login
-            document.getElementById("modal-usuario-titulo").innerText =
-              "Novo Usuário";
-            document.getElementById("usu-login").readOnly = false;
+      // Funções de abrir/fechar modal e salvar...
+      function abrirModalUsuario() {
+        // 1. Reseta o título e desbloqueia o campo de login
+        document.getElementById("modal-usuario-titulo").innerText =
+          "Novo Usuário";
+        document.getElementById("usu-login").readOnly = false;
 
-            // 2. Limpa todos os campos para um cadastro limpo
-            document.getElementById("usu-nome").value = "";
-            document.getElementById("usu-login").value = "";
-            document.getElementById("usu-senha").value = "";
-            document.getElementById("usu-senha").placeholder = "••••••••";
-            document.getElementById("usu-nivel").value = "COLABORADOR";
-            document.getElementById("usu-trocar-senha").checked = true;
+        // 2. Limpa todos os campos para um cadastro limpo
+        document.getElementById("usu-nome").value = "";
+        document.getElementById("usu-login").value = "";
+        document.getElementById("usu-senha").value = "";
+        document.getElementById("usu-senha").placeholder = "••••••••";
+        document.getElementById("usu-nivel").value = "COLABORADOR";
+        document.getElementById("usu-trocar-senha").checked = true;
 
-            // 3. Mostra o modal na tela
-            document.getElementById("modal-usuario").classList.remove("hidden");
-          }
+        // 3. Mostra o modal na tela
+        document.getElementById("modal-usuario").classList.remove("hidden");
+      }
 
-          function fecharModalUsuario() {
-            document.getElementById("modal-usuario").classList.add("hidden");
-          }
+      function fecharModalUsuario() {
+        document.getElementById("modal-usuario").classList.add("hidden");
+      }
 
-          function salvarUsuario() {
-            const obj = {
-              nome: document.getElementById("usu-nome").value,
-              login: document.getElementById("usu-login").value,
-              senha: document.getElementById("usu-senha").value,
-              nivel: document.getElementById("usu-nivel").value,
-              trocar: document.getElementById("usu-trocar-senha").checked,
-            };
+      function salvarUsuario() {
+        const obj = {
+          nome: document.getElementById("usu-nome").value,
+          login: document.getElementById("usu-login").value,
+          senha: document.getElementById("usu-senha").value,
+          nivel: document.getElementById("usu-nivel").value,
+          trocar: document.getElementById("usu-trocar-senha").checked,
+        };
 
-            mostrarToast("Salvando usuário...", "info");
-            google.script.run
-              .withSuccessHandler((res) => {
-                mostrarToast(res.mensagem);
-                fecharModalUsuario();
-                carregarListaUsuarios();
-              })
-              .gerenciarUsuario(obj);
-          }
+        mostrarToast("Salvando usuário...", "info");
+        google.script.run
+          .withSuccessHandler((res) => {
+            mostrarToast(res.mensagem);
+            fecharModalUsuario();
+            carregarListaUsuarios();
+          })
+          .gerenciarUsuario(obj);
+      }
 
-          window.editarUsuario = function (login) {
-            // Busca o usuário na lista global
-            const u = listaUsuariosGlobais.find((user) => user.login === login);
-            if (!u) return;
+      window.editarUsuario = function (login) {
+        // Busca o usuário na lista global
+        const u = listaUsuariosGlobais.find((user) => user.login === login);
+        if (!u) return;
 
-            // Preenche o modal com os dados existentes
-            document.getElementById("usu-nome").value = u.nome;
-            document.getElementById("usu-login").value = u.login;
-            document.getElementById("usu-login").readOnly = true; // Bloqueia o login
-            document.getElementById("usu-nivel").value = u.nivel;
-            document.getElementById("usu-trocar-senha").checked = u.trocar;
+        // Preenche o modal com os dados existentes
+        document.getElementById("usu-nome").value = u.nome;
+        document.getElementById("usu-login").value = u.login;
+        document.getElementById("usu-login").readOnly = true; // Bloqueia o login
+        document.getElementById("usu-nivel").value = u.nivel;
+        document.getElementById("usu-trocar-senha").checked = u.trocar;
 
-            // Limpa apenas o campo de senha para não aparecer a hash
-            const inputSenha = document.getElementById("usu-senha");
-            inputSenha.value = "";
-            inputSenha.placeholder = "Deixe vazio para não alterar";
+        // Limpa apenas o campo de senha para não aparecer a hash
+        const inputSenha = document.getElementById("usu-senha");
+        inputSenha.value = "";
+        inputSenha.placeholder = "Deixe vazio para não alterar";
 
-            // Muda o título
-            document.getElementById("modal-usuario-titulo").innerText =
-              "Editar Usuário";
+        // Muda o título
+        document.getElementById("modal-usuario-titulo").innerText =
+          "Editar Usuário";
 
-            // MOSTRA O MODAL DIRETAMENTE (Sem chamar a função de limpar)
-            document.getElementById("modal-usuario").classList.remove("hidden");
-          };
+        // MOSTRA O MODAL DIRETAMENTE (Sem chamar a função de limpar)
+        document.getElementById("modal-usuario").classList.remove("hidden");
+      };
 
-          function calcularRentabilidade() {
-            // Trava de segurança: Aguarda carregar os parâmetros do banco
-            if (!parametrosProjetos) {
-              mostrarToast("Aguarde, carregando parâmetros financeiros...", "info");
-              return;
-            }
+      function calcularRentabilidade() {
+        // Trava de segurança: Aguarda carregar os parâmetros do banco
+        if (!parametrosProjetos) {
+          mostrarToast("Aguarde, carregando parâmetros financeiros...", "info");
+          return;
+        }
 
-            const total =
-              parseFloat(document.getElementById("proj-total").value) || 0;
-            const kit = parseFloat(document.getElementById("proj-kit").value) || 0;
-            const entrada =
-              parseFloat(document.getElementById("proj-entrada").value) || 0;
+        const total =
+          parseFloat(document.getElementById("proj-total").value) || 0;
+        const kit = parseFloat(document.getElementById("proj-kit").value) || 0;
+        const entrada =
+          parseFloat(document.getElementById("proj-entrada").value) || 0;
 
-            // 1° Regra: Serviço = Total - Kit
-            const servico = total > 0 ? total - kit : 0;
-            document.getElementById("proj-servico").value = servico.toFixed(2);
+        // 1° Regra: Serviço = Total - Kit
+        const servico = total > 0 ? total - kit : 0;
+        document.getElementById("proj-servico").value = servico.toFixed(2);
 
-            // 2° Regra: Impostos = Total * Aba F11
-            const impostos = total * parametrosProjetos.imposto;
-            document.getElementById("proj-impostos").value = impostos.toFixed(2);
+        // 2° Regra: Impostos = Total * Aba F11
+        const impostos = total * parametrosProjetos.imposto;
+        document.getElementById("proj-impostos").value = impostos.toFixed(2);
 
-            // 3° Regra: Outros Custos (Condicional do Kit de 20k)
-            let outros = 0;
-            if (kit > 0) {
-              outros =
-                kit < 20000
-                  ? parametrosProjetos.custoMenor20k
-                  : parametrosProjetos.custoMaior20k;
-            }
-            document.getElementById("proj-outros").value = outros.toFixed(2);
+        // 3° Regra: Outros Custos (Condicional do Kit de 20k)
+        let outros = 0;
+        if (kit > 0) {
+          outros =
+            kit < 20000
+              ? parametrosProjetos.custoMenor20k
+              : parametrosProjetos.custoMaior20k;
+        }
+        document.getElementById("proj-outros").value = outros.toFixed(2);
 
-            // 4° Regra: Comissão = Total * Aba F7
-            const comissao = total * parametrosProjetos.comissao;
-            document.getElementById("proj-comissao").value = comissao.toFixed(2);
+        // 4° Regra: Comissão = Total * Aba F7
+        const comissao = total * parametrosProjetos.comissao;
+        document.getElementById("proj-comissao").value = comissao.toFixed(2);
 
-            // 5° Regra: Maquininha = Total * Aba F9
-            const maquininha = total * parametrosProjetos.maquininha;
-            document.getElementById("proj-maquininha").value =
-              maquininha.toFixed(2);
+        // 5° Regra: Maquininha = Total * Aba F9
+        const maquininha = total * parametrosProjetos.maquininha;
+        document.getElementById("proj-maquininha").value =
+          maquininha.toFixed(2);
 
-            // 6° Regra: Saldo Líquido
-            const liquido = servico - impostos - outros - comissao - maquininha;
-            document.getElementById("proj-liquido").value =
-              "R$ " + liquido.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+        // 6° Regra: Saldo Líquido
+        const liquido = servico - impostos - outros - comissao - maquininha;
+        document.getElementById("proj-liquido").value =
+          "R$ " + liquido.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
 
-            // Regra Extra (Residual)
-            const residual = total - entrada;
-            document.getElementById("proj-residual").value =
-              "R$ " +
-              residual.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
-          }
+        // Regra Extra (Residual)
+        const residual = total - entrada;
+        document.getElementById("proj-residual").value =
+          "R$ " +
+          residual.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+      }
 
-          // --- LÓGICA DE PROJETOS E FILTRO ---
-          let projetosGlobais = []; // Variável para armazenar dados localmente
+      // --- LÓGICA DE PROJETOS E FILTRO ---
+      let projetosGlobais = []; // Variável para armazenar dados localmente
 
-          function carregarListaProjetos() {
-            google.script.run
-              .withSuccessHandler((res) => {
-                projetosGlobais = res;
-                renderizarTabelaProjetos();
-              })
-              .obterListaProjetos();
-          }
-
-          window.filtrarProjetos = function () {
+      function carregarListaProjetos() {
+        google.script.run
+          .withSuccessHandler((res) => {
+            projetosGlobais = res;
             renderizarTabelaProjetos();
-          };
+          })
+          .obterListaProjetos();
+      }
 
-          function renderizarTabelaProjetos() {
-            const tbody = document.getElementById("tabela-projetos-body");
-            const filtroTexto = (
-              document.getElementById("filtro-projetos")?.value || ""
-            ).toUpperCase();
-            tbody.innerHTML = "";
+      window.filtrarProjetos = function () {
+        renderizarTabelaProjetos();
+      };
 
-            const filtrados = projetosGlobais.filter((p) => {
-              const clienteStr = String(p.cliente || "").toUpperCase();
-              const statusStr = String(p.status || "").toUpperCase();
-              return (
-                clienteStr.includes(filtroTexto) || statusStr.includes(filtroTexto)
-              );
-            });
+      function renderizarTabelaProjetos() {
+        const tbody = document.getElementById("tabela-projetos-body");
+        const filtroTexto = (
+          document.getElementById("filtro-projetos")?.value || ""
+        ).toUpperCase();
+        tbody.innerHTML = "";
 
-            filtrados.forEach((p) => {
-              tbody.innerHTML += `
+        const filtrados = projetosGlobais.filter((p) => {
+          const clienteStr = String(p.cliente || "").toUpperCase();
+          const statusStr = String(p.status || "").toUpperCase();
+          return (
+            clienteStr.includes(filtroTexto) || statusStr.includes(filtroTexto)
+          );
+        });
+
+        filtrados.forEach((p) => {
+          tbody.innerHTML += `
                 <tr class="border-b hover:bg-slate-50 transition-colors">
                   <td class="p-3 text-sm">${p.dataBR}</td>
                   <td class="p-3 text-sm font-medium uppercase">${p.cliente}</td>
@@ -1423,126 +1428,126 @@
                   </td>
                 </tr>
               `;
-            });
-            lucide.createIcons();
+        });
+        lucide.createIcons();
+      }
+
+      // --- LÓGICA DO MODAL (NOVO, EDITAR E SALVAR) ---
+
+      window.abrirModalProjeto = function () {
+        // Limpa a linha oculta (Indica que é um Cadastro Novo)
+        document.getElementById("proj-linha").value = "";
+
+        document.querySelectorAll("#modal-projeto input").forEach((input) => {
+          if (
+            input.id !== "proj-liquido" &&
+            input.id !== "proj-residual" &&
+            input.id !== "proj-linha"
+          ) {
+            input.value = "";
           }
+        });
+        document.getElementById("proj-liquido").value = "R$ 0,00";
+        document.getElementById("proj-residual").value = "R$ 0,00";
+        document.getElementById("proj-status").value = "AGUARDANDO KIT";
 
-          // --- LÓGICA DO MODAL (NOVO, EDITAR E SALVAR) ---
+        document.querySelector("#modal-projeto h3").innerText =
+          "Cadastrar Projeto Solar";
+        document.getElementById("modal-projeto").classList.remove("hidden");
+      };
 
-          window.abrirModalProjeto = function () {
-            // Limpa a linha oculta (Indica que é um Cadastro Novo)
-            document.getElementById("proj-linha").value = "";
+      window.fecharModalProjeto = function () {
+        document.getElementById("modal-projeto").classList.add("hidden");
+      };
 
-            document.querySelectorAll("#modal-projeto input").forEach((input) => {
-              if (
-                input.id !== "proj-liquido" &&
-                input.id !== "proj-residual" &&
-                input.id !== "proj-linha"
-              ) {
-                input.value = "";
-              }
-            });
-            document.getElementById("proj-liquido").value = "R$ 0,00";
-            document.getElementById("proj-residual").value = "R$ 0,00";
-            document.getElementById("proj-status").value = "AGUARDANDO KIT";
+      window.editarProjeto = function (linha) {
+        const p = projetosGlobais.find((x) => x.linha === linha);
+        if (!p) return;
 
-            document.querySelector("#modal-projeto h3").innerText =
-              "Cadastrar Projeto Solar";
-            document.getElementById("modal-projeto").classList.remove("hidden");
-          };
+        // Preenche o campo oculto e os dados do formulário
+        document.getElementById("proj-linha").value = p.linha;
+        document.getElementById("proj-data").value = p.dataISO;
+        document.getElementById("proj-cliente").value = p.cliente;
+        document.getElementById("proj-total").value = p.total;
+        document.getElementById("proj-kit").value = p.kit;
+        document.getElementById("proj-servico").value = p.servico;
+        document.getElementById("proj-impostos").value = p.impostos;
+        document.getElementById("proj-outros").value = p.outros;
+        document.getElementById("proj-comissao").value = p.comissao;
+        document.getElementById("proj-maquininha").value = p.maquininha;
+        document.getElementById("proj-entrada").value = p.entrada;
+        document.getElementById("proj-status").value = p.status;
 
-          window.fecharModalProjeto = function () {
-            document.getElementById("modal-projeto").classList.add("hidden");
-          };
+        calcularRentabilidade(); // Dispara o cálculo para preencher Líquido e Residual
 
-          window.editarProjeto = function (linha) {
-            const p = projetosGlobais.find((x) => x.linha === linha);
-            if (!p) return;
+        document.querySelector("#modal-projeto h3").innerText =
+          "Editar Projeto";
+        document.getElementById("modal-projeto").classList.remove("hidden");
+      };
 
-            // Preenche o campo oculto e os dados do formulário
-            document.getElementById("proj-linha").value = p.linha;
-            document.getElementById("proj-data").value = p.dataISO;
-            document.getElementById("proj-cliente").value = p.cliente;
-            document.getElementById("proj-total").value = p.total;
-            document.getElementById("proj-kit").value = p.kit;
-            document.getElementById("proj-servico").value = p.servico;
-            document.getElementById("proj-impostos").value = p.impostos;
-            document.getElementById("proj-outros").value = p.outros;
-            document.getElementById("proj-comissao").value = p.comissao;
-            document.getElementById("proj-maquininha").value = p.maquininha;
-            document.getElementById("proj-entrada").value = p.entrada;
-            document.getElementById("proj-status").value = p.status;
+      window.salvarNovoProjeto = function () {
+        const obj = {
+          linha: document.getElementById("proj-linha").value, // Se tiver valor, o servidor vai Atualizar
+          data: document.getElementById("proj-data").value,
+          cliente: document.getElementById("proj-cliente").value,
+          total: document.getElementById("proj-total").value || 0,
+          kit: document.getElementById("proj-kit").value || 0,
+          servico: document.getElementById("proj-servico").value || 0,
+          impostos: document.getElementById("proj-impostos").value || 0,
+          outros: document.getElementById("proj-outros").value || 0,
+          comissao: document.getElementById("proj-comissao").value || 0,
+          maquininha: document.getElementById("proj-maquininha").value || 0,
+          liquido: document.getElementById("proj-liquido").value,
+          entrada: document.getElementById("proj-entrada").value || 0,
+          residual: document.getElementById("proj-residual").value,
+          status: document.getElementById("proj-status").value,
+        };
 
-            calcularRentabilidade(); // Dispara o cálculo para preencher Líquido e Residual
+        if (!obj.data || !obj.cliente || !obj.total) {
+          mostrarToast("Preencha Data, Cliente e Valor Total.", "erro");
+          return;
+        }
 
-            document.querySelector("#modal-projeto h3").innerText =
-              "Editar Projeto";
-            document.getElementById("modal-projeto").classList.remove("hidden");
-          };
+        mostrarToast(
+          obj.linha ? "Atualizando projeto..." : "A salvar novo projeto...",
+          "info",
+        );
 
-          window.salvarNovoProjeto = function () {
-            const obj = {
-              linha: document.getElementById("proj-linha").value, // Se tiver valor, o servidor vai Atualizar
-              data: document.getElementById("proj-data").value,
-              cliente: document.getElementById("proj-cliente").value,
-              total: document.getElementById("proj-total").value || 0,
-              kit: document.getElementById("proj-kit").value || 0,
-              servico: document.getElementById("proj-servico").value || 0,
-              impostos: document.getElementById("proj-impostos").value || 0,
-              outros: document.getElementById("proj-outros").value || 0,
-              comissao: document.getElementById("proj-comissao").value || 0,
-              maquininha: document.getElementById("proj-maquininha").value || 0,
-              liquido: document.getElementById("proj-liquido").value,
-              entrada: document.getElementById("proj-entrada").value || 0,
-              residual: document.getElementById("proj-residual").value,
-              status: document.getElementById("proj-status").value,
-            };
-
-            if (!obj.data || !obj.cliente || !obj.total) {
-              mostrarToast("Preencha Data, Cliente e Valor Total.", "erro");
-              return;
+        google.script.run
+          .withSuccessHandler((res) => {
+            if (res.sucesso) {
+              mostrarToast(
+                obj.linha
+                  ? "Projeto atualizado com sucesso!"
+                  : "Projeto gravado com sucesso!",
+              );
+              fecharModalProjeto();
+              carregarListaProjetos();
+            } else {
+              mostrarToast("Erro ao gravar: " + res.mensagem, "erro");
             }
+          })
+          .salvarProjetoNoServidor(obj);
+      };
+      function gerarRelatorioVendasEmAberto() {
+        // Opcional: mostrar um loading no botão
+        google.script.run
+          .withSuccessHandler(function (resposta) {
+            if (resposta.sucesso) {
+              montarEImprimirPDF(resposta.dados);
+            } else {
+              mostrarToast("Erro ao buscar dados do relatório.", "erro");
+            }
+          })
+          .obterDadosRelatorioVendasAbertas();
+      }
 
-            mostrarToast(
-              obj.linha ? "Atualizando projeto..." : "A salvar novo projeto...",
-              "info",
-            );
+      function montarEImprimirPDF(dados) {
+        // Abre uma nova janela invisível
+        const janelaPdf = window.open("", "_blank");
 
-            google.script.run
-              .withSuccessHandler((res) => {
-                if (res.sucesso) {
-                  mostrarToast(
-                    obj.linha
-                      ? "Projeto atualizado com sucesso!"
-                      : "Projeto gravado com sucesso!",
-                  );
-                  fecharModalProjeto();
-                  carregarListaProjetos();
-                } else {
-                  mostrarToast("Erro ao gravar: " + res.mensagem, "erro");
-                }
-              })
-              .salvarProjetoNoServidor(obj);
-          };
-          function gerarRelatorioVendasEmAberto() {
-            // Opcional: mostrar um loading no botão
-            google.script.run
-              .withSuccessHandler(function (resposta) {
-                if (resposta.sucesso) {
-                  montarEImprimirPDF(resposta.dados);
-                } else {
-                  mostrarToast("Erro ao buscar dados do relatório.", "erro");
-                }
-              })
-              .obterDadosRelatorioVendasAbertas();
-          }
-
-          function montarEImprimirPDF(dados) {
-            // Abre uma nova janela invisível
-            const janelaPdf = window.open("", "_blank");
-
-            // Começa a montar o HTML do PDF
-            let htmlString = `
+        // Começa a montar o HTML do PDF
+        let htmlString = `
         <html>
           <head>
             <title>Relatório de Vendas em Aberto</title>
@@ -1568,9 +1573,9 @@
               </tr>
       `;
 
-            // Preenche as linhas com os dados
-            dados.forEach((venda) => {
-              htmlString += `
+        // Preenche as linhas com os dados
+        dados.forEach((venda) => {
+          htmlString += `
           <tr>
             <td>${venda.idVenda}</td>
             <td>${venda.cliente}</td>
@@ -1579,52 +1584,52 @@
             <td class="text-right text-red">R$ ${parseFloat(venda.saldoDevedor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
           </tr>
         `;
-            });
+        });
 
-            htmlString += `
+        htmlString += `
             </table>
           </body>
         </html>
       `;
 
-            // Escreve na janela e chama a impressão do navegador
-            janelaPdf.document.write(htmlString);
-            janelaPdf.document.close();
+        // Escreve na janela e chama a impressão do navegador
+        janelaPdf.document.write(htmlString);
+        janelaPdf.document.close();
 
-            // Aguarda o navegador renderizar e abre a caixa de "Salvar como PDF"
-            setTimeout(() => {
-              janelaPdf.print();
-            }, 500);
-          }
+        // Aguarda o navegador renderizar e abre a caixa de "Salvar como PDF"
+        setTimeout(() => {
+          janelaPdf.print();
+        }, 500);
+      }
 
-          function gerarRelatorioRecebidosMes() {
-            const mesAno = document.getElementById("mes-relatorio-recebidos").value;
-            if (!mesAno) {
-              mostrarToast("Selecione o mês e o ano primeiro.", "erro");
-              return;
+      function gerarRelatorioRecebidosMes() {
+        const mesAno = document.getElementById("mes-relatorio-recebidos").value;
+        if (!mesAno) {
+          mostrarToast("Selecione o mês e o ano primeiro.", "erro");
+          return;
+        }
+
+        mostrarToast("Processando recebimentos...", "info");
+
+        google.script.run
+          .withSuccessHandler(function (res) {
+            if (res.sucesso && res.dados.length > 0) {
+              montarEImprimirPDFRecebidos(res.dados, res.periodo);
+            } else {
+              mostrarToast(
+                "Nenhum recebimento encontrado para este período.",
+                "erro",
+              );
             }
+          })
+          .obterDadosRelatorioRecebidosMes(mesAno);
+      }
 
-            mostrarToast("Processando recebimentos...", "info");
+      function montarEImprimirPDFRecebidos(dados, periodo) {
+        const janela = window.open("", "_blank");
+        let totalGeral = 0;
 
-            google.script.run
-              .withSuccessHandler(function (res) {
-                if (res.sucesso && res.dados.length > 0) {
-                  montarEImprimirPDFRecebidos(res.dados, res.periodo);
-                } else {
-                  mostrarToast(
-                    "Nenhum recebimento encontrado para este período.",
-                    "erro",
-                  );
-                }
-              })
-              .obterDadosRelatorioRecebidosMes(mesAno);
-          }
-
-          function montarEImprimirPDFRecebidos(dados, periodo) {
-            const janela = window.open("", "_blank");
-            let totalGeral = 0;
-
-            let html = `
+        let html = `
         <html>
           <head>
             <style>
@@ -1654,9 +1659,9 @@
               <tbody>
       `;
 
-            dados.forEach((item) => {
-              totalGeral += parseFloat(item.valor);
-              html += `
+        dados.forEach((item) => {
+          totalGeral += parseFloat(item.valor);
+          html += `
           <tr>
             <td>${item.dataPgto}</td>
             <td style="text-transform: uppercase;">${item.cliente}</td>
@@ -1665,9 +1670,9 @@
             <td style="text-align: right;">R$ ${parseFloat(item.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
           </tr>
         `;
-            });
+        });
 
-            html += `
+        html += `
               </tbody>
             </table>
             <div class="total-box">TOTAL RECEBIDO: R$ ${totalGeral.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
@@ -1675,63 +1680,63 @@
         </html>
       `;
 
-            janela.document.write(html);
-            janela.document.close();
-            setTimeout(() => {
-              janela.print();
-            }, 500);
-          }
+        janela.document.write(html);
+        janela.document.close();
+        setTimeout(() => {
+          janela.print();
+        }, 500);
+      }
 
-          let parametrosProjetos = null;
+      let parametrosProjetos = null;
 
-          function carregarParametrosProjetos() {
-            google.script.run
-              .withSuccessHandler((res) => {
-                if (res.sucesso) parametrosProjetos = res;
-              })
-              .obterParametrosProjetos();
-          }
+      function carregarParametrosProjetos() {
+        google.script.run
+          .withSuccessHandler((res) => {
+            if (res.sucesso) parametrosProjetos = res;
+          })
+          .obterParametrosProjetos();
+      }
 
-          // Variável global para saber quem está a usar o sistema agora
-          let perfilUsuarioAtual = "ADMIN";
+      // Variável global para saber quem está a usar o sistema agora
+      let perfilUsuarioAtual = "ADMIN";
 
-          function aplicarPermissoes(perfil) {
-            perfilUsuarioAtual = perfil.toUpperCase();
+      function aplicarPermissoes(perfil) {
+        perfilUsuarioAtual = perfil.toUpperCase();
 
-            const btnDashboard = document.getElementById("btn-menu-dashboard");
-            const btnRelatorios = document.getElementById("btn-menu-relatorios");
-            const btnUsuarios = document.getElementById("btn-menu-usuario");
-            const btnPagamentos = document.getElementById("btn-menu-pagamentos"); // Captura o botão de Baixas
+        const btnDashboard = document.getElementById("btn-menu-dashboard");
+        const btnRelatorios = document.getElementById("btn-menu-relatorios");
+        const btnUsuarios = document.getElementById("btn-menu-usuario");
+        const btnPagamentos = document.getElementById("btn-menu-pagamentos"); // Captura o botão de Baixas
 
-            if (perfilUsuarioAtual === "COLABORADOR") {
-              if (btnDashboard) btnDashboard.classList.add("hidden");
-              if (btnRelatorios) btnRelatorios.classList.add("hidden");
-              if (btnUsuarios) btnUsuarios.classList.add("hidden");
-              if (btnPagamentos) btnPagamentos.classList.add("hidden"); // Oculta Pagamentos para Colaborador
-            } else {
-              if (btnDashboard) btnDashboard.classList.remove("hidden");
-              if (btnRelatorios) btnRelatorios.classList.remove("hidden");
-              if (btnUsuarios) btnUsuarios.classList.remove("hidden");
-              if (btnPagamentos) btnPagamentos.classList.remove("hidden");
-            }
-          }
+        if (perfilUsuarioAtual === "COLABORADOR") {
+          if (btnDashboard) btnDashboard.classList.add("hidden");
+          if (btnRelatorios) btnRelatorios.classList.add("hidden");
+          if (btnUsuarios) btnUsuarios.classList.add("hidden");
+          if (btnPagamentos) btnPagamentos.classList.add("hidden"); // Oculta Pagamentos para Colaborador
+        } else {
+          if (btnDashboard) btnDashboard.classList.remove("hidden");
+          if (btnRelatorios) btnRelatorios.classList.remove("hidden");
+          if (btnUsuarios) btnUsuarios.classList.remove("hidden");
+          if (btnPagamentos) btnPagamentos.classList.remove("hidden");
+        }
+      }
 
-          function fazerLogoff() {
-            // 1. Limpa a memória do navegador
-            sessionStorage.removeItem("usuarioAtivo");
+      function fazerLogoff() {
+        // 1. Limpa a memória do navegador
+        sessionStorage.removeItem("usuarioAtivo");
 
-            // 2. Limpa os campos digitados na tela de login
-            document.getElementById("user-login").value = "";
-            document.getElementById("pass-login").value = "";
+        // 2. Limpa os campos digitados na tela de login
+        document.getElementById("user-login").value = "";
+        document.getElementById("pass-login").value = "";
 
-            // 3. Esconde todas as telas e puxa a cortina do Login de volta
-            document
-              .querySelectorAll(".page-view")
-              .forEach((el) => el.classList.remove("active"));
-            document.getElementById("login-overlay").style.display = "flex";
+        // 3. Esconde todas as telas e puxa a cortina do Login de volta
+        document
+          .querySelectorAll(".page-view")
+          .forEach((el) => el.classList.remove("active"));
+        document.getElementById("login-overlay").style.display = "flex";
 
-            mostrarToast("Você saiu do sistema.", "info");
-          }
+        mostrarToast("Você saiu do sistema.", "info");
+      }
     </script>
   </body>
 </html>
