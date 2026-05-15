@@ -680,15 +680,15 @@ function obterUsuarios() {
 }
 
 /**
- * Salva ou Atualiza um usuário
+ * Salva ou Atualiza um usuário (COM CRIPTOGRAFIA CORRIGIDA)
  */
 function gerenciarUsuario(obj) {
-  const ss = SpreadsheetApp.openById(getSpreadsheetId()); // <-- E aqui também!
+  const ss = SpreadsheetApp.openById(getSpreadsheetId()); 
   const sheet = ss.getSheetByName("Usuarios");
   const dados = sheet.getDataRange().getValues();
 
-  // Hash simples para exemplo
-  const senhaFinal = Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, obj.senha));
+  // A CORREÇÃO ESTÁ AQUI: Agora usa a mesma chave mestra do Login!
+  const senhaFinal = obj.senha ? gerarHashSeguro(obj.login, obj.senha) : "";
 
   // Verifica se o login já existe para decidir se é NOVO ou EDIÇÃO
   let linhaExistente = -1;
@@ -700,18 +700,17 @@ function gerenciarUsuario(obj) {
   }
 
   if (linhaExistente !== -1) {
-    // Atualiza os dados básicos
     sheet.getRange(linhaExistente, 1).setValue(obj.nome);
     sheet.getRange(linhaExistente, 4).setValue(obj.nivel);
-    sheet.getRange(linhaExistente, 5).setValue(obj.trocar);
+    sheet.getRange(linhaExistente, 5).setValue(obj.trocar ? "SIM" : "NAO");
 
-    // Se digitou uma senha nova, atualiza o Hash também. Se deixou em branco, mantém a antiga.
-    if (obj.senha && obj.senha.trim() !== "") {
+    // Se digitou uma senha nova, atualiza o Hash. Se deixou em branco, mantém a antiga.
+    if (senhaFinal !== "") {
       sheet.getRange(linhaExistente, 3).setValue(senhaFinal);
     }
   } else {
-    // Novo
-    sheet.appendRow([obj.nome, obj.login, senhaFinal, obj.nivel, obj.trocar]);
+    // Novo (Aplica "SIM" ou "NAO" como texto para evitar bugs de checkbox)
+    sheet.appendRow([obj.nome, obj.login, senhaFinal, obj.nivel, obj.trocar ? "SIM" : "NAO"]);
   }
 
   return { sucesso: true, mensagem: "Usuário processado com sucesso!" };
