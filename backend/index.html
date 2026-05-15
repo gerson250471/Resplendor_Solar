@@ -143,6 +143,7 @@
       </div>
       <nav class="flex-1 px-4 space-y-1">
         <button
+          id="btn-menu-dashboard"
           onclick="navegarPara('dashboard')"
           class="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors text-left text-sm font-medium"
         >
@@ -166,6 +167,7 @@
           Lançamentos
         </button>
         <button
+          id="btn-menu-pagamentos"
           onclick="navegarPara('pagamentos')"
           class="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors text-left text-sm font-medium"
         >
@@ -173,6 +175,7 @@
           Baixas
         </button>
         <button
+          id="btn-menu-usuario"
           onclick="navegarPara('usuarios')"
           class="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors text-left text-sm font-medium"
         >
@@ -186,6 +189,7 @@
           <i data-lucide="sun" class="w-4 h-4 text-orange-400"></i> Projetos
         </button>
         <button
+          id="btn-menu-relatorios"
           onclick="navegarPara('relatorios')"
           class="w-full flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-blue-700 transition-colors group text-left"
         >
@@ -427,6 +431,20 @@
       }
 
       function navegarPara(tela) {
+        // --- INÍCIO DA TRAVA DE SEGURANÇA ---
+        if (perfilUsuarioAtual === "COLABORADOR") {
+          // Removido o 'financeiro' e corrigido 'usuario' para 'usuarios'
+          if (
+            tela === "dashboard" ||
+            tela === "relatorios" ||
+            tela === "usuarios" ||
+            tela === "pagamentos"
+          ) {
+            mostrarToast("Acesso restrito a administradores.", "erro");
+            return;
+          }
+        }
+        // --- FIM DA TRAVA DE SEGURANÇA ---
         // Esconde todas as telas
         document
           .querySelectorAll(".page-view")
@@ -487,8 +505,17 @@
                   "info",
                 );
               } else {
-                navegarPara("dashboard");
-                mostrarToast("Bem-vindo, " + res.nome);
+                // 1. CHAMA A FUNÇÃO DE PERMISSÕES AQUI!
+                aplicarPermissoes(res.nivel);
+
+                // 2. Direciona para a tela correta baseada no NIVEL
+                if (res.nivel === "COLABORADOR") {
+                  navegarPara("clientes");
+                  mostrarToast("Bem-vindo, " + res.nome);
+                } else {
+                  navegarPara("dashboard");
+                  mostrarToast("Bem-vindo, " + res.nome);
+                }
               }
             } else {
               mostrarToast(res.mensagem, "erro");
@@ -1654,6 +1681,30 @@
             if (res.sucesso) parametrosProjetos = res;
           })
           .obterParametrosProjetos();
+      }
+
+      // Variável global para saber quem está a usar o sistema agora
+      let perfilUsuarioAtual = "ADMIN";
+
+      function aplicarPermissoes(perfil) {
+        perfilUsuarioAtual = perfil.toUpperCase();
+
+        const btnDashboard = document.getElementById("btn-menu-dashboard");
+        const btnRelatorios = document.getElementById("btn-menu-relatorios");
+        const btnUsuarios = document.getElementById("btn-menu-usuario");
+        const btnPagamentos = document.getElementById("btn-menu-pagamentos"); // Captura o botão de Baixas
+
+        if (perfilUsuarioAtual === "COLABORADOR") {
+          if (btnDashboard) btnDashboard.classList.add("hidden");
+          if (btnRelatorios) btnRelatorios.classList.add("hidden");
+          if (btnUsuarios) btnUsuarios.classList.add("hidden");
+          if (btnPagamentos) btnPagamentos.classList.add("hidden"); // Oculta Pagamentos para Colaborador
+        } else {
+          if (btnDashboard) btnDashboard.classList.remove("hidden");
+          if (btnRelatorios) btnRelatorios.classList.remove("hidden");
+          if (btnUsuarios) btnUsuarios.classList.remove("hidden");
+          if (btnPagamentos) btnPagamentos.classList.remove("hidden");
+        }
       }
     </script>
   </body>
