@@ -550,7 +550,7 @@
         google.script.run
           .withSuccessHandler((sucesso) => {
             if (sucesso) {
-              // Corrigido para 'sucesso'
+              // Condição corrigida!
               mostrarToast("Senha atualizada com segurança!", "sucesso");
 
               // DIRECIONAMENTO SEGURO PÓS-TROCA
@@ -561,7 +561,7 @@
               }
             } else {
               mostrarToast("Erro ao atualizar a senha.", "erro");
-            } // Chave que faltava fechada aqui!
+            } // Chave que faltava está aqui fechada de forma segura!
           })
           .atualizarSenhaDefinitiva(usuario, nova);
       }
