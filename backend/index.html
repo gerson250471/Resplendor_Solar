@@ -503,11 +503,15 @@
         google.script.run
           .withSuccessHandler((res) => {
             if (res.sucesso) {
-              // 1. APLICA A BLINDAGEM IMEDIATAMENTE (Para todos!)
+              // === A CORREÇÃO ESTÁ AQUI: Esconde a cortina de login! ===
+              document.getElementById("login-overlay").style.display = "none";
+              // =========================================================
+
+              // 1. APLICA A BLINDAGEM IMEDIATAMENTE
               aplicarPermissoes(res.nivel);
 
               if (res.precisaTrocar) {
-                // Menu já está bloqueado lá no fundo, agora pede a troca
+                // Abre a tela de troca de senha
                 navegarPara("troca-senha");
                 mostrarToast(
                   "Alerta de Segurança: Altere sua senha inicial.",
