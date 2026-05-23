@@ -135,11 +135,29 @@
         </div>
       </div>
     </div>
-
-    <aside class="w-64 bg-slate-900 text-white flex flex-col hidden md:flex">
+    <!-- Menu Lateral para celular -->
+    <div
+      class="md:hidden flex items-center justify-between bg-slate-900 text-white p-4"
+    >
+      <span class="font-bold">Resplendor Solar</span>
+      <button onclick="toggleMenu()" class="p-2 bg-slate-800 rounded">
+        <i data-lucide="menu"></i>
+      </button>
+    </div>
+    <!--  -->
+    <aside
+      id="menu-lateral"
+      class="w-64 bg-slate-900 text-white h-screen fixed top-0 left-0 z-50 transform -translate-x-full md:translate-x-0 transition-transform duration-300"
+    >
+      <button
+        onclick="toggleMenu()"
+        class="md:hidden absolute top-4 right-4 p-2 text-slate-400 hover:text-white"
+      >
+        <i data-lucide="x"></i>
+      </button>
       <div class="p-6">
         <h1 class="text-xl font-bold text-blue-400">MAJB CRM</h1>
-        <p class="text-xs text-slate-500 mt-1">V 1.0.5 Modular</p>
+        <p class="text-xs text-slate-500 mt-1">V 1.00.05 Modular</p>
       </div>
       <nav class="flex-1 px-4 space-y-1">
         <button
@@ -476,7 +494,7 @@
         if (tela === "pagamentos") carregarParcelasPendentes();
         // Tela Usuarios
         if (tela === "usuarios") carregarListaUsuarios();
-        // Tela dos Projetos
+        // Tela das Vendas
         if (tela === "projetos") {
           carregarListaProjetos();
           carregarParametrosProjetos();
@@ -1428,7 +1446,10 @@
                   <td class="p-3 text-sm text-emerald-600 font-bold">${typeof p.liquido === "number" ? "R$ " + p.liquido.toLocaleString("pt-BR", { minimumFractionDigits: 2 }) : p.liquido}</td>
                   <td class="p-3 text-xs hidden"><span class="bg-slate-100 px-2 py-1 rounded-full font-bold uppercase text-slate-600">${p.status}</span></td>
                   <td class="p-3 text-center">
-                     <button onclick="editarProjeto(${p.linha})" class="text-blue-600 hover:bg-blue-50 p-1 rounded"><i data-lucide="edit" class="w-4 h-4"></i></button>
+                     <button onclick="editarProjeto(${p.linha})" class="text-blue-600 hover:bg-blue-50 p-2 rounded transition-colors" title="Editar"><i data-lucide="edit" class="w-4 h-4"></i></button>
+                     <button onclick="confirmarExclusaoProjeto(${p.linha})" class="text-red-500 hover:bg-red-50 p-2 rounded transition-colors" title="Excluir">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                     </button>
                   </td>
                 </tr>
               `;
@@ -1740,6 +1761,33 @@
         document.getElementById("login-overlay").style.display = "flex";
 
         mostrarToast("Você saiu do sistema.", "info");
+      }
+
+      function toggleMenu() {
+        const menu = document.getElementById("menu-lateral");
+        menu.classList.toggle("-translate-x-full");
+      }
+
+      function confirmarExclusaoProjeto(linha) {
+        if (
+          confirm(
+            "⚠️ TEM CERTEZA? Esta ação apagará este registro permanentemente!",
+          )
+        ) {
+          mostrarToast("Excluindo registro...", "info");
+
+          google.script.run
+            .withSuccessHandler((res) => {
+              if (res.sucesso) {
+                mostrarToast("Registro excluído com sucesso!", "sucesso");
+                // Atualiza a tabela correta na tela
+                carregarListaProjetos();
+              } else {
+                mostrarToast("Erro ao excluir: " + res.mensagem, "erro");
+              }
+            })
+            .excluirProjetoBackend(linha);
+        }
       }
     </script>
   </body>

@@ -977,3 +977,18 @@ function corrigirProjetosEmMassa() {
   // 5. Despeja os dados corrigidos de volta na planilha de uma só vez!
   range.setValues(dados);
 }
+
+function excluirProjetoBackend(linha) {
+  try {
+    const ss = SpreadsheetApp.openById(getSpreadsheetId());
+    // A aba no banco de dados continua a chamar-se "Projetos"
+    const sheet = ss.getSheetByName("Projetos"); 
+    
+    // Apaga diretamente a linha exata sem precisar de procurar
+    sheet.deleteRow(linha);
+    
+    return { sucesso: true };
+  } catch (erro) {
+    return { sucesso: false, mensagem: erro.toString() };
+  }
+}
