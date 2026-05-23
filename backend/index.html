@@ -377,6 +377,46 @@
     </div>
 
     <div
+      id="modal-exclusao-projeto"
+      class="fixed inset-0 bg-slate-900/80 z-[10000] hidden flex items-center justify-center backdrop-blur-sm transition-all"
+    >
+      <div
+        class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-sm transform transition-all text-center"
+      >
+        <div
+          class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4"
+        >
+          <i data-lucide="alert-triangle" class="w-8 h-8 text-red-600"></i>
+        </div>
+
+        <h3 class="text-xl font-bold text-slate-800 mb-2">
+          Confirmar Exclusão
+        </h3>
+
+        <p class="text-sm text-slate-500 mb-6">
+          Tem certeza que deseja excluir esta Venda permanentemente?
+        </p>
+
+        <input type="hidden" id="modal-projeto-linha" />
+
+        <div class="flex gap-3">
+          <button
+            onclick="fecharModalExclusaoProjeto()"
+            class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-lg hover:bg-slate-200 transition-colors text-sm"
+          >
+            Cancelar
+          </button>
+          <button
+            onclick="executarExclusaoProjetoModal()"
+            class="flex-1 bg-red-600 text-white font-bold py-3 rounded-lg hover:bg-red-700 shadow-md transition-colors text-sm"
+          >
+            Sim, Excluir
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div
       id="toast-container"
       class="fixed top-6 right-6 z-[10001] flex flex-col gap-3"
     ></div>
@@ -1774,26 +1814,41 @@
         menu.classList.toggle("-translate-x-full");
       }
 
+      // 1. Abre o modal e guarda a linha
       function confirmarExclusaoProjeto(linha) {
-        if (
-          confirm(
-            "⚠️ TEM CERTEZA? Esta ação apagará este registro permanentemente!",
-          )
-        ) {
-          mostrarToast("Excluindo registro...", "info");
+        document.getElementById("modal-projeto-linha").value = linha;
+        document
+          .getElementById("modal-exclusao-projeto")
+          .classList.remove("hidden");
+        lucide.createIcons(); // Recarrega o ícone de alerta
+      }
 
-          google.script.run
-            .withSuccessHandler((res) => {
-              if (res.sucesso) {
-                mostrarToast("Registro excluído com sucesso!", "sucesso");
-                // Atualiza a tabela correta na tela
-                carregarListaProjetos();
-              } else {
-                mostrarToast("Erro ao excluir: " + res.mensagem, "erro");
-              }
-            })
-            .excluirProjetoBackend(linha);
-        }
+      // 2. Fecha o modal se o utilizador cancelar
+      function fecharModalExclusaoProjeto() {
+        document
+          .getElementById("modal-exclusao-projeto")
+          .classList.add("hidden");
+      }
+
+      // 3. Executa a exclusão de verdade
+      function executarExclusaoProjetoModal() {
+        const linha = document.getElementById("modal-projeto-linha").value;
+
+        // Esconde o modal na hora
+        fecharModalExclusaoProjeto();
+        mostrarToast("A excluir venda...", "info");
+
+        google.script.run
+          .withSuccessHandler((res) => {
+            if (res.sucesso) {
+              mostrarToast("Venda excluída com sucesso!", "sucesso");
+              // Atualiza a tabela na tela
+              carregarListaProjetos();
+            } else {
+              mostrarToast("Erro ao excluir: " + res.mensagem, "erro");
+            }
+          })
+          .excluirProjetoBackend(linha);
       }
     </script>
   </body>
