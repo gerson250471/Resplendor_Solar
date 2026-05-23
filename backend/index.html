@@ -68,7 +68,7 @@
       }
     </style>
   </head>
-  <body class="flex h-screen overflow-hidden relative">
+  <body class="flex flex-col md:flex-row h-screen overflow-hidden relative">
     <? if (config.isDev) { ?>
     <div
       style="
@@ -137,7 +137,7 @@
     </div>
     <!-- Menu Lateral para celular -->
     <div
-      class="md:hidden flex items-center justify-between bg-slate-900 text-white p-4"
+      class="md:hidden w-full flex items-center justify-between bg-slate-900 text-white p-4 shrink-0 z-40"
     >
       <span class="font-bold">Resplendor Solar</span>
       <button onclick="toggleMenu()" class="p-2 bg-slate-800 rounded">
@@ -147,7 +147,7 @@
     <!--  -->
     <aside
       id="menu-lateral"
-      class="w-64 bg-slate-900 text-white h-screen fixed top-0 left-0 z-50 transform -translate-x-full md:translate-x-0 transition-transform duration-300"
+      class="w-64 bg-slate-900 text-white h-screen fixed md:relative top-0 left-0 z-50 transform -translate-x-full md:translate-x-0 transition-transform duration-300 shrink-0"
     >
       <button
         onclick="toggleMenu()"
