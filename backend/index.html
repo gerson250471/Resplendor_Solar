@@ -458,6 +458,12 @@
       }
 
       function navegarPara(tela) {
+        // --- FECHA O MENU NO TELEMÓVEL AUTOMATICAMENTE ---
+        const menu = document.getElementById("menu-lateral");
+        if (menu) {
+          menu.classList.add("-translate-x-full");
+        }
+        // --------------------------------------------------
         // --- INÍCIO DA TRAVA DE SEGURANÇA ---
         if (perfilUsuarioAtual === "COLABORADOR") {
           // Removido o 'financeiro' e corrigido 'usuario' para 'usuarios'
