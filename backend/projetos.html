@@ -1,6 +1,6 @@
 <section id="view-projetos" class="page-view">
   <div class="flex justify-between items-center mb-6">
-    <h2 class="text-2xl font-bold text-slate-800">Lançamento de Projetos</h2>
+    <h2 class="text-2xl font-bold text-slate-800">Lançamento de Vendas</h2>
     <button
       onclick="abrirModalProjeto()"
       class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-blue-700 shadow-md flex items-center gap-2"
@@ -135,27 +135,52 @@
         />
       </div>
       <div>
-        <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
-          >Comissão</label
+        <label
+          class="flex justify-between items-center text-sm font-bold text-slate-600 mb-1"
         >
+          <span>COMISSÃO</span>
+          <label class="flex items-center gap-1 cursor-pointer">
+            <input
+              type="checkbox"
+              id="check-comissao"
+              onchange="calcularFormularioVenda()"
+              class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+              checked
+            />
+            <span class="text-xs text-slate-500 font-normal">Aplicar</span>
+          </label>
+        </label>
         <input
-          type="number"
-          id="proj-comissao"
-          class="input-field bg-slate-100 cursor-not-allowed"
+          type="text"
+          id="form-proj-comissao"
           readonly
-          oninput="calcularRentabilidade()"
+          class="w-full p-2 bg-slate-50 border border-slate-300 rounded outline-none text-slate-500"
+          placeholder="R$ 0,00"
         />
       </div>
+
       <div>
-        <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
-          >Taxa Maquininha</label
+        <label
+          class="flex justify-between items-center text-sm font-bold text-slate-600 mb-1"
         >
+          <span>TAXA MAQUININHA</span>
+          <label class="flex items-center gap-1 cursor-pointer">
+            <input
+              type="checkbox"
+              id="check-maquininha"
+              onchange="calcularFormularioVenda()"
+              class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+              checked
+            />
+            <span class="text-xs text-slate-500 font-normal">Aplicar</span>
+          </label>
+        </label>
         <input
-          type="number"
-          id="proj-maquininha"
-          class="input-field bg-slate-100 cursor-not-allowed"
+          type="text"
+          id="form-proj-maquininha"
           readonly
-          oninput="calcularRentabilidade()"
+          class="w-full p-2 bg-slate-50 border border-slate-300 rounded outline-none text-slate-500"
+          placeholder="R$ 0,00"
         />
       </div>
 
@@ -221,7 +246,7 @@
         onclick="salvarNovoProjeto()"
         class="flex-1 bg-blue-600 py-3 rounded-xl font-bold text-white shadow-lg hover:bg-blue-700"
       >
-        Salvar Projeto
+        Salvar Venda
       </button>
     </div>
   </div>
