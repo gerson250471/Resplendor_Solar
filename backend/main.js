@@ -908,37 +908,40 @@ function obterParametrosProjetos() {
     const ss = SpreadsheetApp.openById(getSpreadsheetId());
     const aba = ss.getSheetByName("ControleVersao");
 
-    // Lê os valores. O Google Script lê 5% como 0.05
+    // Retorna as 7 variáveis com os nomes exatos que o Front-end espera
     return {
       sucesso: true,
       comissao: parseFloat(aba.getRange("F7").getValue()) || 0,
       maquininha: parseFloat(aba.getRange("F9").getValue()) || 0,
       imposto: parseFloat(aba.getRange("F11").getValue()) || 0,
-      custoMaior20k: parseFloat(aba.getRange("F13").getValue()) || 0, // F13 = Acima de 20k
-      custoMenor20k: parseFloat(aba.getRange("F15").getValue()) || 0, // F15 = Abaixo de 20k
-      custosDiretos: parseFloat(aba.getRange("F17").getValue()) || 0, // F17 = Custos Diretos
-      frete: parseFloat(aba.getRange("F19").getValue()) || 0          // F19 = Frete
+      custoAcima20k: parseFloat(aba.getRange("F13").getValue()) || 0, // Kit 1
+      custoAbaixo20k: parseFloat(aba.getRange("F15").getValue()) || 0, // Kit 2
+      custoDireto: parseFloat(aba.getRange("F17").getValue()) || 0,    // Novo
+      frete: parseFloat(aba.getRange("F19").getValue()) || 0           // Novo
     };
   } catch (e) {
     return { sucesso: false, mensagem: e.message };
   }
 }
 
-function salvarParametros(obj) {
+// --- ADICIONE ESTA NOVA FUNÇÃO LOGO ABAIXO ---
+function salvarParametrosNoServidor(obj) {
   try {
     const ss = SpreadsheetApp.openById(getSpreadsheetId());
     const aba = ss.getSheetByName("ControleVersao");
 
-    // Atualiza as células (os percentuais dividimos por 100 para o Google Sheets formatar direito)
+    // Divide por 100 para gravar como porcentagem na planilha (ex: 5 -> 0.05 = 5%)
     aba.getRange("F7").setValue(obj.comissao / 100);
     aba.getRange("F9").setValue(obj.maquininha / 100);
     aba.getRange("F11").setValue(obj.imposto / 100);
-    aba.getRange("F13").setValue(obj.custoMaior20k);
-    aba.getRange("F15").setValue(obj.custoMenor20k);
-    aba.getRange("F17").setValue(obj.custosDiretos / 100);
+    aba.getRange("F17").setValue(obj.custoDireto / 100);
+    
+    // Custos em R$ gravam o valor direto
+    aba.getRange("F13").setValue(obj.custoAcima20k);
+    aba.getRange("F15").setValue(obj.custoAbaixo20k);
     aba.getRange("F19").setValue(obj.frete);
 
-    return { sucesso: true, mensagem: "Parâmetros atualizados com sucesso!" };
+    return { sucesso: true };
   } catch (e) {
     return { sucesso: false, mensagem: e.message };
   }
