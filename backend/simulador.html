@@ -1,0 +1,147 @@
+<div id="view-simulador" class="page-view hidden">
+  <div class="mb-8">
+    <h2 class="text-2xl font-bold text-slate-800">Simulador de Precificação</h2>
+    <p class="text-slate-500">
+      Calcule o preço de venda e a margem de lucro em tempo real.
+    </p>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+      <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+        <i data-lucide="edit-3" class="w-5 h-5 text-blue-600"></i> Parâmetros de
+        Custo
+      </h3>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1"
+            >Custo do Kit / Equipamentos (R$)</label
+          >
+          <input
+            type="text"
+            id="sim-custo-kit"
+            onkeyup="
+              formatarMoedaInput(this);
+              calcularSimulador();
+            "
+            class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+            placeholder="R$ 0,00"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1"
+            >Custo de Instalação / Terceiros (R$)</label
+          >
+          <input
+            type="text"
+            id="sim-custo-instalacao"
+            onkeyup="
+              formatarMoedaInput(this);
+              calcularSimulador();
+            "
+            class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+            placeholder="R$ 0,00"
+          />
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1"
+              >Margem Desejada (%)</label
+            >
+            <input
+              type="number"
+              id="sim-margem"
+              onkeyup="calcularSimulador()"
+              onchange="calcularSimulador()"
+              class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+              value="30"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1"
+              >Impostos (%)</label
+            >
+            <input
+              type="number"
+              id="sim-imposto"
+              onkeyup="calcularSimulador()"
+              onchange="calcularSimulador()"
+              class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+              value="6"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1"
+            >Forma de Pagamento (Taxas da Maquininha/Banco)</label
+          >
+          <select
+            id="sim-forma-pagamento"
+            onchange="calcularSimulador()"
+            class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+          >
+            <option value="0">À Vista / PIX (0%)</option>
+            <option value="2.5">Cartão de Crédito - 1x (2.5%)</option>
+            <option value="5.8">Cartão de Crédito - 12x (5.8%)</option>
+            <option value="3.0">Financiamento Bancário (3.0%)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="bg-slate-900 p-6 rounded-xl shadow-lg text-white flex flex-col justify-between"
+    >
+      <div>
+        <h3
+          class="text-lg font-bold text-slate-300 mb-6 flex items-center gap-2"
+        >
+          <i data-lucide="pie-chart" class="w-5 h-5 text-green-400"></i> Análise
+          de Rentabilidade
+        </h3>
+
+        <div class="space-y-4">
+          <div
+            class="flex justify-between items-center border-b border-slate-700 pb-2"
+          >
+            <span class="text-slate-400">Custo Total (Kit + Instalação):</span>
+            <span id="res-custo-total" class="font-bold">R$ 0,00</span>
+          </div>
+          <div
+            class="flex justify-between items-center border-b border-slate-700 pb-2"
+          >
+            <span class="text-slate-400">Valor dos Impostos:</span>
+            <span id="res-imposto" class="text-red-400">- R$ 0,00</span>
+          </div>
+          <div
+            class="flex justify-between items-center border-b border-slate-700 pb-2"
+          >
+            <span class="text-slate-400">Taxa de Pagamento:</span>
+            <span id="res-taxa" class="text-red-400">- R$ 0,00</span>
+          </div>
+          <div
+            class="flex justify-between items-center border-b border-slate-700 pb-2"
+          >
+            <span class="text-slate-400">Lucro Líquido (Margem em R$):</span>
+            <span id="res-lucro" class="font-bold text-green-400">R$ 0,00</span>
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="mt-8 bg-slate-800 p-4 rounded-lg text-center border border-slate-700"
+      >
+        <span class="block text-sm text-slate-400 mb-1"
+          >Preço Final de Venda Sugerido</span
+        >
+        <span id="res-preco-venda" class="text-4xl font-black text-blue-400"
+          >R$ 0,00</span
+        >
+      </div>
+    </div>
+  </div>
+</div>

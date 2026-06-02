@@ -1,0 +1,191 @@
+<div id="view-parametros" class="page-view hidden">
+  <div class="mb-8">
+    <h2 class="text-2xl font-bold text-slate-800">Parâmetros do Sistema</h2>
+    <p class="text-slate-500">
+      Configure as taxas e custos base para os cálculos de precificação e
+      rentabilidade.
+    </p>
+  </div>
+
+  <div
+    class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 max-w-4xl"
+  >
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div>
+        <h3
+          class="text-lg font-bold text-blue-800 mb-4 flex items-center gap-2 border-b pb-2"
+        >
+          <i data-lucide="percent" class="w-5 h-5"></i> Taxas Variáveis (%)
+        </h3>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-bold text-slate-600 mb-1"
+              >Comissão (%)</label
+            >
+            <input
+              type="number"
+              step="0.01"
+              id="param-comissao"
+              class="input-field bg-slate-50"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-bold text-slate-600 mb-1"
+              >Taxa Maquininha (%)</label
+            >
+            <input
+              type="number"
+              step="0.01"
+              id="param-maquininha"
+              class="input-field bg-slate-50"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-bold text-slate-600 mb-1"
+              >Impostos (%)</label
+            >
+            <input
+              type="number"
+              step="0.01"
+              id="param-imposto"
+              class="input-field bg-slate-50"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-bold text-slate-600 mb-1"
+              >Custos Diretos (%)</label
+            >
+            <input
+              type="number"
+              step="0.01"
+              id="param-custodireto"
+              class="input-field bg-slate-50"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h3
+          class="text-lg font-bold text-emerald-800 mb-4 flex items-center gap-2 border-b pb-2"
+        >
+          <i data-lucide="dollar-sign" class="w-5 h-5"></i> Custos Fixos (R$)
+        </h3>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-bold text-slate-600 mb-1"
+              >Kit 1 (Acima 20.000) R$</label
+            >
+            <input
+              type="number"
+              step="0.01"
+              id="param-kitacima"
+              class="input-field bg-slate-50"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-bold text-slate-600 mb-1"
+              >Kit 2 (Abaixo 20.000) R$</label
+            >
+            <input
+              type="number"
+              step="0.01"
+              id="param-kitabaixo"
+              class="input-field bg-slate-50"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-bold text-slate-600 mb-1"
+              >Frete (R$)</label
+            >
+            <input
+              type="number"
+              step="0.01"
+              id="param-frete"
+              class="input-field bg-slate-50"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-8 border-t pt-6 flex justify-end">
+      <button
+        onclick="salvarParametrosUI()"
+        id="btn-salvar-parametros"
+        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-bold shadow-md transition-all flex items-center gap-2"
+      >
+        <i data-lucide="save" class="w-5 h-5"></i> Salvar Parâmetros
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function carregarTelaParametros() {
+    mostrarToast("Carregando parâmetros...", "info");
+    google.script.run
+      .withSuccessHandler((res) => {
+        if (res.sucesso) {
+          // Multiplica por 100 para exibir "5" em vez de "0.05"
+          document.getElementById("param-comissao").value = (
+            res.comissao * 100
+          ).toFixed(2);
+          document.getElementById("param-maquininha").value = (
+            res.maquininha * 100
+          ).toFixed(2);
+          document.getElementById("param-imposto").value = (
+            res.imposto * 100
+          ).toFixed(2);
+          document.getElementById("param-custodireto").value = (
+            res.custoDireto * 100
+          ).toFixed(2);
+
+          document.getElementById("param-kitacima").value =
+            res.custoAcima20k.toFixed(2);
+          document.getElementById("param-kitabaixo").value =
+            res.custoAbaixo20k.toFixed(2);
+          document.getElementById("param-frete").value = res.frete.toFixed(2);
+        }
+      })
+      .obterParametrosProjetos();
+  }
+
+  function salvarParametrosUI() {
+    const obj = {
+      comissao:
+        parseFloat(document.getElementById("param-comissao").value) || 0,
+      maquininha:
+        parseFloat(document.getElementById("param-maquininha").value) || 0,
+      imposto: parseFloat(document.getElementById("param-imposto").value) || 0,
+      custoDireto:
+        parseFloat(document.getElementById("param-custodireto").value) || 0,
+      custoAcima20k:
+        parseFloat(document.getElementById("param-kitacima").value) || 0,
+      custoAbaixo20k:
+        parseFloat(document.getElementById("param-kitabaixo").value) || 0,
+      frete: parseFloat(document.getElementById("param-frete").value) || 0,
+    };
+
+    const btn = document.getElementById("btn-salvar-parametros");
+    btn.innerHTML = "Salvando...";
+    btn.disabled = true;
+
+    google.script.run
+      .withSuccessHandler((res) => {
+        btn.innerHTML =
+          '<i data-lucide="save" class="w-5 h-5"></i> Salvar Parâmetros';
+        btn.disabled = false;
+        lucide.createIcons();
+
+        if (res.sucesso) {
+          mostrarToast("Parâmetros atualizados com sucesso!", "sucesso");
+          // Atualiza a memória global para os relatórios/cálculos usarem os dados frescos
+          carregarParametrosProjetos();
+        } else {
+          mostrarToast("Erro: " + res.mensagem, "erro");
+        }
+      })
+      .salvarParametrosNoServidor(obj);
+  }
+</script>
