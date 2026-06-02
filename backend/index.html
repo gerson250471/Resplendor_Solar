@@ -161,19 +161,39 @@
       </div>
       <nav class="flex-1 px-4 space-y-1">
         <button
-          id="btn-menu-dashboard"
-          onclick="navegarPara('dashboard')"
-          class="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors text-left text-sm font-medium"
-        >
-          <i data-lucide="layout-dashboard" class="w-4 h-4 text-blue-400"></i>
-          Dashboard
-        </button>
-        <button
           onclick="navegarPara('clientes')"
           class="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors text-left text-sm font-medium"
         >
           <i data-lucide="users" class="w-4 h-4 text-green-400"></i> Clientes
         </button>
+
+        <button
+          onclick="navegarPara('projetos')"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors text-left text-sm font-medium"
+        >
+          <i data-lucide="sun" class="w-4 h-4 text-orange-400"></i> Vendas
+        </button>
+
+        <button
+          onclick="navegarPara('simulador')"
+          class="w-full flex items-center gap-3 px-4 py-3 text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-colors group text-left text-sm font-medium"
+        >
+          <i
+            data-lucide="calculator"
+            class="w-4 h-4 text-slate-400 group-hover:text-amber-500 transition-colors"
+          ></i>
+          Simulador de Preços
+        </button>
+
+        <button
+          id="btn-menu-dashboard"
+          onclick="navegarPara('dashboard')"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors text-left text-sm font-medium mt-4 border-t border-slate-800 pt-4"
+        >
+          <i data-lucide="layout-dashboard" class="w-4 h-4 text-blue-400"></i>
+          Dashboard
+        </button>
+
         <button
           id="btn-menu-financeiro"
           onclick="navegarPara('financeiro')"
@@ -185,6 +205,7 @@
           ></i>
           Lançamentos
         </button>
+
         <button
           id="btn-menu-pagamentos"
           onclick="navegarPara('pagamentos')"
@@ -193,6 +214,16 @@
           <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
           Baixas
         </button>
+
+        <button
+          id="btn-menu-relatorios"
+          onclick="navegarPara('relatorios')"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors text-left text-sm font-medium"
+        >
+          <i data-lucide="file-bar-chart" class="w-4 h-4 text-blue-400"></i>
+          Relatórios
+        </button>
+
         <button
           id="btn-menu-usuario"
           onclick="navegarPara('usuarios')"
@@ -201,40 +232,25 @@
           <i data-lucide="user-cog" class="w-4 h-4 text-purple-400"></i>
           Usuários
         </button>
+
         <button
           id="btn-menu-parametros"
           onclick="navegarPara('parametros')"
           class="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors text-left text-sm font-medium"
-        >
-          <i data-lucide="settings" class="w-4 h-4 text-slate-400"></i>
-          Parâmetros
-        </button>
-        <button
-          onclick="navegarPara('projetos')"
-          class="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors text-left text-sm font-medium"
-        >
-          <i data-lucide="sun" class="w-4 h-4 text-orange-400"></i> Vendas
-        </button>
-        <button
-          id="btn-menu-relatorios"
-          onclick="navegarPara('relatorios')"
-          class="w-full flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-blue-700 transition-colors group text-left"
-        >
-          <i
-            data-lucide="file-bar-chart"
-            class="w-5 h-5 text-blue-200 group-hover:text-white"
-          ></i>
-          <span class="font-medium text-white">Relatórios</span>
-        </button>
-        <button
-          id="btn-menu-parametros"
-          onclick="navegarPara('parametros')"
-          class="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors text-left text-sm font-medium mt-4"
         >
           <i data-lucide="settings" class="w-4 h-4 text-slate-400"></i>
           Parâmetros
         </button>
       </nav>
+
+      <div class="p-4 mt-auto border-t border-slate-800">
+        <button
+          onclick="fazerLogoff()"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-red-500/10 text-red-400 transition-colors text-left text-sm font-medium"
+        >
+          <i data-lucide="log-out" class="w-4 h-4"></i> Sair do Sistema
+        </button>
+      </div>
       <div class="p-4 mt-auto border-t border-slate-800">
         <button
           onclick="fazerLogoff()"
@@ -244,18 +260,6 @@
           Sair do Sistema
         </button>
       </div>
-      <button
-        onclick="navegarPara('simulador')"
-        class="flex items-center gap-3 w-full px-4 py-3 text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition-colors group text-left"
-      >
-        <i
-          data-lucide="calculator"
-          class="w-5 h-5 text-slate-400 group-hover:text-amber-500 transition-colors"
-        ></i>
-        <span class="font-medium text-sm">Simulador de Preços</span>
-      </button>
-    </aside>
-
     <main class="flex-1 overflow-y-auto p-6 md:p-10">
       <?!= include('dashboard'); ?> <?!= include('clientes'); ?> <?!=
       include('financeiro'); ?> <?!= include('pagamentos'); ?><?!=
