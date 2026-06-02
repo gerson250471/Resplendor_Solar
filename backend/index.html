@@ -260,7 +260,7 @@
       include('financeiro'); ?> <?!= include('pagamentos'); ?><?!=
       include('usuario'); ?><?!= include('projetos'); ?><?!=
       include('relatorios'); ?><?!= include('simulador'); ?><?!=
-      include('relatorios'); ?><?!= include('parametros'); ?>
+      include('parametros'); ?>
 
       <section id="view-troca-senha" class="page-view">
         <div class="finance-card max-w-md mx-auto mt-10">
@@ -575,6 +575,8 @@
         }
         // Tela de Parametros
         if (tela === "parametros") carregarTelaParametros();
+        // Tela Simulador
+        if (tela === "simulador") carregarDadosSimulador();
       }
 
       /**

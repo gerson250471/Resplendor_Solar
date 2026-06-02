@@ -908,38 +908,47 @@ function obterParametrosProjetos() {
     const ss = SpreadsheetApp.openById(getSpreadsheetId());
     const aba = ss.getSheetByName("ControleVersao");
 
-    // Retorna as 7 variáveis com os nomes exatos que o Front-end espera
     return {
       sucesso: true,
       comissao: parseFloat(aba.getRange("F7").getValue()) || 0,
       maquininha: parseFloat(aba.getRange("F9").getValue()) || 0,
       imposto: parseFloat(aba.getRange("F11").getValue()) || 0,
-      custoAcima20k: parseFloat(aba.getRange("F13").getValue()) || 0, // Kit 1
-      custoAbaixo20k: parseFloat(aba.getRange("F15").getValue()) || 0, // Kit 2
-      custoDireto: parseFloat(aba.getRange("F17").getValue()) || 0,    // Novo
-      frete: parseFloat(aba.getRange("F19").getValue()) || 0           // Novo
+      custoAcima20k: parseFloat(aba.getRange("F13").getValue()) || 0,
+      custoAbaixo20k: parseFloat(aba.getRange("F15").getValue()) || 0,
+      custoDireto: parseFloat(aba.getRange("F17").getValue()) || 0,
+      frete: parseFloat(aba.getRange("F19").getValue()) || 0,
+      
+      // NOVOS PARÂMETROS DO SIMULADOR
+      margemPadrao: parseFloat(aba.getRange("F21").getValue()) || 0,
+      taxaPix: parseFloat(aba.getRange("F23").getValue()) || 0,
+      taxaCartao1x: parseFloat(aba.getRange("F25").getValue()) || 0,
+      taxaCartao12x: parseFloat(aba.getRange("F27").getValue()) || 0,
+      taxaFinanciamento: parseFloat(aba.getRange("F29").getValue()) || 0
     };
   } catch (e) {
     return { sucesso: false, mensagem: e.message };
   }
 }
 
-// --- ADICIONE ESTA NOVA FUNÇÃO LOGO ABAIXO ---
 function salvarParametrosNoServidor(obj) {
   try {
     const ss = SpreadsheetApp.openById(getSpreadsheetId());
     const aba = ss.getSheetByName("ControleVersao");
 
-    // Divide por 100 para gravar como porcentagem na planilha (ex: 5 -> 0.05 = 5%)
     aba.getRange("F7").setValue(obj.comissao / 100);
     aba.getRange("F9").setValue(obj.maquininha / 100);
     aba.getRange("F11").setValue(obj.imposto / 100);
     aba.getRange("F17").setValue(obj.custoDireto / 100);
-    
-    // Custos em R$ gravam o valor direto
     aba.getRange("F13").setValue(obj.custoAcima20k);
     aba.getRange("F15").setValue(obj.custoAbaixo20k);
     aba.getRange("F19").setValue(obj.frete);
+
+    // SALVANDO OS NOVOS PARÂMETROS
+    aba.getRange("F21").setValue(obj.margemPadrao / 100);
+    aba.getRange("F23").setValue(obj.taxaPix / 100);
+    aba.getRange("F25").setValue(obj.taxaCartao1x / 100);
+    aba.getRange("F27").setValue(obj.taxaCartao12x / 100);
+    aba.getRange("F29").setValue(obj.taxaFinanciamento / 100);
 
     return { sucesso: true };
   } catch (e) {
@@ -1016,62 +1025,4 @@ function excluirProjetoBackend(linha) {
   } catch (erro) {
     return { sucesso: false, mensagem: erro.toString() };
   }
-}
-
-// Função auxiliar para converter o texto monetário "1.500,00" para número (1500.00)
-function converterMoedaParaNumero(valorString) {
-  if (!valorString) return 0;
-  let numero = valorString.replace(/\./g, '').replace(',', '.');
-  return parseFloat(numero) || 0;
-}
-
-// O Motor de Cálculo Matemático
-function calcularSimulador() {
-  // 1. Coleta os valores digitados
-  const custoKit = converterMoedaParaNumero(document.getElementById('sim-custo-kit').value);
-  const custoInstalacao = converterMoedaParaNumero(document.getElementById('sim-custo-instalacao').value);
-  const margemPercentual = parseFloat(document.getElementById('sim-margem').value) || 0;
-  const impostoPercentual = parseFloat(document.getElementById('sim-imposto').value) || 0;
-  const taxaPagamentoPercentual = parseFloat(document.getElementById('sim-forma-pagamento').value) || 0;
-
-  // 2. Cálculos Base
-  const custoTotal = custoKit + custoInstalacao;
-
-  // 3. O Cálculo de Markup (Preço de Venda)
-  // Fórmula: Preço Venda = Custo Total / (1 - (Margem% + Imposto% + TaxaPagamento%) / 100)
-  const percentuaisSomados = (margemPercentual + impostoPercentual + taxaPagamentoPercentual) / 100;
-  
-  let precoVenda = 0;
-  let valorImposto = 0;
-  let valorTaxa = 0;
-  let lucroLiquido = 0;
-
-  // Trava de segurança matemática (se os percentuais passarem de 100%, a conta fica infinita/negativa)
-  if (percentuaisSomados < 1) {
-    precoVenda = custoTotal / (1 - percentuaisSomados);
-    valorImposto = precoVenda * (impostoPercentual / 100);
-    valorTaxa = precoVenda * (taxaPagamentoPercentual / 100);
-    lucroLiquido = precoVenda - custoTotal - valorImposto - valorTaxa;
-  } else {
-    // Se a soma das taxas for absurda, zera para não quebrar a tela
-    precoVenda = 0; 
-  }
-
-  // 4. Injeta os resultados na tela formatados em Reais (BRL)
-  const formatoMoeda = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
-
-  document.getElementById('res-custo-total').innerText = formatoMoeda.format(custoTotal);
-  document.getElementById('res-imposto').innerText = "- " + formatoMoeda.format(valorImposto);
-  document.getElementById('res-taxa').innerText = "- " + formatoMoeda.format(valorTaxa);
-  document.getElementById('res-lucro').innerText = formatoMoeda.format(lucroLiquido);
-  document.getElementById('res-preco-venda').innerText = formatoMoeda.format(precoVenda);
-}
-
-// Função para colocar a máscara de R$ enquanto o usuário digita
-function formatarMoedaInput(elemento) {
-  let valor = elemento.value.replace(/\D/g, '');
-  valor = (valor / 100).toFixed(2) + '';
-  valor = valor.replace(".", ",");
-  valor = valor.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
-  elemento.value = valor;
 }

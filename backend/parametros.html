@@ -108,7 +108,71 @@
         </div>
       </div>
     </div>
-
+    <div class="md:col-span-2 mt-4">
+      <h3
+        class="text-lg font-bold text-amber-600 mb-4 flex items-center gap-2 border-b pb-2"
+      >
+        <i data-lucide="calculator" class="w-5 h-5"></i> Taxas do Simulador de
+        Preços (%)
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div>
+          <label class="block text-sm font-bold text-slate-600 mb-1"
+            >Margem Padrão</label
+          >
+          <input
+            type="number"
+            step="0.01"
+            id="param-margem"
+            class="input-field bg-amber-50 border-amber-200"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-bold text-slate-600 mb-1"
+            >PIX / À Vista</label
+          >
+          <input
+            type="number"
+            step="0.01"
+            id="param-pix"
+            class="input-field bg-slate-50"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-bold text-slate-600 mb-1"
+            >Cartão 1x</label
+          >
+          <input
+            type="number"
+            step="0.01"
+            id="param-cartao1x"
+            class="input-field bg-slate-50"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-bold text-slate-600 mb-1"
+            >Cartão 12x</label
+          >
+          <input
+            type="number"
+            step="0.01"
+            id="param-cartao12x"
+            class="input-field bg-slate-50"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-bold text-slate-600 mb-1"
+            >Financiamento</label
+          >
+          <input
+            type="number"
+            step="0.01"
+            id="param-financiamento"
+            class="input-field bg-slate-50"
+          />
+        </div>
+      </div>
+    </div>
     <div class="mt-8 border-t pt-6 flex justify-end">
       <button
         onclick="salvarParametrosUI()"
@@ -146,6 +210,21 @@
           document.getElementById("param-kitabaixo").value =
             res.custoAbaixo20k.toFixed(2);
           document.getElementById("param-frete").value = res.frete.toFixed(2);
+          document.getElementById("param-margem").value = (
+            res.margemPadrao * 100
+          ).toFixed(2);
+          document.getElementById("param-pix").value = (
+            res.taxaPix * 100
+          ).toFixed(2);
+          document.getElementById("param-cartao1x").value = (
+            res.taxaCartao1x * 100
+          ).toFixed(2);
+          document.getElementById("param-cartao12x").value = (
+            res.taxaCartao12x * 100
+          ).toFixed(2);
+          document.getElementById("param-financiamento").value = (
+            res.taxaFinanciamento * 100
+          ).toFixed(2);
         }
       })
       .obterParametrosProjetos();
@@ -165,6 +244,15 @@
       custoAbaixo20k:
         parseFloat(document.getElementById("param-kitabaixo").value) || 0,
       frete: parseFloat(document.getElementById("param-frete").value) || 0,
+      margemPadrao:
+        parseFloat(document.getElementById("param-margem").value) || 0,
+      taxaPix: parseFloat(document.getElementById("param-pix").value) || 0,
+      taxaCartao1x:
+        parseFloat(document.getElementById("param-cartao1x").value) || 0,
+      taxaCartao12x:
+        parseFloat(document.getElementById("param-cartao12x").value) || 0,
+      taxaFinanciamento:
+        parseFloat(document.getElementById("param-financiamento").value) || 0,
     };
 
     const btn = document.getElementById("btn-salvar-parametros");
@@ -187,5 +275,115 @@
         }
       })
       .salvarParametrosNoServidor(obj);
+  }
+
+  // Variável global para guardar as regras do jogo enquanto o usuário simula
+  let regrasGlobais = null;
+
+  // Esta função deve ser chamada quando você clica no menu para abrir o simulador
+  function carregarDadosSimulador() {
+    mostrarToast("Sincronizando taxas oficiais...", "info");
+
+    google.script.run
+      .withSuccessHandler((res) => {
+        if (res.sucesso) {
+          regrasGlobais = res;
+
+          // 1. Preenche os campos automáticos
+          document.getElementById("sim-margem").value = (
+            res.margemPadrao * 100
+          ).toFixed(2);
+          document.getElementById("sim-imposto").value = (
+            res.imposto * 100
+          ).toFixed(2);
+
+          // 2. Constrói o Select de Pagamento com as taxas e nomes REAIS do banco de dados
+          const select = document.getElementById("sim-forma-pagamento");
+          select.options.length = 0; // Limpa opções antigas
+
+          select.options.add(
+            new Option(
+              `À Vista / PIX (${(res.taxaPix * 100).toFixed(2)}%)`,
+              res.taxaPix * 100,
+            ),
+          );
+          select.options.add(
+            new Option(
+              `Cartão de Crédito 1x (${(res.taxaCartao1x * 100).toFixed(2)}%)`,
+              res.taxaCartao1x * 100,
+            ),
+          );
+          select.options.add(
+            new Option(
+              `Cartão de Crédito 12x (${(res.taxaCartao12x * 100).toFixed(2)}%)`,
+              res.taxaCartao12x * 100,
+            ),
+          );
+          select.options.add(
+            new Option(
+              `Financiamento Bancário (${(res.taxaFinanciamento * 100).toFixed(2)}%)`,
+              res.taxaFinanciamento * 100,
+            ),
+          );
+
+          // Roda o cálculo inicial
+          calcularSimulador();
+        }
+      })
+      .obterParametrosProjetos();
+  }
+
+  function calcularSimulador() {
+    if (!regrasGlobais) return; // Aguarda os dados chegarem
+
+    const custoKit = converterMoedaParaNumero(
+      document.getElementById("sim-custo-kit").value,
+    );
+    const custoInstalacao = converterMoedaParaNumero(
+      document.getElementById("sim-custo-instalacao").value,
+    );
+
+    const margem = parseFloat(document.getElementById("sim-margem").value) || 0;
+    const imposto =
+      parseFloat(document.getElementById("sim-imposto").value) || 0;
+    const taxaPagamento =
+      parseFloat(document.getElementById("sim-forma-pagamento").value) || 0;
+
+    // A GRANDE JOGADA: O Custo Total agora inclui o Frete Oficial!
+    const custoTotalBase = custoKit + custoInstalacao + regrasGlobais.frete;
+
+    // O Markup agora considera a Comissão e o Custo Direto escondidos do vendedor!
+    const taxasEmbutidas =
+      (margem +
+        imposto +
+        taxaPagamento +
+        regrasGlobais.comissao * 100 +
+        regrasGlobais.custoDireto * 100) /
+      100;
+
+    let precoVenda = 0;
+    let lucroLiquido = 0;
+
+    if (taxasEmbutidas < 1) {
+      precoVenda = custoTotalBase / (1 - taxasEmbutidas);
+      // Lucro Líquido = Preço - (Custos Base) - (Taxas Totais em R$)
+      lucroLiquido =
+        precoVenda -
+        custoTotalBase -
+        precoVenda * (taxasEmbutidas - margem / 100);
+    }
+
+    const formatoMoeda = new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    });
+
+    // Exibe na tela
+    document.getElementById("res-custo-total").innerText =
+      formatoMoeda.format(custoTotalBase);
+    document.getElementById("res-lucro").innerText =
+      formatoMoeda.format(lucroLiquido);
+    document.getElementById("res-preco-venda").innerText =
+      formatoMoeda.format(precoVenda);
   }
 </script>
