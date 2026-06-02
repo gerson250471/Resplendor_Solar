@@ -144,4 +144,140 @@
       </div>
     </div>
   </div>
+  <script>
+    // Variável global para guardar as regras do jogo enquanto o usuário simula
+    let regrasGlobais = null;
+
+    // Esta função deve ser chamada quando você clica no menu para abrir o simulador
+    function carregarDadosSimulador() {
+      mostrarToast("Sincronizando taxas oficiais...", "info");
+
+      google.script.run
+        .withSuccessHandler((res) => {
+          if (res.sucesso) {
+            regrasGlobais = res;
+
+            // 1. Preenche os campos automáticos
+            document.getElementById("sim-margem").value = (
+              res.margemPadrao * 100
+            ).toFixed(2);
+            document.getElementById("sim-imposto").value = (
+              res.imposto * 100
+            ).toFixed(2);
+
+            // 2. Constrói o Select de Pagamento com as taxas e nomes REAIS do banco de dados
+            const select = document.getElementById("sim-forma-pagamento");
+            select.options.length = 0; // Limpa opções antigas
+
+            select.options.add(
+              new Option(
+                `À Vista / PIX (${(res.taxaPix * 100).toFixed(2)}%)`,
+                res.taxaPix * 100,
+              ),
+            );
+            select.options.add(
+              new Option(
+                `Cartão de Crédito 1x (${(res.taxaCartao1x * 100).toFixed(2)}%)`,
+                res.taxaCartao1x * 100,
+              ),
+            );
+            select.options.add(
+              new Option(
+                `Cartão de Crédito 12x (${(res.taxaCartao12x * 100).toFixed(2)}%)`,
+                res.taxaCartao12x * 100,
+              ),
+            );
+            select.options.add(
+              new Option(
+                `Financiamento Bancário (${(res.taxaFinanciamento * 100).toFixed(2)}%)`,
+                res.taxaFinanciamento * 100,
+              ),
+            );
+
+            // Roda o cálculo inicial
+            calcularSimulador();
+          }
+        })
+        .obterParametrosProjetos();
+    }
+
+    // Função auxiliar para converter texto em número
+    function converterMoedaParaNumero(valorString) {
+      if (!valorString) return 0;
+      let numero = valorString.replace(/\./g, "").replace(",", ".");
+      return parseFloat(numero) || 0;
+    }
+
+    // O Motor de Cálculo Matemático
+    function calcularSimulador() {
+      if (!regrasGlobais) return; // Aguarda os dados chegarem
+
+      const custoKit = converterMoedaParaNumero(
+        document.getElementById("sim-custo-kit").value,
+      );
+      const custoInstalacao = converterMoedaParaNumero(
+        document.getElementById("sim-custo-instalacao").value,
+      );
+
+      const margem =
+        parseFloat(document.getElementById("sim-margem").value) || 0;
+      const imposto =
+        parseFloat(document.getElementById("sim-imposto").value) || 0;
+      const taxaPagamento =
+        parseFloat(document.getElementById("sim-forma-pagamento").value) || 0;
+
+      // O Custo Total agora inclui o Frete Oficial!
+      const custoTotalBase = custoKit + custoInstalacao + regrasGlobais.frete;
+
+      // O Markup considera a Comissão e o Custo Direto escondidos
+      const taxasEmbutidas =
+        (margem +
+          imposto +
+          taxaPagamento +
+          regrasGlobais.comissao * 100 +
+          regrasGlobais.custoDireto * 100) /
+        100;
+
+      let precoVenda = 0;
+      let lucroLiquido = 0;
+
+      if (taxasEmbutidas < 1) {
+        precoVenda = custoTotalBase / (1 - taxasEmbutidas);
+        // Lucro Líquido = Preço - (Custos Base) - (Taxas Totais em R$)
+        lucroLiquido =
+          precoVenda -
+          custoTotalBase -
+          precoVenda * (taxasEmbutidas - margem / 100);
+      }
+
+      const formatoMoeda = new Intl.NumberFormat("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+      });
+
+      let valorImposto = precoVenda * (imposto / 100);
+      let valorTaxa = precoVenda * (taxaPagamento / 100);
+
+      // Exibe na tela
+      document.getElementById("res-custo-total").innerText =
+        formatoMoeda.format(custoTotalBase);
+      document.getElementById("res-imposto").innerText =
+        "- " + formatoMoeda.format(valorImposto);
+      document.getElementById("res-taxa").innerText =
+        "- " + formatoMoeda.format(valorTaxa);
+      document.getElementById("res-lucro").innerText =
+        formatoMoeda.format(lucroLiquido);
+      document.getElementById("res-preco-venda").innerText =
+        formatoMoeda.format(precoVenda);
+    }
+
+    // Máscara de R$ enquanto digita
+    function formatarMoedaInput(elemento) {
+      let valor = elemento.value.replace(/\D/g, "");
+      valor = (valor / 100).toFixed(2) + "";
+      valor = valor.replace(".", ",");
+      valor = valor.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
+      elemento.value = valor;
+    }
+  </script>
 </div>
