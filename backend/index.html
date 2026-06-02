@@ -539,7 +539,8 @@
             tela === "relatorios" ||
             tela === "usuarios" ||
             tela === "pagamentos" ||
-            tela === "parametros"
+            tela === "parametros" ||
+            tela === "financeiro"
           ) {
             mostrarToast("Acesso restrito a administradores.", "erro");
             return;
@@ -1839,19 +1840,21 @@
         const btnUsuarios = document.getElementById("btn-menu-usuario");
         const btnPagamentos = document.getElementById("btn-menu-pagamentos"); // Captura o botão de Baixas
         const btnParametros = document.getElementById("btn-menu-parametros"); // NOVO
-
+        const btnFinanceiro = document.getElementById("btn-menu-financeiro"); // <-- Captura o botão de Lançamento
         if (perfilUsuarioAtual === "COLABORADOR") {
           if (btnDashboard) btnDashboard.classList.add("hidden");
           if (btnRelatorios) btnRelatorios.classList.add("hidden");
           if (btnUsuarios) btnUsuarios.classList.add("hidden");
           if (btnPagamentos) btnPagamentos.classList.add("hidden"); // Oculta Pagamentos para Colaborador
           if (btnParametros) btnParametros.classList.add("hidden"); // BLOQUEIA
+          if (btnFinanceiro) btnFinanceiro.classList.add("hidden"); // <-- Esconde do Colaborador
         } else {
           if (btnDashboard) btnDashboard.classList.remove("hidden");
           if (btnRelatorios) btnRelatorios.classList.remove("hidden");
           if (btnUsuarios) btnUsuarios.classList.remove("hidden");
           if (btnPagamentos) btnPagamentos.classList.remove("hidden");
           if (btnParametros) btnParametros.classList.remove("hidden"); // LIBERA
+          if (btnFinanceiro) btnFinanceiro.classList.remove("hidden"); // <-- Mostra para o Admi
         }
       }
 
