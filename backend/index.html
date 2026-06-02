@@ -1441,48 +1441,54 @@
 
         const total =
           parseFloat(document.getElementById("proj-total").value) || 0;
-        const kit = parseFloat(document.getElementById("proj-kit").value) || 0;
         const entrada =
           parseFloat(document.getElementById("proj-entrada").value) || 0;
 
-        // Verifica os checkboxes (se a tela não tiver carregado ainda, assume 'true')
+        // Verifica os checkboxes
         const chkComissao = document.getElementById("check-comissao");
         const chkMaquininha = document.getElementById("check-maquininha");
         const aplicarComissao = chkComissao ? chkComissao.checked : true;
         const aplicarMaquininha = chkMaquininha ? chkMaquininha.checked : true;
 
-        // 1° Regra: Serviço = Total - Kit
+        // 1° Regra: VALOR DO KIT (AUTOMÁTICO) - Baseado no F13 / F15
+        let kit = 0;
+        if (total > 20000) {
+          kit = parametrosProjetos.custoAcima20k;
+        } else if (total > 0) {
+          kit = parametrosProjetos.custoAbaixo20k;
+        }
+        document.getElementById("proj-kit").value = kit.toFixed(2);
+
+        // 2° Regra: Serviço = Total - Kit
         const servico = total > 0 ? total - kit : 0;
         document.getElementById("proj-servico").value = servico.toFixed(2);
 
-        // 2° Regra: Impostos = Total * Aba F11
+        // 3° Regra: Impostos = Total * Aba F11
         const impostos = total * parametrosProjetos.imposto;
         document.getElementById("proj-impostos").value = impostos.toFixed(2);
 
-        // 3° Regra: Outros Custos (Condicional do Kit de 20k)
-        let outros = 0;
-        if (kit > 0) {
-          outros =
-            kit < 20000
-              ? parametrosProjetos.custoMenor20k
-              : parametrosProjetos.custoMaior20k;
-        }
+        // 4° Regra: Outros Custos = (Total * Custo Direto F17) + Frete F19
+        const outros =
+          total > 0
+            ? total * (parametrosProjetos.custoDireto || 0) +
+              (parametrosProjetos.frete || 0)
+            : 0;
         document.getElementById("proj-outros").value = outros.toFixed(2);
 
-        // 4° Regra: Comissão (CONDICIONAL)
+        // 5° Regra: Comissão (CONDICIONAL)
         const comissao = aplicarComissao
           ? total * parametrosProjetos.comissao
           : 0;
         document.getElementById("proj-comissao").value = comissao.toFixed(2);
 
-        // 5° Regra: Maquininha (CONDICIONAL)
+        // 6° Regra: Maquininha (CONDICIONAL)
         const maquininha = aplicarMaquininha
           ? total * parametrosProjetos.maquininha
           : 0;
         document.getElementById("proj-maquininha").value =
           maquininha.toFixed(2);
 
-        // 6° Regra: Saldo Líquido
+        // 7° Regra: Saldo Líquido
         const liquido = servico - impostos - outros - comissao - maquininha;
         const campoLiquido = document.getElementById("proj-liquido");
 
@@ -1491,7 +1497,6 @@
             "R$ " +
             liquido.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
 
-          // Muda a cor do texto do input para vermelho se o lucro for negativo
           if (liquido < 0) {
             campoLiquido.classList.remove("text-emerald-600", "text-green-600");
             campoLiquido.classList.add("text-red-600");
