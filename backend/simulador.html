@@ -219,6 +219,27 @@
         document.getElementById("sim-custo-instalacao").value,
       );
 
+      const formatoMoeda = new Intl.NumberFormat("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+      });
+
+      // --- NOVA TRAVA DE TELA LIMPA ---
+      // Se não há custo de equipamento ou serviço, zera o painel e para o cálculo aqui
+      if (custoKit === 0 && custoInstalacao === 0) {
+        document.getElementById("res-custo-total").innerText =
+          formatoMoeda.format(0);
+        document.getElementById("res-imposto").innerText =
+          "- " + formatoMoeda.format(0);
+        document.getElementById("res-taxa").innerText =
+          "- " + formatoMoeda.format(0);
+        document.getElementById("res-lucro").innerText = formatoMoeda.format(0);
+        document.getElementById("res-preco-venda").innerText =
+          formatoMoeda.format(0);
+        return;
+      }
+      // --------------------------------
+
       const margem =
         parseFloat(document.getElementById("sim-margem").value) || 0;
       const imposto =
@@ -249,11 +270,6 @@
           custoTotalBase -
           precoVenda * (taxasEmbutidas - margem / 100);
       }
-
-      const formatoMoeda = new Intl.NumberFormat("pt-BR", {
-        style: "currency",
-        currency: "BRL",
-      });
 
       let valorImposto = precoVenda * (imposto / 100);
       let valorTaxa = precoVenda * (taxaPagamento / 100);
