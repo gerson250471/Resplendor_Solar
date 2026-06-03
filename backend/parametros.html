@@ -74,7 +74,7 @@
         <div class="space-y-4">
           <div>
             <label class="block text-sm font-bold text-slate-600 mb-1"
-              >Kit 1 (Acima 20.000) R$</label
+              >Mão de Obra (Acima 20.000) R$</label
             >
             <input
               type="number"
@@ -85,7 +85,7 @@
           </div>
           <div>
             <label class="block text-sm font-bold text-slate-600 mb-1"
-              >Kit 2 (Abaixo 20.000) R$</label
+              >Mão de Obra (Abaixo 20.000) R$</label
             >
             <input
               type="number"
@@ -140,7 +140,7 @@
         </div>
         <div>
           <label class="block text-sm font-bold text-slate-600 mb-1"
-            >Cartão 1x</label
+            >Cartão 12x</label
           >
           <input
             type="number"
@@ -151,7 +151,7 @@
         </div>
         <div>
           <label class="block text-sm font-bold text-slate-600 mb-1"
-            >Cartão 12x</label
+            >Cartão 18x</label
           >
           <input
             type="number"
@@ -216,10 +216,10 @@
           document.getElementById("param-pix").value = (
             res.taxaPix * 100
           ).toFixed(2);
-          document.getElementById("param-cartao1x").value = (
+          document.getElementById("param-cartao12x").value = (
             res.taxaCartao1x * 100
           ).toFixed(2);
-          document.getElementById("param-cartao12x").value = (
+          document.getElementById("param-cartao18x").value = (
             res.taxaCartao12x * 100
           ).toFixed(2);
           document.getElementById("param-financiamento").value = (

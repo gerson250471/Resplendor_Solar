@@ -32,17 +32,14 @@
 
         <div>
           <label class="block text-sm font-medium text-slate-700 mb-1"
-            >Custo de Instalação / Terceiros (R$)</label
+            >Mão de Obra (R$)</label
           >
           <input
             type="text"
             id="sim-custo-instalacao"
-            onkeyup="
-              formatarMoedaInput(this);
-              calcularSimulador();
-            "
-            class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
-            placeholder="R$ 0,00"
+            readonly
+            class="w-full p-2 bg-slate-100 border border-slate-300 rounded cursor-not-allowed outline-none text-slate-500 font-medium"
+            placeholder="Calculado automaticamente..."
           />
         </div>
 
@@ -85,8 +82,8 @@
             class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
           >
             <option value="0">À Vista / PIX (0%)</option>
-            <option value="2.5">Cartão de Crédito - 1x (2.5%)</option>
-            <option value="5.8">Cartão de Crédito - 12x (5.8%)</option>
+            <option value="2.5">Cartão de Crédito - 12x (2.5%)</option>
+            <option value="5.8">Cartão de Crédito - 18x (5.8%)</option>
             <option value="3.0">Financiamento Bancário (3.0%)</option>
           </select>
         </div>
@@ -215,18 +212,32 @@
       const custoKit = converterMoedaParaNumero(
         document.getElementById("sim-custo-kit").value,
       );
-      const custoInstalacao = converterMoedaParaNumero(
-        document.getElementById("sim-custo-instalacao").value,
-      );
 
       const formatoMoeda = new Intl.NumberFormat("pt-BR", {
         style: "currency",
         currency: "BRL",
       });
 
-      // --- NOVA TRAVA DE TELA LIMPA ---
-      // Se não há custo de equipamento ou serviço, zera o painel e para o cálculo aqui
-      if (custoKit === 0 && custoInstalacao === 0) {
+      // --- 1. NOVA AUTOMAÇÃO: CUSTO DE INSTALAÇÃO ---
+      let custoInstalacao = 0;
+      if (custoKit > 20000) {
+        custoInstalacao = regrasGlobais.custoAcima20k; // Puxa F13
+      } else if (custoKit > 0) {
+        custoInstalacao = regrasGlobais.custoAbaixo20k; // Puxa F15
+      }
+
+      // Exibe na tela o custo de instalação bloqueado
+      const campoInstalacao = document.getElementById("sim-custo-instalacao");
+      campoInstalacao.value =
+        custoInstalacao > 0
+          ? custoInstalacao.toLocaleString("pt-BR", {
+              minimumFractionDigits: 2,
+            })
+          : "";
+
+      // --- 2. TRAVA DE TELA LIMPA ---
+      // Agora travamos apenas se o Custo do Kit estiver zerado
+      if (custoKit === 0) {
         document.getElementById("res-custo-total").innerText =
           formatoMoeda.format(0);
         document.getElementById("res-imposto").innerText =
