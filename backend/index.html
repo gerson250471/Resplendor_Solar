@@ -132,6 +132,12 @@
           >
             ACESSAR SISTEMA
           </button>
+          <button
+            onclick="abrirModalRecuperarSenha()"
+            class="text-sm font-medium text-slate-500 hover:text-blue-600 transition-colors mt-4 mx-auto block"
+          >
+            Esqueci a minha senha
+          </button>
         </div>
       </div>
     </div>
@@ -158,7 +164,7 @@
       <div class="p-6">
         <h1 class="text-xl font-bold text-blue-400">MAJB CRM</h1>
         <!-- VERSÃO DO SISTEMA -->
-        <p class="text-xs text-slate-500 mt-1">V 1.14.00 Modular</p>
+        <p class="text-xs text-slate-500 mt-1">V 1.15.00 Modular</p>
       </div>
       <nav class="flex-1 px-4 space-y-1">
         <button
@@ -253,6 +259,54 @@
         </button>
       </div>
     </aside>
+    <!-- MODAL DE RECUPERAÇÃO DE SENHA -->
+    <div
+      id="modal-recuperar-senha"
+      class="fixed inset-0 bg-slate-900/90 z-[10005] hidden flex items-center justify-center backdrop-blur-sm"
+    >
+      <div
+        class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-sm text-center"
+      >
+        <div
+          class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4"
+        >
+          <i data-lucide="mail" class="w-6 h-6 text-blue-600"></i>
+        </div>
+        <h3 class="text-xl font-bold text-slate-800 mb-2">Recuperar Acesso</h3>
+        <p class="text-sm text-slate-500 mb-6">
+          Digite seu Utilizador. Enviaremos uma senha provisória para o seu
+          e-mail cadastrado.
+        </p>
+
+        <div class="text-left mb-6">
+          <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
+            >Utilizador</label
+          >
+          <input
+            type="text"
+            id="recuperar-login"
+            class="input-field"
+            placeholder="Ex: gerson"
+          />
+        </div>
+
+        <div class="flex gap-3">
+          <button
+            onclick="fecharModalRecuperarSenha()"
+            class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-lg hover:bg-slate-200 transition-colors text-sm"
+          >
+            Cancelar
+          </button>
+          <button
+            id="btn-enviar-recuperacao"
+            onclick="enviarRecuperacaoSenha()"
+            class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 shadow-md transition-colors text-sm"
+          >
+            Enviar E-mail
+          </button>
+        </div>
+      </div>
+    </div>
     <main class="flex-1 overflow-y-auto p-6 md:p-10">
       <?!= include('dashboard'); ?> <?!= include('clientes'); ?> <?!=
       include('financeiro'); ?> <?!= include('pagamentos'); ?><?!=
@@ -1374,6 +1428,7 @@
         // 2. Limpa todos os campos para um cadastro limpo
         document.getElementById("usu-nome").value = "";
         document.getElementById("usu-login").value = "";
+        document.getElementById("usu-email").value = ""; // <-- Limpa o Email
         document.getElementById("usu-senha").value = "";
         document.getElementById("usu-senha").placeholder = "••••••••";
         document.getElementById("usu-nivel").value = "COLABORADOR";
@@ -1391,6 +1446,7 @@
         const obj = {
           nome: document.getElementById("usu-nome").value,
           login: document.getElementById("usu-login").value,
+          email: document.getElementById("usu-email").value, // <-- Puxa o Email
           senha: document.getElementById("usu-senha").value,
           nivel: document.getElementById("usu-nivel").value,
           trocar: document.getElementById("usu-trocar-senha").checked,
@@ -1415,6 +1471,7 @@
         document.getElementById("usu-nome").value = u.nome;
         document.getElementById("usu-login").value = u.login;
         document.getElementById("usu-login").readOnly = true; // Bloqueia o login
+        document.getElementById("usu-email").value = u.email || ""; // <-- Preenche o Email
         document.getElementById("usu-nivel").value = u.nivel;
         document.getElementById("usu-trocar-senha").checked = u.trocar;
 
@@ -1961,6 +2018,47 @@
             }
           })
           .excluirProjetoBackend(linha);
+      }
+
+      function abrirModalRecuperarSenha() {
+        // Aproveita se o login já estiver digitado
+        document.getElementById("recuperar-login").value =
+          document.getElementById("user-login").value;
+        document
+          .getElementById("modal-recuperar-senha")
+          .classList.remove("hidden");
+        lucide.createIcons();
+      }
+
+      function fecharModalRecuperarSenha() {
+        document
+          .getElementById("modal-recuperar-senha")
+          .classList.add("hidden");
+      }
+
+      function enviarRecuperacaoSenha() {
+        const login = document.getElementById("recuperar-login").value.trim();
+        if (!login) {
+          mostrarToast("Digite seu Utilizador.", "erro");
+          return;
+        }
+
+        const btn = document.getElementById("btn-enviar-recuperacao");
+        btn.innerHTML = "A enviar...";
+        btn.disabled = true;
+
+        google.script.run
+          .withSuccessHandler((res) => {
+            btn.innerHTML = "Enviar E-mail";
+            btn.disabled = false;
+            if (res.sucesso) {
+              mostrarToast(res.mensagem, "sucesso");
+              fecharModalRecuperarSenha();
+            } else {
+              mostrarToast(res.mensagem, "erro");
+            }
+          })
+          .recuperarSenhaEmail(login);
       }
     </script>
   </body>

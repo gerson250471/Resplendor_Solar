@@ -665,7 +665,7 @@ function excluirLancamentoFinanceiro(idVenda) {
  * Busca todos os usuários (exceto a senha por segurança)
  */
 function obterUsuarios() {
-  const ss = SpreadsheetApp.openById(getSpreadsheetId()); // <-- A Mágica da sua arquitetura aqui
+  const ss = SpreadsheetApp.openById(getSpreadsheetId()); 
   const sheet = ss.getSheetByName("Usuarios");
   const dados = sheet.getDataRange().getValues();
   dados.shift(); // Remove cabeçalho
@@ -675,22 +675,18 @@ function obterUsuarios() {
     nome: r[0],
     login: r[1],
     nivel: r[3],
-    trocar: r[4]
+    trocar: r[4],
+    email: r[5] || "" // <-- NOVO: Captura o e-mail
   }));
 }
 
-/**
- * Salva ou Atualiza um usuário (COM CRIPTOGRAFIA CORRIGIDA)
- */
 function gerenciarUsuario(obj) {
   const ss = SpreadsheetApp.openById(getSpreadsheetId()); 
   const sheet = ss.getSheetByName("Usuarios");
   const dados = sheet.getDataRange().getValues();
 
-  // A CORREÇÃO ESTÁ AQUI: Agora usa a mesma chave mestra do Login!
   const senhaFinal = obj.senha ? gerarHashSeguro(obj.login, obj.senha) : "";
 
-  // Verifica se o login já existe para decidir se é NOVO ou EDIÇÃO
   let linhaExistente = -1;
   for (let i = 1; i < dados.length; i++) {
     if (dados[i][1] === obj.login) {
@@ -703,16 +699,13 @@ function gerenciarUsuario(obj) {
     sheet.getRange(linhaExistente, 1).setValue(obj.nome);
     sheet.getRange(linhaExistente, 4).setValue(obj.nivel);
     sheet.getRange(linhaExistente, 5).setValue(obj.trocar ? "SIM" : "NAO");
-
-    // Se digitou uma senha nova, atualiza o Hash. Se deixou em branco, mantém a antiga.
+    sheet.getRange(linhaExistente, 6).setValue(obj.email); // <-- NOVO: Salva E-mail
     if (senhaFinal !== "") {
       sheet.getRange(linhaExistente, 3).setValue(senhaFinal);
     }
   } else {
-    // Novo (Aplica "SIM" ou "NAO" como texto para evitar bugs de checkbox)
-    sheet.appendRow([obj.nome, obj.login, senhaFinal, obj.nivel, obj.trocar ? "SIM" : "NAO"]);
+    sheet.appendRow([obj.nome, obj.login, senhaFinal, obj.nivel, obj.trocar ? "SIM" : "NAO", obj.email]); // <-- NOVO: Salva E-mail
   }
-
   return { sucesso: true, mensagem: "Usuário processado com sucesso!" };
 }
 
@@ -1024,5 +1017,43 @@ function excluirProjetoBackend(linha) {
     return { sucesso: true };
   } catch (erro) {
     return { sucesso: false, mensagem: erro.toString() };
+  }
+}
+
+function recuperarSenhaEmail(login) {
+  try {
+    const ss = SpreadsheetApp.openById(getSpreadsheetId());
+    const sheet = ss.getSheetByName("Usuarios");
+    const dados = sheet.getDataRange().getValues();
+
+    for (let i = 1; i < dados.length; i++) {
+      if (dados[i][1] === login) {
+        const nome = dados[i][0];
+        const emailDestino = dados[i][5]; // Coluna F
+
+        if (!emailDestino || emailDestino.trim() === "") {
+          return { sucesso: false, mensagem: "Utilizador sem e-mail cadastrado. Fale com a gerência." };
+        }
+
+        // 1. Gera Senha Provisória Aleatória (6 dígitos)
+        const senhaTemp = Math.floor(100000 + Math.random() * 900000).toString();
+        const hashTemp = gerarHashSeguro(login, senhaTemp);
+
+        // 2. Trava de Segurança no Banco de Dados
+        sheet.getRange(i + 1, 3).setValue(hashTemp); // Substitui pela senha temporária
+        sheet.getRange(i + 1, 5).setValue("SIM");    // Força a troca no primeiro acesso
+
+        // 3. Disparo do E-mail
+        const assunto = "Resplendor Solar - Recuperação de Acesso";
+        const corpo = `Olá, ${nome}.\n\nA sua senha provisória foi gerada com sucesso: ${senhaTemp}\n\nAo acessar o sistema com esta credencial, você será redirecionado para cadastrar uma nova senha definitiva e exclusiva.\n\nEquipe MAJB Sistemas.`;
+
+        MailApp.sendEmail(emailDestino, assunto, corpo);
+
+        return { sucesso: true, mensagem: "Senha provisória enviada para o seu e-mail!" };
+      }
+    }
+    return { sucesso: false, mensagem: "Utilizador não encontrado no sistema." };
+  } catch (e) {
+    return { sucesso: false, mensagem: "Erro no servidor de e-mail: " + e.message };
   }
 }
