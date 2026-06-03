@@ -1,60 +1,113 @@
-# MAJB CRM - Resplendor Solar ☀️
+# ☀️ MAJB CRM - Resplendor Solar
 
-Sistema corporativo de gestão (CRM) e portal de clientes desenvolvido sob medida para a operação da **Resplendor Solar**. Construído com uma arquitetura **Single Page Application (SPA)**, o sistema oferece alta performance, segurança de nível corporativo e gestão financeira detalhada das usinas solares.
+![Status](https://img.shields.io/badge/Status-Produção-success)
+![Versão](https://img.shields.io/badge/Version-1.00.05_Modular-blue)
+![Stack](https://img.shields.io/badge/Stack-Google_Apps_Script_%7C_JS_%7C_Tailwind-orange)
 
-## 🚀 Funcionalidades Principais
+Sistema corporativo de gestão (CRM) e portal financeiro desenvolvido sob medida para a operação da **Resplendor Solar**. Construído sob uma arquitetura **Single Page Application (SPA)** serverless, o sistema centraliza as vendas, automatiza a precificação e oferece gestão financeira detalhada com alta performance e segurança.
 
-- **Arquitetura SPA:** Navegação fluida e ultrarrápida, sem recarregamentos de página.
-- **Controle de Acesso Hierárquico:** Sistema de login seguro com distinção rigorosa de permissões entre Administradores e Colaboradores.
-- **Segurança e Criptografia:** Validação de senhas com hashing seguro e fluxo obrigatório de troca de senha no primeiro acesso.
-- **Motor Financeiro Blindado:** Cálculos dinâmicos de rentabilidade baseados em parâmetros do banco de dados em tempo real.
-- **Geração de Relatórios em PDF:** Criação de balanços, extratos e relatórios formatados profissionalmente, gerados diretamente no navegador.
-- **Detecção Automática de Ambiente:** O sistema identifica automaticamente se está a rodar em Produção ou Homologação, ajustando as conexões de banco de dados e a interface (faixas de aviso) sem intervenção manual.
+---
 
-## 🛠️ Stack Tecnológica
+## 🚀 Módulos e Funcionalidades
 
-O projeto utiliza uma separação moderna entre o Frontend (Interface) e o Backend (Lógica e Banco de Dados), integrados via API do Google.
+O sistema foi desenhado de forma modular para eliminar gargalos operacionais e blindar as regras de negócio da empresa:
 
-**Frontend (Hospedado na Hostinger)**
+- **📊 Dashboard Analítico:** Visão geral de recebíveis, parcelas em atraso e fluxo de caixa renderizados em tempo real via Google Charts.
+- **🧮 Simulador de Preços Inteligente:** Motor matemático que calcula margens de lucro, comissões, fretes e taxas de maquininha dinamicamente, sugerindo o preço ideal de venda.
+- **💰 Gestão Financeira e Baixas:** Controle de parcelamentos, identificação automática de status (Urgente/Em Atraso) e suporte a baixas parciais com recálculo automático de saldo devedor.
+- **📄 Relatórios Profissionais:** Geração nativa de relatórios em PDF diretamente pelo navegador, com filtros de período (Data Inicial/Final) e totalizadores contábeis.
+- **🔐 Segurança e Controle de Acesso:** Autenticação criptografada (Hashing SHA-256), troca obrigatória de senha no primeiro acesso e controle hierárquico estrito (Administrador vs. Colaborador).
 
-- HTML5 / CSS3 / JavaScript (Vanilla)
-- [Tailwind CSS](https://tailwindcss.com/) para estilização rápida e responsiva.
-- [Lucide Icons](https://lucide.dev/) para a iconografia.
-- Google Charts para a renderização do Dashboard.
+---
 
-**Backend & Banco de Dados (Serverless)**
+## 🛠️ Stack Tecnológica e Arquitetura
 
-- **Google Apps Script (GAS):** Motor lógico e API do sistema.
-- **Google Sheets:** Atuando como um banco de dados relacional (NoSQL) de alta disponibilidade.
+O projeto adota uma arquitetura moderna separando completamente a Interface (Frontend) do Motor de Banco de Dados (Backend), comunicando-se via API.
+
+**Frontend (Hospedado via Hostinger)**
+
+- HTML5 / JavaScript (Vanilla)
+- [Tailwind CSS](https://tailwindcss.com/) (Estilização utilitária e responsiva)
+- [Lucide Icons](https://lucide.dev/) (Iconografia leve)
+
+**Backend & Banco de Dados (Serverless Google)**
+
+- **Google Apps Script (GAS):** API e motor de regras de negócio.
+- **Google Sheets:** Banco de dados relacional (NoSQL) garantindo alta disponibilidade e fácil auditoria.
 
 **DevOps & CI/CD**
 
-- **GitHub Actions:** Automação total de deploys.
-- **Clasp (Command Line Apps Script Projects):** Push automático do código backend para o Google.
-- **FTP Deploy:** Envio automático do código frontend para a Hostinger.
+- **GitHub Actions:** Esteira de deploy totalmente automatizada.
+- **Clasp (Google):** Envio automatizado do código backend para o servidor da Google.
+- **FTP Deploy:** Sincronização automática do frontend com a Hostinger a cada novo commit na branch `main`.
 
-## ⚙️ Estrutura de Ambientes
+---
 
-O projeto está dividido em dois ambientes isolados para garantir a segurança das atualizações:
+## ⚙️ Ambientes de Implantação
 
-1. **Homologação (Testes):** \* Frontend: Subdiretório `/homologacao`
-   - Backend: Script ID e Planilha de testes dedicados.
-   - _Aviso visual (faixa laranja) ativado para evitar confusão._
+Para garantir a estabilidade da operação, o fluxo de desenvolvimento respeita dois ambientes isolados:
 
-2. **Produção (Oficial):**
-   - Frontend: Raiz do domínio (via máscara de `iframe` em tela cheia).
-   - Backend: Script ID e Planilha oficiais da operação.
+1.  **Homologação (Testes):** \* Frontend servido em subdiretório (`/homologacao`).
+    - Backend conectado a uma base de dados espelho.
+    - _Aviso visual persistente na interface (faixa amarela) para prevenir uso acidental pela operação._
+2.  **Produção (Oficial):** \* Frontend servido na raiz do domínio protegido por máscara de iframe.
+    - Conectado à base de dados oficial.
 
-## 📦 Fluxo de Deploy (CI/CD)
+---
 
-Ao realizar um `push` ou `merge` para a branch `main`, o GitHub Actions executa duas rotinas paralelas:
+## 💻 Como Rodar Localmente (Desenvolvimento)
 
-1. Valida e envia o código `main.js` e `planilhas.js` para o Google Apps Script de Produção via Clasp.
-2. Transfere os ficheiros HTML/CSS da pasta `public_html/` para o servidor da Hostinger via FTP.
+Para programadores que desejem clonar o repositório e utilizar o Visual Studio Code para edição e manutenção do sistema, é necessário configurar a ponte com o Google Apps Script utilizando o Node.js.
 
-## 👨‍💻 Autoria
+### Pré-requisitos
 
-Desenvolvido com excelência por **MAJB Sistemas**.
+- [Node.js](https://nodejs.org/) instalado.
+- Git instalado.
+- Permissão de edição no Script do Google.
 
+### 1. Instalar e Autenticar o Clasp
+
+Abra o seu terminal e instale a ferramenta de linha de comandos do Google Apps Script globalmente:
+
+```bash
+npm install -g @google/clasp
+```
+
+Faça o login na sua conta Google (abrirá uma janela no navegador):
+
+```Bash
+clasp login 2. Clonar o Ambiente
+```
+
+Clone este repositório para a sua máquina local:
+
+```Bash
+git clone <URL_DO_SEU_REPOSITORIO>
+cd resplendor-solar
+```
+
+Associe a sua pasta local ao Script de Homologação da Google:
+
+```Bash
+clasp clone <ID_DO_SEU_SCRIPT_DE_HOMOLOGACAO>
+```
+
+### 3. Sincronizar o Código
+
+Após fazer edições nos seus ficheiros locais (.js ou .html), envie as alterações para o servidor da Google para testar:
+
+```Bash
+clasp push
+```
+
+Para o deploy final de interface, basta fazer um commit e um git push para a branch main, e as Actions encarregar-se-ão de atualizar a Hostinger.
+
+### 👨‍💻 Autoria
+
+Desenvolvido com excelência por MAJB Sistemas.
+
+```
 "Tudo o que fizerem, façam de todo o coração, como para o Senhor." - Colossenses 3:23
+```
+
 © 2026 MAJB Sistemas - Todos os direitos reservados.
