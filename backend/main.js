@@ -781,7 +781,7 @@ function salvarProjetoNoServidor(obj) {
 }
 
 // --- NO ARQUIVO MAIN.GS ---
-function obterDadosRelatorioVendasAbertas() {
+function obterDadosRelatorioVendasAbertas(inicioISO, fimISO) {
   const ss = SpreadsheetApp.openById(getSpreadsheetId()); 
   const abaVendas = ss.getSheetByName("Vendas");
   const abaParcelas = ss.getSheetByName("Parcelas");
@@ -791,29 +791,35 @@ function obterDadosRelatorioVendasAbertas() {
   
   let relatorio = [];
   
-  // Ignora o cabeçalho
+  // Converte a data "2026-06-01" num número inteiro "20260601" para a matemática não falhar
+  let limiteInicio = parseInt(inicioISO.replace(/-/g, ""));
+  let limiteFim = parseInt(fimISO.replace(/-/g, ""));
+  
   for (let i = 1; i < dadosVendas.length; i++) {
     let idVenda = dadosVendas[i][0];
     let cliente = dadosVendas[i][1];
     
-    // --- A CORREÇÃO: Converte a Data Nativa para Texto Seguro ---
     let dataRaw = dadosVendas[i][2]; 
-    let dataVendaSegura = "";
-    if (dataRaw instanceof Date) {
-      // Formata direto no servidor para o padrão brasileiro
-      dataVendaSegura = Utilities.formatDate(dataRaw, "America/Sao_Paulo", "dd/MM/yyyy");
-    } else {
-      dataVendaSegura = String(dataRaw);
-    }
-    // -------------------------------------------------------------
+    let dataVendaSegura = (dataRaw instanceof Date) ? Utilities.formatDate(dataRaw, "America/Sao_Paulo", "dd/MM/yyyy") : String(dataRaw);
     
     let valorTotal = dadosVendas[i][3]; 
     let saldoDevedor = 0;
     
-    // Varre as parcelas buscando por esse ID
     for (let j = 1; j < dadosParcelas.length; j++) {
-      if (dadosParcelas[j][0] === idVenda) {
-        if (dadosParcelas[j][5] !== "PAGO") {
+      if (dadosParcelas[j][0] === idVenda && dadosParcelas[j][5] !== "PAGO") {
+        let vencRaw = dadosParcelas[j][2];
+        let vencNum = 0;
+        
+        // Conversão de qualquer tipo de data da planilha para o formato numérico YYYYMMDD
+        if (vencRaw instanceof Date) {
+          vencNum = parseInt(Utilities.formatDate(vencRaw, "America/Sao_Paulo", "yyyyMMdd"));
+        } else if (typeof vencRaw === "string" && vencRaw.includes("/")) {
+          let p = vencRaw.split("/");
+          vencNum = parseInt(p[2].substring(0,4) + p[1].padStart(2,'0') + p[0].padStart(2,'0'));
+        }
+
+        // Soma apenas se estiver dentro do intervalo do filtro!
+        if (vencNum >= limiteInicio && vencNum <= limiteFim) {
           saldoDevedor += parseFloat(dadosParcelas[j][3]);
         }
       }
@@ -823,18 +829,17 @@ function obterDadosRelatorioVendasAbertas() {
       relatorio.push({
         idVenda: idVenda,
         cliente: cliente,
-        dataVenda: dataVendaSegura, // Envia o texto formatado!
+        dataVenda: dataVendaSegura, 
         valorTotal: valorTotal,
         saldoDevedor: saldoDevedor
       });
     }
   }
-  // ADICIONE ESTA LINHA: 
   return { sucesso: true, dados: relatorio };
 }
 
-function obterDadosRelatorioRecebidosMes(mesAno) {
-  try { // INICIAMOS A BLINDAGEM DO SERVIDOR
+function obterDadosRelatorioRecebidosMes(inicioISO, fimISO) {
+  try { 
     const ss = SpreadsheetApp.openById(getSpreadsheetId()); 
     const abaParcelas = ss.getSheetByName("Parcelas");
     const abaVendas = ss.getSheetByName("Vendas");
@@ -842,47 +847,40 @@ function obterDadosRelatorioRecebidosMes(mesAno) {
     const dadosParcelas = abaParcelas.getDataRange().getValues();
     const dadosVendas = abaVendas.getDataRange().getValues();
     
-    // 1. CRIAR O DICIONÁRIO DE CLIENTES
     const mapaClientes = {};
     for (let v = 1; v < dadosVendas.length; v++) {
       let idVenda = String(dadosVendas[v][0] || "").trim();
       let nomeCliente = String(dadosVendas[v][1] || "").trim();
-      if (idVenda !== "") {
-        mapaClientes[idVenda] = nomeCliente;
-      }
+      if (idVenda !== "") mapaClientes[idVenda] = nomeCliente;
     }
 
     let relatorio = [];
-    let [anoAlvo, mesAlvo] = String(mesAno).split("-"); 
+    let limiteInicio = parseInt(inicioISO.replace(/-/g, ""));
+    let limiteFim = parseInt(fimISO.replace(/-/g, ""));
 
-    // 2. FILTRAR AS PARCELAS
     for (let i = 1; i < dadosParcelas.length; i++) {
       let status = String(dadosParcelas[i][5] || "").toUpperCase().trim(); 
       let dataPgto = dadosParcelas[i][4]; 
 
       if (status === "PAGO" && dataPgto) {
-        let mesPgto = "";
-        let anoPgto = "";
+        let pgtoNum = 0;
         let dataFormatada = "";
 
         if (dataPgto instanceof Date) {
-          mesPgto = (dataPgto.getMonth() + 1).toString().padStart(2, '0');
-          anoPgto = dataPgto.getFullYear().toString();
+          pgtoNum = parseInt(Utilities.formatDate(dataPgto, "America/Sao_Paulo", "yyyyMMdd"));
           dataFormatada = Utilities.formatDate(dataPgto, "America/Sao_Paulo", "dd/MM/yyyy");
         }
         else if (typeof dataPgto === "string" && dataPgto.includes("/")) {
           let partes = dataPgto.split("/"); 
           if (partes.length === 3) {
-            mesPgto = partes[1].padStart(2, '0'); // Garante que o mês tem sempre 2 dígitos
-            anoPgto = partes[2].substring(0, 4); 
+            pgtoNum = parseInt(partes[2].substring(0,4) + partes[1].padStart(2,'0') + partes[0].padStart(2,'0'));
             dataFormatada = dataPgto;
           }
         }
 
-        if (mesPgto === mesAlvo && anoPgto === anoAlvo) {
+        // Filtra pela data de pagamento
+        if (pgtoNum >= limiteInicio && pgtoNum <= limiteFim) {
           let idVendaPk = String(dadosParcelas[i][0] || "").trim(); 
-          
-          // BLINDAGEM DE DADOS: Tudo convertido rigorosamente para String (Texto)
           relatorio.push({
             dataPgto: String(dataFormatada),
             cliente: String(mapaClientes[idVendaPk] || "Não Identificado"), 
@@ -894,15 +892,17 @@ function obterDadosRelatorioRecebidosMes(mesAno) {
       }
     }
     
-    // 3. ENVIA O PACOTE BLINDADO
-    return { sucesso: true, dados: relatorio, periodo: `${mesAlvo}/${anoAlvo}` };
+    // Formata o período de "2026-06-01 a 2026-06-30" para "01/06/2026 a 30/06/2026"
+    let fInicio = inicioISO.split('-').reverse().join('/');
+    let fFim = fimISO.split('-').reverse().join('/');
+    let periodoStr = (fInicio === fFim) ? fInicio : `${fInicio} a ${fFim}`;
+
+    return { sucesso: true, dados: relatorio, periodo: periodoStr };
     
   } catch (erro) {
-    // Se ocorrer um erro crítico, o servidor avisa o ecrã em vez de enviar null
-    return { sucesso: false, mensagem: "Falha interna no motor: " + erro.message };
+    return { sucesso: false, mensagem: erro.message };
   }
 }
-
 function obterParametrosProjetos() {
   try {
     const ss = SpreadsheetApp.openById(getSpreadsheetId());

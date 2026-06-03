@@ -1658,56 +1658,93 @@
           })
           .salvarProjetoNoServidor(obj);
       };
+
       function gerarRelatorioVendasEmAberto() {
-        // Opcional: mostrar um loading no botão
+        const inicio = document.getElementById("data-inicio-aberto").value;
+        const fim = document.getElementById("data-fim-aberto").value;
+
+        if (!inicio || !fim) {
+          mostrarToast("Selecione a data inicial e final do período.", "erro");
+          return;
+        }
+        if (inicio > fim) {
+          mostrarToast(
+            "A data inicial não pode ser maior que a final.",
+            "erro",
+          );
+          return;
+        }
+
+        mostrarToast("Processando valores a receber...", "info");
+
         google.script.run
           .withSuccessHandler(function (resposta) {
             if (resposta.sucesso) {
-              montarEImprimirPDF(resposta.dados);
+              if (resposta.dados.length > 0) {
+                let fInicio = inicio.split("-").reverse().join("/");
+                let fFim = fim.split("-").reverse().join("/");
+                let periodo =
+                  fInicio === fFim ? fInicio : `${fInicio} a ${fFim}`;
+                montarEImprimirPDF(resposta.dados, periodo);
+              } else {
+                mostrarToast(
+                  "Nenhum valor a receber encontrado neste período.",
+                  "erro",
+                );
+              }
             } else {
               mostrarToast("Erro ao buscar dados do relatório.", "erro");
             }
           })
-          .obterDadosRelatorioVendasAbertas();
+          .obterDadosRelatorioVendasAbertas(inicio, fim);
       }
 
-      function montarEImprimirPDF(dados) {
-        // Abre uma nova janela invisível
+      function montarEImprimirPDF(dados, periodo) {
         const janelaPdf = window.open("", "_blank");
+        const dataGeracao = new Date().toLocaleString("pt-BR");
+        let totalAberto = 0;
 
-        // Começa a montar o HTML do PDF
         let htmlString = `
         <html>
           <head>
             <title>Relatório de Valores a Receber</title>
             <style>
               body { font-family: Arial, sans-serif; padding: 20px; }
-              table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-              th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-              th { background-color: #1e3a8a; color: white; }
+              .header { border-bottom: 2px solid #1e3a8a; padding-bottom: 10px; margin-bottom: 20px; }
+              .data-geracao { font-size: 11px; color: #666; margin-top: -10px; margin-bottom: 15px; }
+              table { width: 100%; border-collapse: collapse; }
+              th { background: #1e3a8a; color: white; padding: 10px; text-align: left; font-size: 12px; }
+              td { padding: 8px; border-bottom: 1px solid #eee; font-size: 11px; }
               .text-right { text-align: right; }
               .text-red { color: #dc2626; font-weight: bold; }
+              .total-box { margin-top: 20px; text-align: right; font-size: 18px; font-weight: bold; color: #1e3a8a; }
             </style>
           </head>
           <body>
-            <h2>Relatório de Valores a Receber</h2>
-            <hr>
+            <div class="header">
+              <h1>Valores a Receber: ${periodo}</h1>
+              <p>MAJB SISTEMAS - Resplendor Solar</p>
+            </div>
+            <div class="data-geracao">Relatório gerado em: ${dataGeracao}</div>
             <table>
-              <tr>
-                <th>ID Venda</th>
-                <th>Cliente</th>
-                <th>Data Venda</th>
-                <th class="text-right">Valor Total</th>
-                <th class="text-right">Valor a Receber</th>
-              </tr>
-      `;
+              <thead>
+                <tr>
+                  <th>ID Venda</th>
+                  <th>Cliente</th>
+                  <th>Data Venda</th>
+                  <th class="text-right">Valor Total</th>
+                  <th class="text-right">Valor a Receber</th>
+                </tr>
+              </thead>
+              <tbody>
+        `;
 
-        // Preenche as linhas com os dados
         dados.forEach((venda) => {
+          totalAberto += parseFloat(venda.saldoDevedor);
           htmlString += `
           <tr>
             <td>${venda.idVenda}</td>
-            <td>${venda.cliente}</td>
+            <td style="text-transform: uppercase;">${venda.cliente}</td>
             <td>${venda.dataVenda}</td>
             <td class="text-right">R$ ${parseFloat(venda.valorTotal).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
             <td class="text-right text-red">R$ ${parseFloat(venda.saldoDevedor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
@@ -1716,25 +1753,33 @@
         });
 
         htmlString += `
+              </tbody>
             </table>
+            <div class="total-box">TOTAL A RECEBER: R$ ${totalAberto.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
           </body>
         </html>
       `;
 
-        // Escreve na janela e chama a impressão do navegador
         janelaPdf.document.write(htmlString);
         janelaPdf.document.close();
-
-        // Aguarda o navegador renderizar e abre a caixa de "Salvar como PDF"
         setTimeout(() => {
           janelaPdf.print();
         }, 500);
       }
 
       function gerarRelatorioRecebidosMes() {
-        const mesAno = document.getElementById("mes-relatorio-recebidos").value;
-        if (!mesAno) {
-          mostrarToast("Selecione o mês e o ano primeiro.", "erro");
+        const inicio = document.getElementById("data-inicio-recebidos").value;
+        const fim = document.getElementById("data-fim-recebidos").value;
+
+        if (!inicio || !fim) {
+          mostrarToast("Selecione a data inicial e final do período.", "erro");
+          return;
+        }
+        if (inicio > fim) {
+          mostrarToast(
+            "A data inicial não pode ser maior que a final.",
+            "erro",
+          );
           return;
         }
 
@@ -1751,11 +1796,12 @@
               );
             }
           })
-          .obterDadosRelatorioRecebidosMes(mesAno);
+          .obterDadosRelatorioRecebidosMes(inicio, fim);
       }
 
       function montarEImprimirPDFRecebidos(dados, periodo) {
         const janela = window.open("", "_blank");
+        const dataGeracao = new Date().toLocaleString("pt-BR");
         let totalGeral = 0;
 
         let html = `
@@ -1764,6 +1810,7 @@
             <style>
               body { font-family: Arial, sans-serif; padding: 20px; }
               .header { border-bottom: 2px solid #059669; padding-bottom: 10px; margin-bottom: 20px; }
+              .data-geracao { font-size: 11px; color: #666; margin-top: -10px; margin-bottom: 15px; }
               table { width: 100%; border-collapse: collapse; }
               th { background: #059669; color: white; padding: 10px; text-align: left; font-size: 12px; }
               td { padding: 8px; border-bottom: 1px solid #eee; font-size: 11px; }
@@ -1772,9 +1819,10 @@
           </head>
           <body>
             <div class="header">
-              <h1>Relatório de Recebidos - ${periodo}</h1>
+              <h1>Relatório de Recebidos: ${periodo}</h1>
               <p>MAJB SISTEMAS - Resplendor Solar</p>
             </div>
+            <div class="data-geracao">Relatório gerado em: ${dataGeracao}</div>
             <table>
               <thead>
                 <tr>
@@ -1786,7 +1834,7 @@
                 </tr>
               </thead>
               <tbody>
-      `;
+        `;
 
         dados.forEach((item) => {
           totalGeral += parseFloat(item.valor);
