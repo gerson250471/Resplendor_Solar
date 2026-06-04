@@ -93,39 +93,81 @@
     <div
       class="bg-slate-900 p-6 rounded-xl shadow-lg text-white flex flex-col justify-between"
     >
-      <div>
-        <h3
-          class="text-lg font-bold text-slate-300 mb-6 flex items-center gap-2"
-        >
-          <i data-lucide="pie-chart" class="w-5 h-5 text-green-400"></i> Análise
-          de Rentabilidade
-        </h3>
+      <!-- Análise de Rentabilidade (Painel Escuro) -->
+      <div
+        class="bg-slate-900 rounded-xl p-6 shadow-xl flex flex-col justify-between"
+      >
+        <div>
+          <div class="flex items-center gap-2 mb-6">
+            <i data-lucide="pie-chart" class="w-5 h-5 text-emerald-400"></i>
+            <h3 class="text-lg font-bold text-white">
+              Análise de Custos e Formação
+            </h3>
+          </div>
 
-        <div class="space-y-4">
-          <div
-            class="flex justify-between items-center border-b border-slate-700 pb-2"
-          >
-            <span class="text-slate-400">Custo Total (Kit + Instalação):</span>
-            <span id="res-custo-total" class="font-bold">R$ 0,00</span>
+          <!-- NOVA LISTA DETALHADA -->
+          <div class="space-y-4 mb-8">
+            <div
+              class="flex justify-between items-center pb-3 border-b border-slate-800"
+            >
+              <span class="text-slate-400 text-sm">Custo Produto (CP):</span>
+              <span id="res-cp" class="font-bold text-white">R$ 0,00</span>
+            </div>
+
+            <div
+              class="flex justify-between items-center pb-3 border-b border-slate-800"
+            >
+              <span class="text-slate-400 text-sm">Custos Diretos (CD):</span>
+              <span id="res-cd" class="font-bold text-white">R$ 0,00</span>
+            </div>
+
+            <div
+              class="flex justify-between items-center pb-3 border-b border-slate-800"
+            >
+              <span class="text-slate-400 text-sm">Frete R$ (fixo):</span>
+              <span id="res-frete" class="font-bold text-white">R$ 0,00</span>
+            </div>
+
+            <div
+              class="flex justify-between items-center pb-3 border-b border-slate-800"
+            >
+              <span class="text-slate-400 text-sm">Mão-de-obra (fixo):</span>
+              <span id="res-mao-obra" class="font-bold text-white"
+                >R$ 0,00</span
+              >
+            </div>
+
+            <div
+              class="flex justify-between items-center pb-3 border-b border-slate-800"
+            >
+              <span class="text-red-400 text-sm italic font-bold"
+                >Dedução ISS:</span
+              >
+              <span id="res-deducao-iss" class="font-bold text-red-400"
+                >- R$ 0,00</span
+              >
+            </div>
+
+            <div
+              class="flex justify-between items-center pb-3 border-b border-slate-800"
+            >
+              <span class="text-sm font-bold text-amber-500"
+                >Custo Total (CT):</span
+              >
+              <span id="res-ct" class="font-bold text-amber-500">R$ 0,00</span>
+            </div>
           </div>
-          <div
-            class="flex justify-between items-center border-b border-slate-700 pb-2"
-          >
-            <span class="text-slate-400">Valor dos Impostos:</span>
-            <span id="res-imposto" class="text-red-400">- R$ 0,00</span>
-          </div>
-          <div
-            class="flex justify-between items-center border-b border-slate-700 pb-2"
-          >
-            <span class="text-slate-400">Taxa de Pagamento:</span>
-            <span id="res-taxa" class="text-red-400">- R$ 0,00</span>
-          </div>
-          <div
-            class="flex justify-between items-center border-b border-slate-700 pb-2"
-          >
-            <span class="text-slate-400">Lucro Líquido (Margem em R$):</span>
-            <span id="res-lucro" class="font-bold text-green-400">R$ 0,00</span>
-          </div>
+        </div>
+
+        <div
+          class="bg-slate-800/50 border border-slate-700 p-6 rounded-xl text-center mt-auto"
+        >
+          <p class="text-slate-400 text-sm mb-1">
+            Preço Final de Venda Sugerido
+          </p>
+          <p id="res-preco-venda" class="text-4xl font-black text-blue-400">
+            R$ 0,00
+          </p>
         </div>
       </div>
 
@@ -209,7 +251,6 @@
     function calcularSimulador() {
       if (!regrasGlobais) return;
 
-      // CP: Custo Produto
       const CP = converterMoedaParaNumero(
         document.getElementById("sim-custo-kit").value,
       );
@@ -219,7 +260,7 @@
         currency: "BRL",
       });
 
-      // 1. Cálculo da Mão de Obra (Mantém a automação F13 / F15)
+      // 1. Mão de Obra
       let MaoDeObra = 0;
       if (CP > 20000) {
         MaoDeObra = regrasGlobais.custoAcima20k;
@@ -227,73 +268,58 @@
         MaoDeObra = regrasGlobais.custoAbaixo20k;
       }
 
+      // Mostra a mão de obra no input da esquerda
       document.getElementById("sim-custo-instalacao").value =
         MaoDeObra > 0
           ? MaoDeObra.toLocaleString("pt-BR", { minimumFractionDigits: 2 })
           : "";
 
-      // Se o valor estiver zerado, limpa o painel
+      // Limpeza se o valor do kit for zero
       if (CP === 0) {
-        document.getElementById("res-custo-total").innerText =
+        document.getElementById("res-cp").innerText = formatoMoeda.format(0);
+        document.getElementById("res-cd").innerText = formatoMoeda.format(0);
+        document.getElementById("res-frete").innerText = formatoMoeda.format(0);
+        document.getElementById("res-mao-obra").innerText =
           formatoMoeda.format(0);
-        document.getElementById("res-imposto").innerText =
+        document.getElementById("res-deducao-iss").innerText =
           "- " + formatoMoeda.format(0);
-        document.getElementById("res-taxa").innerText =
-          "- " + formatoMoeda.format(0);
-        document.getElementById("res-lucro").innerText = formatoMoeda.format(0);
+        document.getElementById("res-ct").innerText = formatoMoeda.format(0);
         document.getElementById("res-preco-venda").innerText =
           formatoMoeda.format(0);
         return;
       }
 
-      // Variáveis do formulário
+      // Variáveis das taxas
       const margem =
         parseFloat(document.getElementById("sim-margem").value) || 0;
       const iss = parseFloat(document.getElementById("sim-imposto").value) || 0;
       const taxaPagamento =
         parseFloat(document.getElementById("sim-forma-pagamento").value) || 0;
 
-      // --- LÓGICA MATEMÁTICA ESTRITA DO FLUXOGRAMA ---
-
-      // CD: Custos Diretos
+      // --- CÁLCULOS DO FLUXOGRAMA ---
       const CD = CP * regrasGlobais.custoDireto;
-
-      // Frete Fixo
       const Frete = regrasGlobais.frete;
-
-      // Dedução ISS
       const DeducaoISS = (CP + CD) * (iss / 100);
-
-      // CT: Custo Total
       const CT = CP + CD + Frete + MaoDeObra - DeducaoISS;
 
-      // Preço final de venda Sugerido
+      // Preço de venda = CT / (1 - margem - ISS - TaxaPagamento)
       const divisor = 1 - margem / 100 - iss / 100 - taxaPagamento / 100;
 
       let precoVenda = 0;
-      let lucroLiquido = 0;
-      let valorImposto = 0;
-      let valorTaxa = 0;
-
-      // Evita divisões por zero ou números negativos se as taxas passarem de 100%
       if (divisor > 0) {
         precoVenda = CT / divisor;
-
-        // Distribuição para o visual do painel escuro
-        valorImposto = precoVenda * (iss / 100);
-        valorTaxa = precoVenda * (taxaPagamento / 100);
-        lucroLiquido = precoVenda * (margem / 100);
       }
 
-      // Atualiza o painel de Rentabilidade (Painel Escuro)
-      document.getElementById("res-custo-total").innerText =
-        formatoMoeda.format(CT);
-      document.getElementById("res-imposto").innerText =
-        "- " + formatoMoeda.format(valorImposto);
-      document.getElementById("res-taxa").innerText =
-        "- " + formatoMoeda.format(valorTaxa);
-      document.getElementById("res-lucro").innerText =
-        formatoMoeda.format(lucroLiquido);
+      // Injeção dos valores no Painel Escuro à direita
+      document.getElementById("res-cp").innerText = formatoMoeda.format(CP);
+      document.getElementById("res-cd").innerText = formatoMoeda.format(CD);
+      document.getElementById("res-frete").innerText =
+        formatoMoeda.format(Frete);
+      document.getElementById("res-mao-obra").innerText =
+        formatoMoeda.format(MaoDeObra);
+      document.getElementById("res-deducao-iss").innerText =
+        "- " + formatoMoeda.format(DeducaoISS);
+      document.getElementById("res-ct").innerText = formatoMoeda.format(CT);
       document.getElementById("res-preco-venda").innerText =
         formatoMoeda.format(precoVenda);
     }
