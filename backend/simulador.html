@@ -207,9 +207,10 @@
 
     // O Motor de Cálculo Matemático
     function calcularSimulador() {
-      if (!regrasGlobais) return; // Aguarda os dados chegarem
+      if (!regrasGlobais) return;
 
-      const custoKit = converterMoedaParaNumero(
+      // CP: Custo Produto
+      const CP = converterMoedaParaNumero(
         document.getElementById("sim-custo-kit").value,
       );
 
@@ -218,26 +219,21 @@
         currency: "BRL",
       });
 
-      // --- 1. NOVA AUTOMAÇÃO: CUSTO DE INSTALAÇÃO ---
-      let custoInstalacao = 0;
-      if (custoKit > 20000) {
-        custoInstalacao = regrasGlobais.custoAcima20k; // Puxa F13
-      } else if (custoKit > 0) {
-        custoInstalacao = regrasGlobais.custoAbaixo20k; // Puxa F15
+      // 1. Cálculo da Mão de Obra (Mantém a automação F13 / F15)
+      let MaoDeObra = 0;
+      if (CP > 20000) {
+        MaoDeObra = regrasGlobais.custoAcima20k;
+      } else if (CP > 0) {
+        MaoDeObra = regrasGlobais.custoAbaixo20k;
       }
 
-      // Exibe na tela o custo de instalação bloqueado
-      const campoInstalacao = document.getElementById("sim-custo-instalacao");
-      campoInstalacao.value =
-        custoInstalacao > 0
-          ? custoInstalacao.toLocaleString("pt-BR", {
-              minimumFractionDigits: 2,
-            })
+      document.getElementById("sim-custo-instalacao").value =
+        MaoDeObra > 0
+          ? MaoDeObra.toLocaleString("pt-BR", { minimumFractionDigits: 2 })
           : "";
 
-      // --- 2. TRAVA DE TELA LIMPA ---
-      // Agora travamos apenas se o Custo do Kit estiver zerado
-      if (custoKit === 0) {
+      // Se o valor estiver zerado, limpa o painel
+      if (CP === 0) {
         document.getElementById("res-custo-total").innerText =
           formatoMoeda.format(0);
         document.getElementById("res-imposto").innerText =
@@ -249,45 +245,49 @@
           formatoMoeda.format(0);
         return;
       }
-      // --------------------------------
 
+      // Variáveis do formulário
       const margem =
         parseFloat(document.getElementById("sim-margem").value) || 0;
-      const imposto =
-        parseFloat(document.getElementById("sim-imposto").value) || 0;
+      const iss = parseFloat(document.getElementById("sim-imposto").value) || 0;
       const taxaPagamento =
         parseFloat(document.getElementById("sim-forma-pagamento").value) || 0;
 
-      // O Custo Total agora inclui o Frete Oficial!
-      const custoTotalBase = custoKit + custoInstalacao + regrasGlobais.frete;
+      // --- LÓGICA MATEMÁTICA ESTRITA DO FLUXOGRAMA ---
 
-      // O Markup considera a Comissão e o Custo Direto escondidos
-      const taxasEmbutidas =
-        (margem +
-          imposto +
-          taxaPagamento +
-          regrasGlobais.comissao * 100 +
-          regrasGlobais.custoDireto * 100) /
-        100;
+      // CD: Custos Diretos
+      const CD = CP * regrasGlobais.custoDireto;
+
+      // Frete Fixo
+      const Frete = regrasGlobais.frete;
+
+      // Dedução ISS
+      const DeducaoISS = (CP + CD) * (iss / 100);
+
+      // CT: Custo Total
+      const CT = CP + CD + Frete + MaoDeObra - DeducaoISS;
+
+      // Preço final de venda Sugerido
+      const divisor = 1 - margem / 100 - iss / 100 - taxaPagamento / 100;
 
       let precoVenda = 0;
       let lucroLiquido = 0;
+      let valorImposto = 0;
+      let valorTaxa = 0;
 
-      if (taxasEmbutidas < 1) {
-        precoVenda = custoTotalBase / (1 - taxasEmbutidas);
-        // Lucro Líquido = Preço - (Custos Base) - (Taxas Totais em R$)
-        lucroLiquido =
-          precoVenda -
-          custoTotalBase -
-          precoVenda * (taxasEmbutidas - margem / 100);
+      // Evita divisões por zero ou números negativos se as taxas passarem de 100%
+      if (divisor > 0) {
+        precoVenda = CT / divisor;
+
+        // Distribuição para o visual do painel escuro
+        valorImposto = precoVenda * (iss / 100);
+        valorTaxa = precoVenda * (taxaPagamento / 100);
+        lucroLiquido = precoVenda * (margem / 100);
       }
 
-      let valorImposto = precoVenda * (imposto / 100);
-      let valorTaxa = precoVenda * (taxaPagamento / 100);
-
-      // Exibe na tela
+      // Atualiza o painel de Rentabilidade (Painel Escuro)
       document.getElementById("res-custo-total").innerText =
-        formatoMoeda.format(custoTotalBase);
+        formatoMoeda.format(CT);
       document.getElementById("res-imposto").innerText =
         "- " + formatoMoeda.format(valorImposto);
       document.getElementById("res-taxa").innerText =
