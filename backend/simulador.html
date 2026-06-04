@@ -291,8 +291,13 @@
       const DeducaoISS = (CP + CD) * (iss / 100);
       const CT = CP + CD + Frete + MaoDeObra - DeducaoISS;
 
-      // Preço de venda = CT / (1 - margem - ISS - TaxaPagamento)
-      const divisor = 1 - margem / 100 - iss / 100 - taxaPagamento / 100;
+      // CORREÇÃO APLICADA AQUI: Adição do - regrasGlobais.comissao
+      const divisor =
+        1 -
+        margem / 100 -
+        iss / 100 -
+        taxaPagamento / 100 -
+        regrasGlobais.comissao;
 
       let precoVenda = 0;
       if (divisor > 0) {
