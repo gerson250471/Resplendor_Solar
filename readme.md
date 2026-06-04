@@ -1,7 +1,7 @@
 # ☀️ MAJB CRM - Resplendor Solar
 
 ![Status](https://img.shields.io/badge/Status-Produção-success)
-![Versão](https://img.shields.io/badge/Version-1.00.05_Modular-blue)
+![Versão](https://img.shields.io/badge/Version-1.16.01_Modular-blue)
 ![Stack](https://img.shields.io/badge/Stack-Google_Apps_Script_%7C_JS_%7C_Tailwind-orange)
 
 Sistema corporativo de gestão (CRM) e portal financeiro desenvolvido sob medida para a operação da **Resplendor Solar**. Construído sob uma arquitetura **Single Page Application (SPA)** serverless, o sistema centraliza as vendas, automatiza a precificação e oferece gestão financeira detalhada com alta performance e segurança.
