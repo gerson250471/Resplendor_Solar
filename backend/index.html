@@ -1739,6 +1739,11 @@
           .salvarProjetoNoServidor(obj);
       };
 
+      // Função que faltava para destravar a tela!
+      window.fecharModalProjeto = function () {
+        document.getElementById("modal-projeto").classList.add("hidden");
+      };
+
       function gerarRelatorioVendasEmAberto() {
         const inicio = document.getElementById("data-inicio-aberto").value;
         const fim = document.getElementById("data-fim-aberto").value;
