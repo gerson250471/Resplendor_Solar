@@ -716,20 +716,19 @@ function obterListaProjetos() {
   dados.shift(); // Remove cabeçalho
 
   return dados.map((r, index) => {
-    // Tratamento de data para o padrão do input type="date"
     let dataISO = "";
     let dataBR = "---";
     if (r[0]) {
       let d = new Date(r[0]);
       if (!isNaN(d.getTime())) {
-        d.setMinutes(d.getMinutes() + d.getTimezoneOffset()); // Corrige fuso horário
+        d.setMinutes(d.getMinutes() + d.getTimezoneOffset());
         dataBR = d.toLocaleDateString('pt-BR');
         dataISO = d.toISOString().split('T')[0];
       }
     }
 
     return {
-      linha: index + 2, // Guarda o número da linha da planilha
+      linha: index + 2,
       dataBR: dataBR,
       dataISO: dataISO,
       cliente: r[1] || "",
@@ -737,13 +736,14 @@ function obterListaProjetos() {
       kit: parseFloat(r[3]) || 0,
       servico: parseFloat(r[4]) || 0,
       impostos: parseFloat(r[5]) || 0,
-      outros: parseFloat(r[6]) || 0,
-      comissao: parseFloat(r[7]) || 0,
-      maquininha: parseFloat(r[8]) || 0,
-      liquido: r[9] || 0,
-      entrada: parseFloat(r[10]) || 0,
-      residual: r[11] || 0,
-      status: r[12] || "AGUARDANDO KIT"
+      maoDeObra: parseFloat(r[6]) || 0, // Coluna G (Alinhado com a Valéria)
+      comissao: parseFloat(r[7]) || 0,  // Coluna H
+      maquininha: parseFloat(r[8]) || 0,// Coluna I
+      liquido: r[9] || 0,               // Coluna J
+      entrada: parseFloat(r[10]) || 0,  // Coluna K
+      residual: r[11] || 0,             // Coluna L
+      status: r[12] || "AGUARDANDO KIT",// Coluna M
+      outros: parseFloat(r[13]) || 0    // Coluna N (Nova gaveta para Outros Custos)
     };
   });
 }
@@ -753,17 +753,16 @@ function salvarProjetoNoServidor(obj) {
     const ss = SpreadsheetApp.openById(getSpreadsheetId());
     const aba = ss.getSheetByName("Projetos");
 
+    // Gravamos exatamente nas posições corretas
     const arrayDados = [
       obj.data, obj.cliente, obj.total, obj.kit, obj.servico,
-      obj.impostos, obj.outros, obj.comissao, obj.maquininha,
-      obj.liquido, obj.entrada, obj.residual, obj.status
+      obj.impostos, obj.maoDeObra, obj.comissao, obj.maquininha,
+      obj.liquido, obj.entrada, obj.residual, obj.status, obj.outros
     ];
 
     if (obj.linha && obj.linha !== "") {
-      // É EDIÇÃO: Atualiza a linha específica
       aba.getRange(obj.linha, 1, 1, arrayDados.length).setValues([arrayDados]);
     } else {
-      // É NOVO: Cria uma linha no final
       aba.appendRow(arrayDados);
     }
 
