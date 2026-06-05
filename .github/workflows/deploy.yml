@@ -13,7 +13,7 @@ jobs:
       - name: Checkout do código
         uses: actions/checkout@v4
 
-      - name: Deploy via FTP para Hostinger (Subdomínio)
+      - name: 📂 Sync files (Deploy Hostinger)
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.FTP_SERVER }}
