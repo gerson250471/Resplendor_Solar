@@ -88,28 +88,24 @@
         />
       </div>
       <div>
-        <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
-          >Mão de Obra</label
-        >
-        <input
-          type="number"
-          id="proj-kit"
-          class="input-field bg-slate-100 cursor-not-allowed"
-          readonly
-          oninput="calcularRentabilidade()"
-        />
+        <label class="block text-xs font-bold text-blue-600 uppercase mb-1">Valor Total (Contrato)</label>
+        <input type="number" id="proj-total" class="input-field font-bold border-blue-300" oninput="calcularRentabilidade()" />
       </div>
+      
       <div>
-        <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
-          >Valor do Serviço</label
-        >
-        <input
-          type="number"
-          id="proj-servico"
-          class="input-field bg-slate-100 cursor-not-allowed"
-          readonly
-          oninput="calcularRentabilidade()"
-        />
+        <label class="block text-xs font-bold text-blue-600 uppercase mb-1">Valor do Kit</label>
+        <input type="number" id="proj-kit" class="input-field font-bold border-blue-300" oninput="calcularRentabilidade()" />
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Mão de Obra</label>
+        <input type="number" id="proj-mao-obra" class="input-field bg-slate-100 cursor-not-allowed text-slate-500" readonly />
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Valor do Serviço</label>
+        <input type="number" id="proj-servico" class="input-field bg-slate-100 cursor-not-allowed text-slate-500" readonly />
+      </div>
       </div>
       <div>
         <label class="block text-xs font-bold text-slate-500 uppercase mb-1"

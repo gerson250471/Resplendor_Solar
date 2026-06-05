@@ -1489,62 +1489,61 @@
       };
 
       function calcularRentabilidade() {
-        // Trava de segurança: Aguarda carregar os parâmetros do banco
         if (!parametrosProjetos) {
           mostrarToast("Aguarde, carregando parâmetros financeiros...", "info");
           return;
         }
 
+        // 1. O VENDEDOR INFORMA ESSES DOIS VALORES
         const total =
           parseFloat(document.getElementById("proj-total").value) || 0;
+        const kit = parseFloat(document.getElementById("proj-kit").value) || 0;
         const entrada =
           parseFloat(document.getElementById("proj-entrada").value) || 0;
 
-        // Verifica os checkboxes
         const chkComissao = document.getElementById("check-comissao");
         const chkMaquininha = document.getElementById("check-maquininha");
         const aplicarComissao = chkComissao ? chkComissao.checked : true;
         const aplicarMaquininha = chkMaquininha ? chkMaquininha.checked : true;
 
-        // 1° Regra: VALOR DA MÃO DE OBRA (AUTOMÁTICO) - Baseado no F13 / F15
-        let kit = 0;
-        if (total > 20000) {
-          kit = parametrosProjetos.custoAcima20k;
-        } else if (total > 0) {
-          kit = parametrosProjetos.custoAbaixo20k;
-        }
-        document.getElementById("proj-kit").value = kit.toFixed(2);
-
-        // 2° Regra: Serviço = Total - Kit
+        // 2. Serviço = Valor Total - Valor do Kit
         const servico = total > 0 ? total - kit : 0;
         document.getElementById("proj-servico").value = servico.toFixed(2);
 
-        // 3° Regra: Impostos = Total * Aba F11
+        // 3. Impostos s/ Venda (Calculado sobre o Total)
         const impostos = total * parametrosProjetos.imposto;
         document.getElementById("proj-impostos").value = impostos.toFixed(2);
 
-        // 4° Regra: Outros Custos = (Total * Custo Direto F17) + Frete F19
-        const outros =
-          total > 0
-            ? total * (parametrosProjetos.custoDireto || 0) +
-              (parametrosProjetos.frete || 0)
-            : 0;
+        // 4. Mão de Obra (Regra dos 20k baseada no KIT)
+        let maoDeObra = 0;
+        if (kit > 20000) {
+          maoDeObra = parametrosProjetos.custoAcima20k;
+        } else if (kit > 0) {
+          maoDeObra = parametrosProjetos.custoAbaixo20k;
+        }
+        // Exibe a mão de obra naquele novo campo que criamos
+        const campoMaoObra = document.getElementById("proj-mao-obra");
+        if (campoMaoObra) campoMaoObra.value = maoDeObra.toFixed(2);
+
+        // 5. Outros Custos = Mão de Obra + Custo Direto + Frete
+        const custoDireto = kit * (parametrosProjetos.custoDireto || 0);
+        const frete = parametrosProjetos.frete || 0;
+        const outros = kit > 0 ? maoDeObra + custoDireto + frete : 0;
         document.getElementById("proj-outros").value = outros.toFixed(2);
 
-        // 5° Regra: Comissão (CONDICIONAL)
+        // 6. Comissão e Maquininha
         const comissao = aplicarComissao
           ? total * parametrosProjetos.comissao
           : 0;
         document.getElementById("proj-comissao").value = comissao.toFixed(2);
 
-        // 6° Regra: Maquininha (CONDICIONAL)
         const maquininha = aplicarMaquininha
           ? total * parametrosProjetos.maquininha
           : 0;
         document.getElementById("proj-maquininha").value =
           maquininha.toFixed(2);
 
-        // 7° Regra: Saldo Líquido
+        // 7. SALDO LÍQUIDO EXATO = Serviço - Impostos - Outros Custos - Comissão - Maquininha
         const liquido = servico - impostos - outros - comissao - maquininha;
         const campoLiquido = document.getElementById("proj-liquido");
 
@@ -1562,7 +1561,7 @@
           }
         }
 
-        // Regra Extra (Residual)
+        // 8. Valor Residual
         const residual = total - entrada;
         document.getElementById("proj-residual").value =
           "R$ " +
