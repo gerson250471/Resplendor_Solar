@@ -164,7 +164,11 @@
       <div class="p-6">
         <h1 class="text-xl font-bold text-blue-400">MAJB CRM</h1>
         <!-- VERSÃO DO SISTEMA -->
+<<<<<<< HEAD
         <p class="text-xs text-slate-500 mt-1">V 1.16.02 Modular</p>
+=======
+        <p class="text-xs text-slate-500 mt-1">V 1.16.04 Modular</p>
+>>>>>>> develop
       </div>
       <nav class="flex-1 px-4 space-y-1">
         <button
@@ -1489,7 +1493,6 @@
       };
 
       function calcularRentabilidade() {
-        // Trava de segurança: Aguarda carregar os parâmetros do banco
         if (!parametrosProjetos) {
           mostrarToast("Aguarde, carregando parâmetros financeiros...", "info");
           return;
@@ -1497,55 +1500,54 @@
 
         const total =
           parseFloat(document.getElementById("proj-total").value) || 0;
+        const kit = parseFloat(document.getElementById("proj-kit").value) || 0;
         const entrada =
           parseFloat(document.getElementById("proj-entrada").value) || 0;
 
-        // Verifica os checkboxes
         const chkComissao = document.getElementById("check-comissao");
         const chkMaquininha = document.getElementById("check-maquininha");
         const aplicarComissao = chkComissao ? chkComissao.checked : true;
         const aplicarMaquininha = chkMaquininha ? chkMaquininha.checked : true;
 
-        // 1° Regra: VALOR DA MÃO DE OBRA (AUTOMÁTICO) - Baseado no F13 / F15
-        let kit = 0;
-        if (total > 20000) {
-          kit = parametrosProjetos.custoAcima20k;
-        } else if (total > 0) {
-          kit = parametrosProjetos.custoAbaixo20k;
-        }
-        document.getElementById("proj-kit").value = kit.toFixed(2);
-
-        // 2° Regra: Serviço = Total - Kit
+        // Serviço = Total - Kit
         const servico = total > 0 ? total - kit : 0;
         document.getElementById("proj-servico").value = servico.toFixed(2);
 
-        // 3° Regra: Impostos = Total * Aba F11
+        // Impostos
         const impostos = total * parametrosProjetos.imposto;
         document.getElementById("proj-impostos").value = impostos.toFixed(2);
 
-        // 4° Regra: Outros Custos = (Total * Custo Direto F17) + Frete F19
-        const outros =
-          total > 0
-            ? total * (parametrosProjetos.custoDireto || 0) +
-              (parametrosProjetos.frete || 0)
-            : 0;
+        // Mão de Obra
+        let maoDeObra = 0;
+        if (kit > 20000) {
+          maoDeObra = parametrosProjetos.custoAcima20k;
+        } else if (kit > 0) {
+          maoDeObra = parametrosProjetos.custoAbaixo20k;
+        }
+        const campoMaoObra = document.getElementById("proj-mao-obra");
+        if (campoMaoObra) campoMaoObra.value = maoDeObra.toFixed(2);
+
+        // Outros Custos (Agora APENAS Frete e Custo Direto, separado da Mão de Obra)
+        const custoDireto = kit * (parametrosProjetos.custoDireto || 0);
+        const frete = parametrosProjetos.frete || 0;
+        const outros = kit > 0 ? custoDireto + frete : 0;
         document.getElementById("proj-outros").value = outros.toFixed(2);
 
-        // 5° Regra: Comissão (CONDICIONAL)
+        // Comissão e Maquininha
         const comissao = aplicarComissao
           ? total * parametrosProjetos.comissao
           : 0;
         document.getElementById("proj-comissao").value = comissao.toFixed(2);
 
-        // 6° Regra: Maquininha (CONDICIONAL)
         const maquininha = aplicarMaquininha
           ? total * parametrosProjetos.maquininha
           : 0;
         document.getElementById("proj-maquininha").value =
           maquininha.toFixed(2);
 
-        // 7° Regra: Saldo Líquido
-        const liquido = servico - impostos - outros - comissao - maquininha;
+        // SALDO LÍQUIDO EXATO = Serviço - Impostos - Mão de Obra - Outros Custos - Comissão - Maquininha
+        const liquido =
+          servico - impostos - maoDeObra - outros - comissao - maquininha;
         const campoLiquido = document.getElementById("proj-liquido");
 
         if (campoLiquido) {
@@ -1562,7 +1564,7 @@
           }
         }
 
-        // Regra Extra (Residual)
+        // Valor Residual
         const residual = total - entrada;
         document.getElementById("proj-residual").value =
           "R$ " +
@@ -1623,18 +1625,25 @@
       // --- LÓGICA DO MODAL (NOVO, EDITAR E SALVAR) ---
 
       window.abrirModalProjeto = function () {
-        // Limpa a linha oculta (Indica que é um Cadastro Novo)
         document.getElementById("proj-linha").value = "";
 
-        document.querySelectorAll("#modal-projeto input").forEach((input) => {
-          if (
-            input.id !== "proj-liquido" &&
-            input.id !== "proj-residual" &&
-            input.id !== "proj-linha"
-          ) {
-            input.value = "";
-          }
-        });
+        // Limpa os campos para uma venda nova limpa
+        document.getElementById("proj-data").value = "";
+        document.getElementById("proj-cliente").value = "";
+        document.getElementById("proj-total").value = "";
+        document.getElementById("proj-kit").value = "";
+        document.getElementById("proj-servico").value = "";
+        document.getElementById("proj-impostos").value = "";
+        document.getElementById("proj-mao-obra").value = "";
+        document.getElementById("proj-outros").value = "";
+        document.getElementById("proj-comissao").value = "";
+        document.getElementById("proj-maquininha").value = "";
+        document.getElementById("proj-entrada").value = "";
+
+        // Em VENDAS NOVAS, os botões vêm marcados por padrão
+        document.getElementById("check-comissao").checked = true;
+        document.getElementById("check-maquininha").checked = true;
+
         document.getElementById("proj-liquido").value = "R$ 0,00";
         document.getElementById("proj-residual").value = "R$ 0,00";
         document.getElementById("proj-status").value = "AGUARDANDO KIT";
@@ -1644,15 +1653,11 @@
         document.getElementById("modal-projeto").classList.remove("hidden");
       };
 
-      window.fecharModalProjeto = function () {
-        document.getElementById("modal-projeto").classList.add("hidden");
-      };
-
       window.editarProjeto = function (linha) {
         const p = projetosGlobais.find((x) => x.linha === linha);
         if (!p) return;
 
-        // Preenche o campo oculto e os dados do formulário
+        // INJETA OS NÚMEROS EXATOS DO BANCO DE DADOS (SEM RECALCULAR)
         document.getElementById("proj-linha").value = p.linha;
         document.getElementById("proj-data").value = p.dataISO;
         document.getElementById("proj-cliente").value = p.cliente;
@@ -1660,28 +1665,49 @@
         document.getElementById("proj-kit").value = p.kit;
         document.getElementById("proj-servico").value = p.servico;
         document.getElementById("proj-impostos").value = p.impostos;
+        document.getElementById("proj-mao-obra").value = p.maoDeObra;
         document.getElementById("proj-outros").value = p.outros;
         document.getElementById("proj-comissao").value = p.comissao;
         document.getElementById("proj-maquininha").value = p.maquininha;
         document.getElementById("proj-entrada").value = p.entrada;
         document.getElementById("proj-status").value = p.status;
 
-        calcularRentabilidade(); // Dispara o cálculo para preencher Líquido e Residual
+        // VERIFICA SE OS CHECKBOXES ESTAVAM ATIVOS NA ÉPOCA DA VENDA
+        document.getElementById("check-comissao").checked =
+          parseFloat(p.comissao) > 0;
+        document.getElementById("check-maquininha").checked =
+          parseFloat(p.maquininha) > 0;
+
+        // RESTAURA O LÍQUIDO E RESIDUAL EXATOS
+        document.getElementById("proj-liquido").value =
+          typeof p.liquido === "number"
+            ? "R$ " +
+              p.liquido.toLocaleString("pt-BR", { minimumFractionDigits: 2 })
+            : p.liquido;
+        document.getElementById("proj-residual").value =
+          typeof p.residual === "number"
+            ? "R$ " +
+              p.residual.toLocaleString("pt-BR", { minimumFractionDigits: 2 })
+            : p.residual;
 
         document.querySelector("#modal-projeto h3").innerText = "Editar Venda";
         document.getElementById("modal-projeto").classList.remove("hidden");
+
+        // IMPORTANTE: A função "calcularRentabilidade()" foi removida daqui!
+        // O sistema agora respeita cegamente o que estava no Banco de Dados!
       };
 
       window.salvarNovoProjeto = function () {
         const obj = {
-          linha: document.getElementById("proj-linha").value, // Se tiver valor, o servidor vai Atualizar
+          linha: document.getElementById("proj-linha").value,
           data: document.getElementById("proj-data").value,
           cliente: document.getElementById("proj-cliente").value,
           total: document.getElementById("proj-total").value || 0,
           kit: document.getElementById("proj-kit").value || 0,
           servico: document.getElementById("proj-servico").value || 0,
           impostos: document.getElementById("proj-impostos").value || 0,
-          outros: document.getElementById("proj-outros").value || 0,
+          maoDeObra: document.getElementById("proj-mao-obra").value || 0, // Agora Mão de Obra salva corretamente!
+          outros: document.getElementById("proj-outros").value || 0, // Outros salva corretamente!
           comissao: document.getElementById("proj-comissao").value || 0,
           maquininha: document.getElementById("proj-maquininha").value || 0,
           liquido: document.getElementById("proj-liquido").value,
@@ -1715,6 +1741,11 @@
             }
           })
           .salvarProjetoNoServidor(obj);
+      };
+
+      // Função que faltava para destravar a tela!
+      window.fecharModalProjeto = function () {
+        document.getElementById("modal-projeto").classList.add("hidden");
       };
 
       function gerarRelatorioVendasEmAberto() {
