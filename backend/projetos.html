@@ -75,172 +75,216 @@
         />
       </div>
 
-      <div>
-        <label
-          class="block text-xs font-bold text-slate-500 uppercase mb-1 text-blue-600"
-          >Valor Total (Contrato)</label
-        >
-        <input
-          type="number"
-          id="proj-total"
-          class="input-field font-bold"
-          oninput="calcularRentabilidade()"
-        />
-      </div>
-      
-      <div>
-        <label class="block text-xs font-bold text-blue-600 uppercase mb-1">Valor do Kit</label>
-        <input type="number" id="proj-kit" class="input-field font-bold border-blue-300" oninput="calcularRentabilidade()" />
-      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- LINHA 1 -->
+        <div class="md:col-span-1">
+          <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
+            >Data da Venda</label
+          >
+          <input type="date" id="proj-data" class="input-field" />
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
+            >Cliente</label
+          >
+          <input
+            type="text"
+            id="proj-cliente"
+            class="input-field"
+            list="clientes-list"
+          />
+        </div>
 
-      <div>
-        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Mão de Obra</label>
-        <input type="number" id="proj-mao-obra" class="input-field bg-slate-100 cursor-not-allowed text-slate-500" readonly />
-      </div>
+        <!-- LINHA 2 -->
+        <div>
+          <label class="block text-xs font-bold text-blue-600 uppercase mb-1"
+            >Valor Total (Contrato)</label
+          >
+          <input
+            type="number"
+            id="proj-total"
+            class="input-field font-bold border-blue-300"
+            oninput="calcularRentabilidade()"
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-blue-600 uppercase mb-1"
+            >Valor do Kit</label
+          >
+          <input
+            type="number"
+            id="proj-kit"
+            class="input-field font-bold border-blue-300"
+            oninput="calcularRentabilidade()"
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
+            >Valor do Serviço</label
+          >
+          <input
+            type="number"
+            id="proj-servico"
+            class="input-field bg-slate-100 cursor-not-allowed text-slate-500"
+            readonly
+          />
+        </div>
 
-      <div>
-        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Valor do Serviço</label>
-        <input type="number" id="proj-servico" class="input-field bg-slate-100 cursor-not-allowed text-slate-500" readonly />
-      </div>
-      </div>
-      <div>
-        <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
-          >Impostos s/ Venda</label
-        >
-        <input
-          type="number"
-          id="proj-impostos"
-          class="input-field bg-slate-100 cursor-not-allowed"
-          readonly
-          oninput="calcularRentabilidade()"
-        />
-      </div>
-      <div>
-        <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
-          >Outros Custos</label
-        >
-        <input
-          type="number"
-          id="proj-outros"
-          class="input-field bg-slate-100 cursor-not-allowed"
-          readonly
-          oninput="calcularRentabilidade()"
-        />
-      </div>
-      <div>
-        <label
-          class="flex justify-between items-center text-sm font-bold text-slate-600 mb-1"
-        >
-          <span>COMISSÃO</span>
-          <label class="flex items-center gap-1 cursor-pointer">
-            <input
-              type="checkbox"
-              id="check-comissao"
-              onchange="calcularRentabilidade()"
-              class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
-              checked
-            />
-            <span class="text-xs text-slate-500 font-normal">Aplicar</span>
+        <!-- LINHA 3 -->
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
+            >Mão de Obra</label
+          >
+          <input
+            type="number"
+            id="proj-mao-obra"
+            class="input-field bg-slate-100 cursor-not-allowed text-slate-500"
+            readonly
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
+            >Impostos s/ Venda</label
+          >
+          <input
+            type="number"
+            id="proj-impostos"
+            class="input-field bg-slate-100 cursor-not-allowed text-slate-500"
+            readonly
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
+            >Outros Custos</label
+          >
+          <input
+            type="number"
+            id="proj-outros"
+            class="input-field bg-slate-100 cursor-not-allowed text-slate-500"
+            readonly
+          />
+        </div>
+
+        <!-- LINHA 4 -->
+        <div>
+          <label
+            class="flex justify-between items-center text-sm font-bold text-slate-600 mb-1"
+          >
+            <span>COMISSÃO</span>
+            <label class="flex items-center gap-1 cursor-pointer">
+              <input
+                type="checkbox"
+                id="check-comissao"
+                onchange="calcularRentabilidade()"
+                class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+                checked
+              />
+              <span class="text-xs text-slate-500 font-normal">Aplicar</span>
+            </label>
           </label>
-        </label>
-        <input
-          type="text"
-          id="proj-comissao"
-          readonly
-          class="w-full p-2 bg-slate-50 border border-slate-300 rounded outline-none text-slate-500 font-medium"
-          placeholder="R$ 0,00"
-        />
-      </div>
+          <input
+            type="text"
+            id="proj-comissao"
+            readonly
+            class="w-full p-2 bg-slate-50 border border-slate-300 rounded outline-none text-slate-500 font-medium"
+            placeholder="R$ 0,00"
+          />
+        </div>
 
-      <div>
-        <label
-          class="flex justify-between items-center text-sm font-bold text-slate-600 mb-1"
-        >
-          <span>TAXA MAQUININHA</span>
-          <label class="flex items-center gap-1 cursor-pointer">
-            <input
-              type="checkbox"
-              id="check-maquininha"
-              onchange="calcularRentabilidade()"
-              class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
-              checked
-            />
-            <span class="text-xs text-slate-500 font-normal">Aplicar</span>
+        <div>
+          <label
+            class="flex justify-between items-center text-sm font-bold text-slate-600 mb-1"
+          >
+            <span>TAXA MAQUININHA</span>
+            <label class="flex items-center gap-1 cursor-pointer">
+              <input
+                type="checkbox"
+                id="check-maquininha"
+                onchange="calcularRentabilidade()"
+                class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+                checked
+              />
+              <span class="text-xs text-slate-500 font-normal">Aplicar</span>
+            </label>
           </label>
-        </label>
-        <input
-          type="text"
-          id="proj-maquininha"
-          readonly
-          class="w-full p-2 bg-slate-50 border border-slate-300 rounded outline-none text-slate-500 font-medium"
-          placeholder="R$ 0,00"
-        />
+          <input
+            type="text"
+            id="proj-maquininha"
+            readonly
+            class="w-full p-2 bg-slate-50 border border-slate-300 rounded outline-none text-slate-500 font-medium"
+            placeholder="R$ 0,00"
+          />
+        </div>
+
+        <div class="bg-emerald-50 p-3 rounded-lg border border-emerald-100">
+          <label class="block text-xs font-bold text-emerald-600 uppercase mb-1"
+            >Saldo Líquido (Lucro)</label
+          >
+          <input
+            type="text"
+            id="proj-liquido"
+            class="bg-transparent border-none font-bold text-emerald-700 outline-none w-full"
+            readonly
+            value="R$ 0,00"
+          />
+        </div>
+
+        <!-- LINHA 5 -->
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
+            >Valor de Entrada</label
+          >
+          <input
+            type="number"
+            id="proj-entrada"
+            class="input-field"
+            oninput="calcularRentabilidade()"
+          />
+        </div>
+        <div
+          class="bg-slate-50 p-3 rounded-lg border border-slate-200 md:col-span-2"
+        >
+          <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
+            >Valor Residual</label
+          >
+          <input
+            type="text"
+            id="proj-residual"
+            class="bg-transparent border-none font-bold text-slate-700 outline-none w-full"
+            readonly
+            value="R$ 0,00"
+          />
+        </div>
+
+        <!-- OCULTO -->
+        <div class="hidden">
+          <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
+            >Status das Vendas</label
+          >
+          <select id="proj-status" class="input-field">
+            <option value="AGUARDANDO KIT">Aguardando Kit</option>
+            <option value="EM INSTALAÇÃO">Em Instalação</option>
+            <option value="VISTORIA">Vistoria</option>
+            <option value="HOMOLOGADO">Homologado</option>
+            <option value="CANCELADO">Cancelado</option>
+          </select>
+        </div>
       </div>
 
-      <div class="bg-emerald-50 p-3 rounded-lg border border-emerald-100">
-        <label class="block text-xs font-bold text-emerald-600 uppercase mb-1"
-          >Saldo Líquido (Lucro)</label
+      <div class="flex gap-3 mt-6">
+        <button
+          onclick="fecharModalProjeto()"
+          class="flex-1 bg-slate-100 py-3 rounded-xl font-bold text-slate-600"
         >
-        <input
-          type="text"
-          id="proj-liquido"
-          class="bg-transparent border-none font-bold text-emerald-700 outline-none w-full"
-          readonly
-          value="R$ 0,00"
-        />
-      </div>
-
-      <div>
-        <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
-          >Valor de Entrada</label
+          Cancelar
+        </button>
+        <button
+          onclick="salvarNovoProjeto()"
+          class="flex-1 bg-blue-600 py-3 rounded-xl font-bold text-white shadow-lg hover:bg-blue-700"
         >
-        <input
-          type="number"
-          id="proj-entrada"
-          class="input-field"
-          oninput="calcularRentabilidade()"
-        />
+          Salvar Venda
+        </button>
       </div>
-      <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
-        <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
-          >Valor Residual</label
-        >
-        <input
-          type="text"
-          id="proj-residual"
-          class="bg-transparent border-none font-bold text-slate-700 outline-none w-full"
-          readonly
-          value="R$ 0,00"
-        />
-      </div>
-
-      <div class="hidden">
-        <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
-          >Status das Vendas</label
-        >
-        <select id="proj-status" class="input-field">
-          <option value="AGUARDANDO KIT">Aguardando Kit</option>
-          <option value="EM INSTALAÇÃO">Em Instalação</option>
-          <option value="VISTORIA">Vistoria</option>
-          <option value="HOMOLOGADO">Homologado</option>
-          <option value="CANCELADO">Cancelado</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="flex gap-3 mt-6">
-      <button
-        onclick="fecharModalProjeto()"
-        class="flex-1 bg-slate-100 py-3 rounded-xl font-bold text-slate-600"
-      >
-        Cancelar
-      </button>
-      <button
-        onclick="salvarNovoProjeto()"
-        class="flex-1 bg-blue-600 py-3 rounded-xl font-bold text-white shadow-lg hover:bg-blue-700"
-      >
-        Salvar Venda
-      </button>
     </div>
   </div>
 </div>

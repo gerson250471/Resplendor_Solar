@@ -164,7 +164,7 @@
       <div class="p-6">
         <h1 class="text-xl font-bold text-blue-400">MAJB CRM</h1>
         <!-- VERSÃO DO SISTEMA -->
-        <p class="text-xs text-slate-500 mt-1">V 1.16.02 Modular</p>
+        <p class="text-xs text-slate-500 mt-1">V 1.16.03 Modular</p>
       </div>
       <nav class="flex-1 px-4 space-y-1">
         <button
@@ -1494,7 +1494,6 @@
           return;
         }
 
-        // 1. O VENDEDOR INFORMA ESSES DOIS VALORES
         const total =
           parseFloat(document.getElementById("proj-total").value) || 0;
         const kit = parseFloat(document.getElementById("proj-kit").value) || 0;
@@ -1506,32 +1505,31 @@
         const aplicarComissao = chkComissao ? chkComissao.checked : true;
         const aplicarMaquininha = chkMaquininha ? chkMaquininha.checked : true;
 
-        // 2. Serviço = Valor Total - Valor do Kit
+        // Serviço = Total - Kit
         const servico = total > 0 ? total - kit : 0;
         document.getElementById("proj-servico").value = servico.toFixed(2);
 
-        // 3. Impostos s/ Venda (Calculado sobre o Total)
+        // Impostos
         const impostos = total * parametrosProjetos.imposto;
         document.getElementById("proj-impostos").value = impostos.toFixed(2);
 
-        // 4. Mão de Obra (Regra dos 20k baseada no KIT)
+        // Mão de Obra
         let maoDeObra = 0;
         if (kit > 20000) {
           maoDeObra = parametrosProjetos.custoAcima20k;
         } else if (kit > 0) {
           maoDeObra = parametrosProjetos.custoAbaixo20k;
         }
-        // Exibe a mão de obra naquele novo campo que criamos
         const campoMaoObra = document.getElementById("proj-mao-obra");
         if (campoMaoObra) campoMaoObra.value = maoDeObra.toFixed(2);
 
-        // 5. Outros Custos = Mão de Obra + Custo Direto + Frete
+        // Outros Custos (Agora APENAS Frete e Custo Direto, separado da Mão de Obra)
         const custoDireto = kit * (parametrosProjetos.custoDireto || 0);
         const frete = parametrosProjetos.frete || 0;
-        const outros = kit > 0 ? maoDeObra + custoDireto + frete : 0;
+        const outros = kit > 0 ? custoDireto + frete : 0;
         document.getElementById("proj-outros").value = outros.toFixed(2);
 
-        // 6. Comissão e Maquininha
+        // Comissão e Maquininha
         const comissao = aplicarComissao
           ? total * parametrosProjetos.comissao
           : 0;
@@ -1543,8 +1541,9 @@
         document.getElementById("proj-maquininha").value =
           maquininha.toFixed(2);
 
-        // 7. SALDO LÍQUIDO EXATO = Serviço - Impostos - Outros Custos - Comissão - Maquininha
-        const liquido = servico - impostos - outros - comissao - maquininha;
+        // SALDO LÍQUIDO EXATO = Serviço - Impostos - Mão de Obra - Outros Custos - Comissão - Maquininha
+        const liquido =
+          servico - impostos - maoDeObra - outros - comissao - maquininha;
         const campoLiquido = document.getElementById("proj-liquido");
 
         if (campoLiquido) {
@@ -1561,7 +1560,7 @@
           }
         }
 
-        // 8. Valor Residual
+        // Valor Residual
         const residual = total - entrada;
         document.getElementById("proj-residual").value =
           "R$ " +
