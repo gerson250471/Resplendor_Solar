@@ -19,6 +19,7 @@ jobs:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USER_PROD }}
           password: ${{ secrets.FTP_PASS_PROD }}
+          timeout: 600000 # Dá 10 minutos de tolerância para a Hostinger não derrubar
           local-dir: ./frontend/
           server-dir: /public_html/
 
