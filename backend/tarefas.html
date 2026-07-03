@@ -6,79 +6,67 @@
         Arraste os cartões para avançar as etapas.
       </p>
     </div>
-    <button
-      onclick="abrirModalTarefa()"
-      class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-blue-700 shadow-md flex items-center gap-2"
-    >
-      <i data-lucide="plus" class="w-4 h-4"></i> Novo Cartão
-    </button>
-  </div>
-
-  <div class="flex gap-6 overflow-x-auto pb-4 flex-1 items-start">
-    <div
-      class="bg-slate-100 rounded-xl w-80 shrink-0 flex flex-col max-h-full border border-slate-200"
-    >
-      <div
-        class="p-3 border-b border-slate-200 flex justify-between items-center bg-slate-200/50 rounded-t-xl"
+    <div class="flex gap-2">
+      <button
+        onclick="abrirModalStatus()"
+        class="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-bold hover:bg-slate-300 shadow-sm flex items-center gap-2"
       >
-        <h3 class="font-bold text-slate-700">A Fazer</h3>
-        <span
-          id="count-todo"
-          class="bg-slate-300 text-slate-700 text-xs px-2 py-1 rounded-full font-bold"
-          >0</span
-        >
-      </div>
-      <div
-        id="col-A FAZER"
-        class="p-3 flex-1 overflow-y-auto space-y-3 min-h-[200px]"
-        ondragover="allowDrop(event)"
-        ondrop="dropTarefa(event, 'A FAZER')"
-      ></div>
-    </div>
-
-    <div
-      class="bg-blue-50 rounded-xl w-80 shrink-0 flex flex-col max-h-full border border-blue-100"
-    >
-      <div
-        class="p-3 border-b border-blue-100 flex justify-between items-center bg-blue-100/50 rounded-t-xl"
+        <i data-lucide="settings-2" class="w-4 h-4"></i> Status
+      </button>
+      <button
+        onclick="abrirModalTarefa()"
+        class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-blue-700 shadow-md flex items-center gap-2"
       >
-        <h3 class="font-bold text-blue-800">Em Andamento</h3>
-        <span
-          id="count-doing"
-          class="bg-blue-200 text-blue-800 text-xs px-2 py-1 rounded-full font-bold"
-          >0</span
-        >
-      </div>
-      <div
-        id="col-EM ANDAMENTO"
-        class="p-3 flex-1 overflow-y-auto space-y-3 min-h-[200px]"
-        ondragover="allowDrop(event)"
-        ondrop="dropTarefa(event, 'EM ANDAMENTO')"
-      ></div>
-    </div>
-
-    <div
-      class="bg-emerald-50 rounded-xl w-80 shrink-0 flex flex-col max-h-full border border-emerald-100"
-    >
-      <div
-        class="p-3 border-b border-emerald-100 flex justify-between items-center bg-emerald-100/50 rounded-t-xl"
-      >
-        <h3 class="font-bold text-emerald-800">Concluído</h3>
-        <span
-          id="count-done"
-          class="bg-emerald-200 text-emerald-800 text-xs px-2 py-1 rounded-full font-bold"
-          >0</span
-        >
-      </div>
-      <div
-        id="col-CONCLUIDO"
-        class="p-3 flex-1 overflow-y-auto space-y-3 min-h-[200px]"
-        ondragover="allowDrop(event)"
-        ondrop="dropTarefa(event, 'CONCLUIDO')"
-      ></div>
+        <i data-lucide="plus" class="w-4 h-4"></i> Novo Cartão
+      </button>
     </div>
   </div>
+
+  <div
+    id="kanban-colunas"
+    class="flex gap-6 overflow-x-auto pb-4 flex-1 items-start"
+  ></div>
 </section>
+
+<div
+  id="modal-status"
+  class="fixed inset-0 bg-slate-900/80 hidden z-[10005] flex items-center justify-center backdrop-blur-sm p-4"
+>
+  <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-md relative">
+    <h3 class="text-xl font-bold text-slate-800 mb-1">Gerenciar Colunas</h3>
+    <p class="text-xs text-slate-500 mb-4">
+      Adicione, altere ou remova as colunas do seu quadro. A ordem salva será a
+      ordem da tela.
+    </p>
+
+    <div
+      id="lista-inputs-status"
+      class="space-y-2 max-h-[40vh] overflow-y-auto mb-4 p-3 border border-slate-100 rounded-lg bg-slate-50"
+    ></div>
+
+    <button
+      onclick="adicionarInputStatus()"
+      class="text-sm font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 mb-6"
+    >
+      <i data-lucide="plus-circle" class="w-4 h-4"></i> Adicionar nova etapa
+    </button>
+
+    <div class="flex justify-end gap-2 pt-4 border-t border-slate-100">
+      <button
+        onclick="fecharModalStatus()"
+        class="bg-slate-100 px-4 py-2 rounded-lg font-bold text-slate-600 hover:bg-slate-200"
+      >
+        Cancelar
+      </button>
+      <button
+        onclick="salvarNovosStatus()"
+        class="bg-blue-600 px-4 py-2 rounded-lg font-bold text-white shadow-md hover:bg-blue-700"
+      >
+        Salvar Ordem
+      </button>
+    </div>
+  </div>
+</div>
 
 <div
   id="modal-tarefa"
@@ -147,6 +135,7 @@
 
 <script>
   let tarefasGlobais = [];
+  let colunasGlobais = []; // Guarda os status dinâmicos do banco
 
   function carregarQuadroKanban() {
     mostrarToast("Carregando quadro...", "info");
@@ -154,9 +143,9 @@
       .withSuccessHandler((res) => {
         if (res && res.sucesso) {
           tarefasGlobais = res.dados;
+          colunasGlobais = res.colunas;
           renderizarQuadro();
         } else {
-          // Se o servidor negar os dados, exibe um alerta vermelho em vez de travar
           mostrarToast(
             "Erro ao carregar: " + (res ? res.mensagem : "Falha na conexão"),
             "erro",
@@ -164,36 +153,49 @@
         }
       })
       .withFailureHandler((err) => {
-        // Se a internet falhar ou o Google engasgar, o sistema avisa
         mostrarToast("Erro crítico de comunicação: " + err.message, "erro");
       })
       .obterTarefas();
   }
 
   function renderizarQuadro() {
-    // Limpa as colunas
-    document.getElementById("col-A FAZER").innerHTML = "";
-    document.getElementById("col-EM ANDAMENTO").innerHTML = "";
-    document.getElementById("col-CONCLUIDO").innerHTML = "";
+    const container = document.getElementById("kanban-colunas");
+    container.innerHTML = "";
 
-    let cTodo = 0,
-      cDoing = 0,
-      cDone = 0;
+    // 1. GERA AS COLUNAS DINAMICAMENTE
+    colunasGlobais.forEach((colNome, index) => {
+      const qtd = tarefasGlobais.filter((t) => t.status === colNome).length;
 
-    tarefasGlobais.forEach((t) => {
-      const status = t.status.toUpperCase();
-      let divId = "col-A FAZER";
+      // Lógica visual: Primeira coluna (Cinza), Meio (Azul), Última (Verde)
+      let corBg = "bg-blue-50 border-blue-100";
+      let corHeader = "bg-blue-100/50 border-blue-100 text-blue-800";
+      let corBadge = "bg-blue-200 text-blue-800";
 
-      if (status === "EM ANDAMENTO") {
-        divId = "col-EM ANDAMENTO";
-        cDoing++;
-      } else if (status === "CONCLUIDO") {
-        divId = "col-CONCLUIDO";
-        cDone++;
-      } else {
-        cTodo++;
+      if (index === 0) {
+        corBg = "bg-slate-100 border-slate-200";
+        corHeader = "bg-slate-200/50 border-slate-200 text-slate-700";
+        corBadge = "bg-slate-300 text-slate-700";
+      } else if (index === colunasGlobais.length - 1) {
+        corBg = "bg-emerald-50 border-emerald-100";
+        corHeader = "bg-emerald-100/50 border-emerald-100 text-emerald-800";
+        corBadge = "bg-emerald-200 text-emerald-800";
       }
 
+      const colDiv = document.createElement("div");
+      colDiv.className = `${corBg} rounded-xl w-80 shrink-0 flex flex-col max-h-full border`;
+      colDiv.innerHTML = `
+        <div class="p-3 border-b flex justify-between items-center rounded-t-xl ${corHeader}">
+          <h3 class="font-bold">${colNome}</h3>
+          <span class="${corBadge} text-xs px-2 py-1 rounded-full font-bold">${qtd}</span>
+        </div>
+        <div id="col-${colNome}" class="p-3 flex-1 overflow-y-auto space-y-3 min-h-[200px]" ondragover="allowDrop(event)" ondrop="dropTarefa(event, '${colNome}')">
+        </div>
+      `;
+      container.appendChild(colDiv);
+    });
+
+    // 2. GERA OS CARTÕES E COLOCA NA COLUNA CERTA
+    tarefasGlobais.forEach((t) => {
       const card = document.createElement("div");
       card.className =
         "bg-white p-3 rounded-lg shadow-sm border border-slate-200 cursor-grab hover:shadow-md transition-shadow relative group active:cursor-grabbing";
@@ -201,7 +203,6 @@
       card.id = "card-" + t.linha;
       card.ondragstart = (e) => dragStart(e, t.linha);
 
-      // Ícone de lápis que aparece ao passar o mouse
       card.innerHTML = `
         <div class="flex justify-between items-start mb-2">
           <span class="text-[10px] font-mono text-slate-400 font-bold">${t.id}</span>
@@ -216,25 +217,76 @@
         </div>
       `;
 
-      const colunaDestino = document.getElementById(divId);
+      const colunaDestino = document.getElementById("col-" + t.status);
       if (colunaDestino) colunaDestino.appendChild(card);
     });
 
-    document.getElementById("count-todo").innerText = cTodo;
-    document.getElementById("count-doing").innerText = cDoing;
-    document.getElementById("count-done").innerText = cDone;
-
     lucide.createIcons();
+  }
+
+  // --- FUNÇÕES DE STATUS ---
+  function abrirModalStatus() {
+    const container = document.getElementById("lista-inputs-status");
+    container.innerHTML = "";
+    colunasGlobais.forEach((col) => adicionarInputStatus(col));
+    document.getElementById("modal-status").classList.remove("hidden");
+    lucide.createIcons();
+  }
+
+  function fecharModalStatus() {
+    document.getElementById("modal-status").classList.add("hidden");
+  }
+
+  function adicionarInputStatus(valor = "") {
+    const container = document.getElementById("lista-inputs-status");
+    const div = document.createElement("div");
+    div.className = "flex gap-2 items-center group";
+    div.innerHTML = `
+      <i data-lucide="grip-vertical" class="w-4 h-4 text-slate-300"></i>
+      <input type="text" class="input-status flex-1 p-2 border border-slate-300 rounded outline-none uppercase font-bold text-sm text-slate-700 bg-white" value="${valor}" placeholder="NOME DO STATUS" />
+      <button onclick="this.parentElement.remove()" class="text-red-300 hover:text-red-600 p-1 transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
+    `;
+    container.appendChild(div);
+    lucide.createIcons();
+  }
+
+  function salvarNovosStatus() {
+    const inputs = document.querySelectorAll(".input-status");
+    const novosStatus = [];
+
+    inputs.forEach((inp) => {
+      if (inp.value.trim() !== "")
+        novosStatus.push(inp.value.trim().toUpperCase());
+    });
+
+    if (novosStatus.length === 0) {
+      mostrarToast("Você precisa ter pelo menos 1 coluna de status!", "erro");
+      return;
+    }
+
+    fecharModalStatus();
+    mostrarToast("Salvando colunas...", "info");
+
+    google.script.run
+      .withSuccessHandler((res) => {
+        if (res.sucesso) {
+          carregarQuadroKanban();
+          mostrarToast("Colunas atualizadas!", "sucesso");
+        } else {
+          mostrarToast("Erro: " + res.mensagem, "erro");
+        }
+      })
+      .salvarStatusTarefas(novosStatus);
   }
 
   // --- FUNÇÕES DE DRAG AND DROP ---
   function dragStart(event, linha) {
     event.dataTransfer.setData("linha", linha);
-    event.target.classList.add("opacity-50"); // Efeito visual de que está a ser arrastado
+    event.target.classList.add("opacity-50");
   }
 
   function allowDrop(event) {
-    event.preventDefault(); // Necessário para permitir o drop
+    event.preventDefault();
   }
 
   function dropTarefa(event, novoStatus) {
@@ -244,25 +296,19 @@
 
     if (cardElement) {
       cardElement.classList.remove("opacity-50");
-
-      // Atualiza visualmente na hora (pra parecer rápido pro usuário)
       document.getElementById("col-" + novoStatus).appendChild(cardElement);
 
-      // Atualiza a memória local
       const t = tarefasGlobais.find(
         (x) => x.linha.toString() === linha.toString(),
       );
       if (t) t.status = novoStatus;
 
-      // Recalcula contadores
-      renderizarQuadro();
-
-      // Envia para o servidor no background
+      renderizarQuadro(); // Atualiza a contagem dos números
       google.script.run.atualizarStatusTarefa(linha, novoStatus);
     }
   }
 
-  // --- MODAL CRIAR/EDITAR ---
+  // --- FUNÇÕES DE TAREFAS ---
   function abrirModalTarefa() {
     document.getElementById("tar-linha").value = "";
     document.getElementById("tar-titulo").value = "";
@@ -305,11 +351,8 @@
 
     google.script.run
       .withSuccessHandler((res) => {
-        if (res.sucesso) {
-          carregarQuadroKanban(); // Atualiza a tela puxando do banco
-        } else {
-          mostrarToast(res.mensagem, "erro");
-        }
+        if (res.sucesso) carregarQuadroKanban();
+        else mostrarToast(res.mensagem, "erro");
       })
       .salvarTarefaNoServidor(obj);
   }

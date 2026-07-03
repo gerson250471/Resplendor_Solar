@@ -1066,14 +1066,35 @@ function recuperarSenhaEmail(login) {
 function obterTarefas() {
   try {
     const ss = SpreadsheetApp.openById(getSpreadsheetId());
-    const aba = ss.getSheetByName("Tarefas");
-    if (!aba) return { sucesso: false, mensagem: "Aba 'Tarefas' não encontrada." };
+    
+    // 1. GERENCIAMENTO DINÂMICO DE STATUS (Cria a aba sozinha se não existir)
+    let abaStatus = ss.getSheetByName("StatusTarefas");
+    let colunasKanban = ["A FAZER", "EM ANDAMENTO", "CONCLUÍDO"]; // Padrão
+    
+    if (!abaStatus) {
+      abaStatus = ss.insertSheet("StatusTarefas");
+      abaStatus.appendRow(["Nome do Status"]);
+      abaStatus.appendRow(["A FAZER"]);
+      abaStatus.appendRow(["EM ANDAMENTO"]);
+      abaStatus.appendRow(["CONCLUÍDO"]);
+    } else {
+      const stData = abaStatus.getDataRange().getValues();
+      if (stData.length > 1) {
+        colunasKanban = [];
+        for (let i = 1; i < stData.length; i++) {
+          if (stData[i][0]) colunasKanban.push(String(stData[i][0]).toUpperCase().trim());
+        }
+      }
+    }
 
-    const dados = aba.getDataRange().getValues();
+    // 2. BUSCA AS TAREFAS
+    const abaTarefas = ss.getSheetByName("Tarefas");
+    if (!abaTarefas) return { sucesso: false, mensagem: "Aba 'Tarefas' não encontrada." };
+
+    const dados = abaTarefas.getDataRange().getValues();
     dados.shift(); // Remove cabeçalho
 
     const lista = dados.map((r, index) => {
-      // 1. BLINDAGEM DA DATA: Converte qualquer objeto de data para texto seguro
       let dataSegura = "";
       if (r[4]) {
         if (r[4] instanceof Date) {
@@ -1083,18 +1104,39 @@ function obterTarefas() {
         }
       }
 
+      // Se a tarefa tiver um status apagado, ela cai na primeira coluna automaticamente
+      let statusAtual = String(r[3] || colunasKanban[0]).toUpperCase().trim();
+      if(!colunasKanban.includes(statusAtual)) statusAtual = colunasKanban[0];
+
       return {
         linha: index + 2,
         id: r[0],
         titulo: r[1],
         descricao: r[2],
-        // 2. BLINDAGEM DO STATUS: Remove espaços acidentais e garante maiúsculas
-        status: String(r[3] || "A FAZER").toUpperCase().trim(),
+        status: statusAtual,
         data: dataSegura
       };
     });
 
-    return { sucesso: true, dados: lista };
+    // Envia para a tela as Tarefas E as Colunas juntas!
+    return { sucesso: true, dados: lista, colunas: colunasKanban };
+  } catch (e) {
+    return { sucesso: false, mensagem: e.message };
+  }
+}
+
+function salvarStatusTarefas(listaStatus) {
+  try {
+    const ss = SpreadsheetApp.openById(getSpreadsheetId());
+    const abaStatus = ss.getSheetByName("StatusTarefas");
+    if (!abaStatus) return { sucesso: false, mensagem: "Aba de Status não encontrada." };
+
+    abaStatus.clear();
+    abaStatus.appendRow(["Nome do Status"]);
+    listaStatus.forEach(st => {
+      if(st.trim() !== "") abaStatus.appendRow([st.toUpperCase().trim()]);
+    });
+    return { sucesso: true };
   } catch (e) {
     return { sucesso: false, mensagem: e.message };
   }
@@ -1104,17 +1146,20 @@ function salvarTarefaNoServidor(obj) {
   try {
     const ss = SpreadsheetApp.openById(getSpreadsheetId());
     const aba = ss.getSheetByName("Tarefas");
-
     const dataHoje = new Date().toLocaleDateString('pt-BR');
-    const idUnico = "TK-" + new Date().getTime().toString().slice(-6); // Gera ID tipo TK-123456
+    const idUnico = "TK-" + new Date().getTime().toString().slice(-6);
 
     if (obj.linha) {
-      // Atualiza
       aba.getRange(obj.linha, 2).setValue(obj.titulo);
       aba.getRange(obj.linha, 3).setValue(obj.descricao);
     } else {
-      // Nova Tarefa (Sempre nasce na primeira coluna)
-      aba.appendRow([idUnico, obj.titulo, obj.descricao, "A FAZER", dataHoje]);
+      // Busca qual é o primeiro status da lista para colocar o cartão novo lá
+      let primeiroStatus = "A FAZER";
+      const abaStatus = ss.getSheetByName("StatusTarefas");
+      if(abaStatus && abaStatus.getLastRow() > 1) {
+         primeiroStatus = String(abaStatus.getRange("A2").getValue()).toUpperCase().trim();
+      }
+      aba.appendRow([idUnico, obj.titulo, obj.descricao, primeiroStatus, dataHoje]);
     }
     return { sucesso: true };
   } catch (e) {
@@ -1126,7 +1171,7 @@ function atualizarStatusTarefa(linha, novoStatus) {
   try {
     const ss = SpreadsheetApp.openById(getSpreadsheetId());
     const aba = ss.getSheetByName("Tarefas");
-    aba.getRange(linha, 4).setValue(novoStatus); // Coluna D é o Status
+    aba.getRange(linha, 4).setValue(novoStatus);
     return { sucesso: true };
   } catch (e) {
     return { sucesso: false, mensagem: e.message };
