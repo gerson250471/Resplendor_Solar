@@ -164,7 +164,7 @@
       <div class="p-6">
         <h1 class="text-xl font-bold text-blue-400">MAJB CRM</h1>
         <!-- VERSÃO DO SISTEMA -->
-        <p class="text-xs text-slate-500 mt-1">V 1.16.04 Modular</p>
+        <p class="text-xs text-slate-500 mt-1">V 1.17.00 Modular</p>
       </div>
       <nav class="flex-1 px-4 space-y-1">
         <button
@@ -179,6 +179,14 @@
           class="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors text-left text-sm font-medium"
         >
           <i data-lucide="sun" class="w-4 h-4 text-orange-400"></i> Vendas
+        </button>
+
+        <button
+          onclick="navegarPara('tarefas')"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors text-left text-sm font-medium"
+        >
+          <i data-lucide="trello" class="w-4 h-4 text-purple-400"></i> Quadro
+          (Kanban)
         </button>
 
         <button
@@ -312,7 +320,7 @@
       include('financeiro'); ?> <?!= include('pagamentos'); ?><?!=
       include('usuario'); ?><?!= include('projetos'); ?><?!=
       include('relatorios'); ?><?!= include('simulador'); ?><?!=
-      include('parametros'); ?>
+      include('parametros'); ?><?!= include('tarefas'); ?>
 
       <section id="view-troca-senha" class="page-view">
         <div class="finance-card max-w-md mx-auto mt-10">
@@ -630,6 +638,8 @@
         if (tela === "parametros") carregarTelaParametros();
         // Tela Simulador
         if (tela === "simulador") carregarDadosSimulador();
+        // Quadro kanban
+        if (tela === "tarefas") carregarQuadroKanban();
       }
 
       /**

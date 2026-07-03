@@ -1056,3 +1056,77 @@ function recuperarSenhaEmail(login) {
     return { sucesso: false, mensagem: "Erro no servidor de e-mail: " + e.message };
   }
 }
+
+/**
+ * ============================================================================
+ * MÓDULO KANBAN / TRELLO (GESTÃO DE TAREFAS)
+ * ============================================================================
+ */
+
+function obterTarefas() {
+  try {
+    const ss = SpreadsheetApp.openById(getSpreadsheetId());
+    const aba = ss.getSheetByName("Tarefas");
+    if (!aba) return { sucesso: false, mensagem: "Aba 'Tarefas' não encontrada." };
+
+    const dados = aba.getDataRange().getValues();
+    dados.shift(); // Remove cabeçalho
+
+    const lista = dados.map((r, index) => ({
+      linha: index + 2,
+      id: r[0],
+      titulo: r[1],
+      descricao: r[2],
+      status: r[3] || "A FAZER",
+      data: r[4]
+    }));
+
+    return { sucesso: true, dados: lista };
+  } catch (e) {
+    return { sucesso: false, mensagem: e.message };
+  }
+}
+
+function salvarTarefaNoServidor(obj) {
+  try {
+    const ss = SpreadsheetApp.openById(getSpreadsheetId());
+    const aba = ss.getSheetByName("Tarefas");
+
+    const dataHoje = new Date().toLocaleDateString('pt-BR');
+    const idUnico = "TK-" + new Date().getTime().toString().slice(-6); // Gera ID tipo TK-123456
+
+    if (obj.linha) {
+      // Atualiza
+      aba.getRange(obj.linha, 2).setValue(obj.titulo);
+      aba.getRange(obj.linha, 3).setValue(obj.descricao);
+    } else {
+      // Nova Tarefa (Sempre nasce na primeira coluna)
+      aba.appendRow([idUnico, obj.titulo, obj.descricao, "A FAZER", dataHoje]);
+    }
+    return { sucesso: true };
+  } catch (e) {
+    return { sucesso: false, mensagem: e.message };
+  }
+}
+
+function atualizarStatusTarefa(linha, novoStatus) {
+  try {
+    const ss = SpreadsheetApp.openById(getSpreadsheetId());
+    const aba = ss.getSheetByName("Tarefas");
+    aba.getRange(linha, 4).setValue(novoStatus); // Coluna D é o Status
+    return { sucesso: true };
+  } catch (e) {
+    return { sucesso: false, mensagem: e.message };
+  }
+}
+
+function excluirTarefaBackend(linha) {
+  try {
+    const ss = SpreadsheetApp.openById(getSpreadsheetId());
+    const aba = ss.getSheetByName("Tarefas");
+    aba.deleteRow(linha);
+    return { sucesso: true };
+  } catch (e) {
+    return { sucesso: false, mensagem: e.message };
+  }
+}
