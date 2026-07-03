@@ -152,10 +152,20 @@
     mostrarToast("Carregando quadro...", "info");
     google.script.run
       .withSuccessHandler((res) => {
-        if (res.sucesso) {
+        if (res && res.sucesso) {
           tarefasGlobais = res.dados;
           renderizarQuadro();
+        } else {
+          // Se o servidor negar os dados, exibe um alerta vermelho em vez de travar
+          mostrarToast(
+            "Erro ao carregar: " + (res ? res.mensagem : "Falha na conexão"),
+            "erro",
+          );
         }
+      })
+      .withFailureHandler((err) => {
+        // Se a internet falhar ou o Google engasgar, o sistema avisa
+        mostrarToast("Erro crítico de comunicação: " + err.message, "erro");
       })
       .obterTarefas();
   }

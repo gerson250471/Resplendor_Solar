@@ -1072,14 +1072,27 @@ function obterTarefas() {
     const dados = aba.getDataRange().getValues();
     dados.shift(); // Remove cabeçalho
 
-    const lista = dados.map((r, index) => ({
-      linha: index + 2,
-      id: r[0],
-      titulo: r[1],
-      descricao: r[2],
-      status: r[3] || "A FAZER",
-      data: r[4]
-    }));
+    const lista = dados.map((r, index) => {
+      // 1. BLINDAGEM DA DATA: Converte qualquer objeto de data para texto seguro
+      let dataSegura = "";
+      if (r[4]) {
+        if (r[4] instanceof Date) {
+          dataSegura = Utilities.formatDate(r[4], "America/Sao_Paulo", "dd/MM/yyyy");
+        } else {
+          dataSegura = String(r[4]);
+        }
+      }
+
+      return {
+        linha: index + 2,
+        id: r[0],
+        titulo: r[1],
+        descricao: r[2],
+        // 2. BLINDAGEM DO STATUS: Remove espaços acidentais e garante maiúsculas
+        status: String(r[3] || "A FAZER").toUpperCase().trim(),
+        data: dataSegura
+      };
+    });
 
     return { sucesso: true, dados: lista };
   } catch (e) {
