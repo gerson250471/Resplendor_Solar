@@ -1209,7 +1209,7 @@ function obterRelatorioSaldoTotal() {
     let dataRaw = dadosVendas[v][2];
     let dataSegura = (dataRaw instanceof Date) ? Utilities.formatDate(dataRaw, "America/Sao_Paulo", "dd/MM/yyyy") : String(dataRaw);
     mapaVendas[idVenda] = {
-      cliente: String(dados[v][1]).trim(),
+      cliente: String(dadosVendas[v][1]).trim(), // <--- O ERRO ESTAVA AQUI (Faltava a palavra Vendas)
       data: dataSegura
     };
   }
