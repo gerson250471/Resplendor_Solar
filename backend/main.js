@@ -1190,82 +1190,103 @@ function excluirTarefaBackend(linha) {
 }
 /**
  * ============================================================================
- * MÓDULO DE NOVOS RELATÓRIOS (SALDO TOTAL, MÊS ATUAL E PERÍODO) - CORRIGIDO
+ * MÓDULO DE NOVOS RELATÓRIOS (SALDO TOTAL, MÊS ATUAL E PERÍODO) - DEFINITIVO
  * ============================================================================
  */
 
 function obterRelatorioSaldoTotal() {
   const ss = SpreadsheetApp.openById(getSpreadsheetId());
-  const abaProjetos = ss.getSheetByName("Projetos"); 
-  const dados = abaProjetos.getDataRange().getValues();
-  
+  const abaVendas = ss.getSheetByName("Vendas");
+  const abaParcelas = ss.getSheetByName("Parcelas");
+
+  const dadosVendas = abaVendas.getDataRange().getValues();
+  const dadosParcelas = abaParcelas.getDataRange().getValues();
+
+  // 1. Mapeia os dados base das vendas (Cliente e Data)
+  const mapaVendas = {};
+  for (let v = 1; v < dadosVendas.length; v++) {
+    let idVenda = String(dadosVendas[v][0]).trim();
+    let dataRaw = dadosVendas[v][2];
+    let dataSegura = (dataRaw instanceof Date) ? Utilities.formatDate(dataRaw, "America/Sao_Paulo", "dd/MM/yyyy") : String(dataRaw);
+    mapaVendas[idVenda] = {
+      cliente: String(dados[v][1]).trim(),
+      data: dataSegura
+    };
+  }
+
+  // 2. Soma EXATAMENTE as parcelas em aberto (Para bater 100% com o Dashboard)
+  const dividas = {};
+  for (let p = 1; p < dadosParcelas.length; p++) {
+    let idVenda = String(dadosParcelas[p][0]).trim();
+    let status = String(dadosParcelas[p][5] || "").toUpperCase().trim();
+    let val = parseFloat(dadosParcelas[p][3]) || 0;
+
+    if (status !== "PAGO" && status !== "") {
+      if (!dividas[idVenda]) dividas[idVenda] = 0;
+      dividas[idVenda] += val;
+    }
+  }
+
+  // 3. Monta o relatório final
   let relatorio = [];
-  for (let i = 1; i < dados.length; i++) {
-    // Coluna L (Índice 11) é o Valor Residual (Saldo a Receber)
-    let saldo = parseFloat(dados[i][11]) || 0; 
-    
+  for (let id in dividas) {
+    let saldo = Math.round(dividas[id] * 100) / 100; // Evita dízimas do Javascript
     if (saldo > 0) {
-      // Coluna A (Índice 0) é a Data da Venda
-      let dataRaw = dados[i][0]; 
-      let dataSegura = (dataRaw instanceof Date) ? Utilities.formatDate(dataRaw, "America/Sao_Paulo", "dd/MM/yyyy") : String(dataRaw);
-      
       relatorio.push({
-        idVenda: "V-" + (i + 1), // Usa a linha da planilha como ID Visual
-        cliente: String(dados[i][1]), // Coluna B (Índice 1) é o Cliente
-        data: dataSegura,
+        idVenda: id,
+        cliente: mapaVendas[id] ? mapaVendas[id].cliente : "NÃO IDENTIFICADO",
+        data: mapaVendas[id] ? mapaVendas[id].data : "---",
         valor: saldo
       });
     }
   }
+
   // Ordena do maior devedor para o menor
-  relatorio.sort((a,b) => b.valor - a.valor);
+  relatorio.sort((a, b) => b.valor - a.valor);
   return { sucesso: true, dados: relatorio };
 }
 
 function obterRelatorioVendasMesAtual() {
   const ss = SpreadsheetApp.openById(getSpreadsheetId());
-  const abaProjetos = ss.getSheetByName("Projetos");
-  const dados = abaProjetos.getDataRange().getValues();
-  
+  const abaVendas = ss.getSheetByName("Vendas");
+  const dados = abaVendas.getDataRange().getValues();
+
   const hoje = new Date();
   const mesAtual = hoje.getMonth();
   const anoAtual = hoje.getFullYear();
 
   let relatorio = [];
   for (let i = 1; i < dados.length; i++) {
-    let dataRaw = dados[i][0]; // Coluna A
-    
-    if (dataRaw instanceof Date) {
-      if (dataRaw.getMonth() === mesAtual && dataRaw.getFullYear() === anoAtual) {
-        relatorio.push({
-          idVenda: "V-" + (i + 1),
-          cliente: String(dados[i][1]), // Coluna B
-          data: Utilities.formatDate(dataRaw, "America/Sao_Paulo", "dd/MM/yyyy"),
-          valor: parseFloat(dados[i][2]) || 0 // Coluna C (Índice 2) é o Valor Total
-        });
-      }
+    let dataRaw = dados[i][2]; // Coluna C (Data)
+    let d = new Date(dataRaw);
+
+    if (!isNaN(d.getTime()) && d.getMonth() === mesAtual && d.getFullYear() === anoAtual) {
+      relatorio.push({
+        idVenda: dados[i][0],
+        cliente: dados[i][1],
+        data: Utilities.formatDate(d, "America/Sao_Paulo", "dd/MM/yyyy"),
+        valor: parseFloat(dados[i][3]) || 0 // Coluna D (Valor Total)
+      });
     }
   }
-  // Ordena pelas mais recentes
   relatorio.reverse();
   return { sucesso: true, dados: relatorio };
 }
 
 function obterDadosRelatorioVendasPeriodo(inicioISO, fimISO) {
   const ss = SpreadsheetApp.openById(getSpreadsheetId());
-  const abaProjetos = ss.getSheetByName("Projetos");
-  const dados = abaProjetos.getDataRange().getValues();
-  
+  const abaVendas = ss.getSheetByName("Vendas");
+  const dados = abaVendas.getDataRange().getValues();
+
   let limiteInicio = parseInt(inicioISO.replace(/-/g, ""));
   let limiteFim = parseInt(fimISO.replace(/-/g, ""));
 
   let relatorio = [];
   for(let i = 1; i < dados.length; i++) {
-    let dataRaw = dados[i][0]; // Coluna A
+    let dataRaw = dados[i][2]; // Coluna C (Data)
     let vencNum = 0;
     let dataFormatada = "";
 
-    // Tratamento robusto para leitura de datas
     if (dataRaw instanceof Date) {
       vencNum = parseInt(Utilities.formatDate(dataRaw, "America/Sao_Paulo", "yyyyMMdd"));
       dataFormatada = Utilities.formatDate(dataRaw, "America/Sao_Paulo", "dd/MM/yyyy");
@@ -1285,10 +1306,10 @@ function obterDadosRelatorioVendasPeriodo(inicioISO, fimISO) {
 
     if(vencNum >= limiteInicio && vencNum <= limiteFim) {
       relatorio.push({
-        idVenda: "V-" + (i + 1),
-        cliente: String(dados[i][1]), // Coluna B
+        idVenda: dados[i][0],
+        cliente: String(dados[i][1]),
         data: dataFormatada,
-        valor: parseFloat(dados[i][2]) || 0 // Coluna C
+        valor: parseFloat(dados[i][3]) || 0 // Coluna D (Valor Total)
       });
     }
   }
