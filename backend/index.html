@@ -164,7 +164,7 @@
       <div class="p-6">
         <h1 class="text-xl font-bold text-blue-400">MAJB CRM</h1>
         <!-- VERSÃO DO SISTEMA -->
-        <p class="text-xs text-slate-500 mt-1">V 1.18.00 Modular</p>
+        <p class="text-xs text-slate-500 mt-1">V 1.19.00 Modular</p>
       </div>
       <nav class="flex-1 px-4 space-y-1">
         <button
@@ -2096,6 +2096,146 @@
             }
           })
           .recuperarSenhaEmail(login);
+      }
+      /**
+       * ============================================================================
+       * NOVOS RELATÓRIOS DO RENAN
+       * ============================================================================
+       */
+
+      window.gerarRelatorioSaldoTotal = function () {
+        mostrarToast("Processando Saldo a Receber...", "info");
+        google.script.run
+          .withSuccessHandler((res) => {
+            if (res.sucesso && res.dados.length > 0) {
+              imprimirRelatorioUniversal(
+                res.dados,
+                "Relatório Geral: Saldo a Receber",
+                "Saldo Devedor",
+              );
+            } else {
+              mostrarToast("Não há saldos pendentes no sistema.", "erro");
+            }
+          })
+          .obterRelatorioSaldoTotal();
+      };
+
+      window.gerarRelatorioVendasMesAtual = function () {
+        mostrarToast("Processando vendas do mês...", "info");
+        google.script.run
+          .withSuccessHandler((res) => {
+            if (res.sucesso && res.dados.length > 0) {
+              imprimirRelatorioUniversal(
+                res.dados,
+                "Relatório: Vendas do Mês Atual",
+                "Valor do Contrato",
+              );
+            } else {
+              mostrarToast("Nenhuma venda registrada este mês.", "erro");
+            }
+          })
+          .obterRelatorioVendasMesAtual();
+      };
+
+      window.gerarRelatorioVendasPeriodo = function () {
+        const inicio = document.getElementById("data-inicio-vendas").value;
+        const fim = document.getElementById("data-fim-vendas").value;
+
+        if (!inicio || !fim) {
+          mostrarToast("Selecione a data inicial e final do período.", "erro");
+          return;
+        }
+        if (inicio > fim) {
+          mostrarToast(
+            "A data inicial não pode ser maior que a final.",
+            "erro",
+          );
+          return;
+        }
+
+        mostrarToast("Gerando relatório de vendas...", "info");
+        google.script.run
+          .withSuccessHandler((res) => {
+            if (res.sucesso && res.dados.length > 0) {
+              let fInicio = inicio.split("-").reverse().join("/");
+              let fFim = fim.split("-").reverse().join("/");
+              let periodo = fInicio === fFim ? fInicio : `${fInicio} a ${fFim}`;
+              imprimirRelatorioUniversal(
+                res.dados,
+                `Relatório de Vendas: ${periodo}`,
+                "Valor do Contrato",
+              );
+            } else {
+              mostrarToast("Nenhuma venda encontrada neste período.", "erro");
+            }
+          })
+          .obterDadosRelatorioVendasPeriodo(inicio, fim);
+      };
+
+      // Gerador Universal de PDF para evitar repetição de código
+      function imprimirRelatorioUniversal(dados, titulo, nomeColunaValor) {
+        const janelaPdf = window.open("", "_blank");
+        const dataGeracao = new Date().toLocaleString("pt-BR");
+        let somaValores = 0;
+
+        let htmlString = `
+        <html>
+          <head>
+            <title>${titulo}</title>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 20px; }
+              .header { border-bottom: 2px solid #3b82f6; padding-bottom: 10px; margin-bottom: 20px; }
+              .data-geracao { font-size: 11px; color: #666; margin-top: -10px; margin-bottom: 15px; }
+              table { width: 100%; border-collapse: collapse; }
+              th { background: #3b82f6; color: white; padding: 10px; text-align: left; font-size: 12px; }
+              td { padding: 8px; border-bottom: 1px solid #eee; font-size: 11px; }
+              .text-right { text-align: right; }
+              .total-box { margin-top: 20px; text-align: right; font-size: 18px; font-weight: bold; color: #3b82f6; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>${titulo}</h1>
+              <p>MAJB SISTEMAS - Resplendor Solar</p>
+            </div>
+            <div class="data-geracao">Relatório gerado em: ${dataGeracao}</div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>ID Venda</th>
+                  <th>Cliente</th>
+                  <th class="text-right">${nomeColunaValor}</th>
+                </tr>
+              </thead>
+              <tbody>
+        `;
+
+        dados.forEach((item) => {
+          somaValores += parseFloat(item.valor) || 0;
+          htmlString += `
+          <tr>
+            <td>${item.data}</td>
+            <td>${item.idVenda}</td>
+            <td style="text-transform: uppercase;">${item.cliente}</td>
+            <td class="text-right">R$ ${parseFloat(item.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
+          </tr>
+        `;
+        });
+
+        htmlString += `
+              </tbody>
+            </table>
+            <div class="total-box">TOTAL: R$ ${somaValores.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
+          </body>
+        </html>
+        `;
+
+        janelaPdf.document.write(htmlString);
+        janelaPdf.document.close();
+        setTimeout(() => {
+          janelaPdf.print();
+        }, 500);
       }
     </script>
   </body>

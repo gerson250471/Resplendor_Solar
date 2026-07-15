@@ -1188,3 +1188,101 @@ function excluirTarefaBackend(linha) {
     return { sucesso: false, mensagem: e.message };
   }
 }
+/**
+ * ============================================================================
+ * MÓDULO DE NOVOS RELATÓRIOS (SALDO TOTAL, MÊS ATUAL E PERÍODO)
+ * ============================================================================
+ */
+
+function obterRelatorioSaldoTotal() {
+  const ss = SpreadsheetApp.openById(getSpreadsheetId());
+  const abaVendas = ss.getSheetByName("Vendas");
+  const dados = abaVendas.getDataRange().getValues();
+  
+  let relatorio = [];
+  for (let i = 1; i < dados.length; i++) {
+    let saldo = parseFloat(dados[i][5]) || 0; // Coluna F é onde guardamos o Saldo Devedor
+    if (saldo > 0) {
+      let dataSegura = (dados[i][2] instanceof Date) ? Utilities.formatDate(dados[i][2], "America/Sao_Paulo", "dd/MM/yyyy") : String(dados[i][2]);
+      relatorio.push({
+        idVenda: dados[i][0],
+        cliente: dados[i][1],
+        data: dataSegura,
+        valor: saldo // Saldo devedor
+      });
+    }
+  }
+  // Ordena do maior devedor para o menor
+  relatorio.sort((a,b) => b.valor - a.valor);
+  return { sucesso: true, dados: relatorio };
+}
+
+function obterRelatorioVendasMesAtual() {
+  const ss = SpreadsheetApp.openById(getSpreadsheetId());
+  const abaVendas = ss.getSheetByName("Vendas");
+  const dados = abaVendas.getDataRange().getValues();
+  
+  const hoje = new Date();
+  const mesAtual = hoje.getMonth();
+  const anoAtual = hoje.getFullYear();
+
+  let relatorio = [];
+  for (let i = 1; i < dados.length; i++) {
+    let d = new Date(dados[i][2]);
+    if (!isNaN(d.getTime()) && d.getMonth() === mesAtual && d.getFullYear() === anoAtual) {
+      relatorio.push({
+        idVenda: dados[i][0],
+        cliente: dados[i][1],
+        data: Utilities.formatDate(d, "America/Sao_Paulo", "dd/MM/yyyy"),
+        valor: parseFloat(dados[i][3]) || 0 // Valor Total Contrato
+      });
+    }
+  }
+  // Ordena pelas mais recentes
+  relatorio.reverse();
+  return { sucesso: true, dados: relatorio };
+}
+
+function obterDadosRelatorioVendasPeriodo(inicioISO, fimISO) {
+  const ss = SpreadsheetApp.openById(getSpreadsheetId());
+  const abaVendas = ss.getSheetByName("Vendas");
+  const dados = abaVendas.getDataRange().getValues();
+  
+  let limiteInicio = parseInt(inicioISO.replace(/-/g, ""));
+  let limiteFim = parseInt(fimISO.replace(/-/g, ""));
+
+  let relatorio = [];
+  for(let i = 1; i < dados.length; i++) {
+    let dataRaw = dados[i][2];
+    let vencNum = 0;
+    let dataFormatada = "";
+
+    // Blindagem de leitura de Datas
+    if (dataRaw instanceof Date) {
+      vencNum = parseInt(Utilities.formatDate(dataRaw, "America/Sao_Paulo", "yyyyMMdd"));
+      dataFormatada = Utilities.formatDate(dataRaw, "America/Sao_Paulo", "dd/MM/yyyy");
+    } else if (typeof dataRaw === "string" && dataRaw.includes("/")) {
+      let p = dataRaw.split("/");
+      if(p.length === 3) {
+         vencNum = parseInt(p[2].substring(0,4) + p[1].padStart(2,'0') + p[0].padStart(2,'0'));
+         dataFormatada = dataRaw;
+      }
+    } else if (typeof dataRaw === "string" && dataRaw.includes("-")) {
+       let p = dataRaw.split("-");
+       if(p.length === 3) {
+         vencNum = parseInt(p[0] + p[1] + p[2].substring(0,2));
+         dataFormatada = `${p[2].substring(0,2)}/${p[1]}/${p[0]}`;
+       }
+    }
+
+    if(vencNum >= limiteInicio && vencNum <= limiteFim) {
+      relatorio.push({
+        idVenda: dados[i][0],
+        cliente: dados[i][1],
+        data: dataFormatada,
+        valor: parseFloat(dados[i][3]) || 0
+      });
+    }
+  }
+  return { sucesso: true, dados: relatorio };
+}

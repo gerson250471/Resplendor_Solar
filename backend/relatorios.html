@@ -94,6 +94,48 @@
           <i data-lucide="download" class="w-4 h-4"></i> Gerar PDF Recebidos
         </button>
       </div>
+      <div
+        class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col hover:shadow-md transition-all border-l-4 border-l-purple-500"
+      >
+        <div class="flex-1">
+          <div
+            class="w-12 h-12 bg-purple-50 rounded-lg flex items-center justify-center mb-4"
+          >
+            <i data-lucide="shopping-cart" class="w-6 h-6 text-purple-600"></i>
+          </div>
+          <h3 class="text-lg font-bold text-slate-800 mb-2">
+            Vendas Realizadas
+          </h3>
+          <p class="text-sm text-slate-500 mb-4">
+            Relatório completo de contratos fechados em um período específico.
+          </p>
+
+          <div class="mb-6">
+            <label class="text-xs font-bold text-slate-400 uppercase mb-1 block"
+              >Período da Venda</label
+            >
+            <div class="flex gap-2">
+              <input
+                type="date"
+                id="data-inicio-vendas"
+                class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm text-slate-700 font-bold focus:ring-2 focus:ring-purple-500 outline-none"
+              />
+              <input
+                type="date"
+                id="data-fim-vendas"
+                class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm text-slate-700 font-bold focus:ring-2 focus:ring-purple-500 outline-none"
+              />
+            </div>
+          </div>
+        </div>
+
+        <button
+          onclick="gerarRelatorioVendasPeriodo()"
+          class="w-full bg-purple-600 text-white font-bold py-2.5 px-4 rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"
+        >
+          <i data-lucide="download" class="w-4 h-4"></i> Gerar PDF Vendas
+        </button>
+      </div>
     </div>
   </div>
 </section>
