@@ -1190,25 +1190,30 @@ function excluirTarefaBackend(linha) {
 }
 /**
  * ============================================================================
- * MÓDULO DE NOVOS RELATÓRIOS (SALDO TOTAL, MÊS ATUAL E PERÍODO)
+ * MÓDULO DE NOVOS RELATÓRIOS (SALDO TOTAL, MÊS ATUAL E PERÍODO) - CORRIGIDO
  * ============================================================================
  */
 
 function obterRelatorioSaldoTotal() {
   const ss = SpreadsheetApp.openById(getSpreadsheetId());
-  const abaVendas = ss.getSheetByName("Vendas");
-  const dados = abaVendas.getDataRange().getValues();
+  const abaProjetos = ss.getSheetByName("Projetos"); 
+  const dados = abaProjetos.getDataRange().getValues();
   
   let relatorio = [];
   for (let i = 1; i < dados.length; i++) {
-    let saldo = parseFloat(dados[i][5]) || 0; // Coluna F é onde guardamos o Saldo Devedor
+    // Coluna L (Índice 11) é o Valor Residual (Saldo a Receber)
+    let saldo = parseFloat(dados[i][11]) || 0; 
+    
     if (saldo > 0) {
-      let dataSegura = (dados[i][2] instanceof Date) ? Utilities.formatDate(dados[i][2], "America/Sao_Paulo", "dd/MM/yyyy") : String(dados[i][2]);
+      // Coluna A (Índice 0) é a Data da Venda
+      let dataRaw = dados[i][0]; 
+      let dataSegura = (dataRaw instanceof Date) ? Utilities.formatDate(dataRaw, "America/Sao_Paulo", "dd/MM/yyyy") : String(dataRaw);
+      
       relatorio.push({
-        idVenda: dados[i][0],
-        cliente: dados[i][1],
+        idVenda: "V-" + (i + 1), // Usa a linha da planilha como ID Visual
+        cliente: String(dados[i][1]), // Coluna B (Índice 1) é o Cliente
         data: dataSegura,
-        valor: saldo // Saldo devedor
+        valor: saldo
       });
     }
   }
@@ -1219,8 +1224,8 @@ function obterRelatorioSaldoTotal() {
 
 function obterRelatorioVendasMesAtual() {
   const ss = SpreadsheetApp.openById(getSpreadsheetId());
-  const abaVendas = ss.getSheetByName("Vendas");
-  const dados = abaVendas.getDataRange().getValues();
+  const abaProjetos = ss.getSheetByName("Projetos");
+  const dados = abaProjetos.getDataRange().getValues();
   
   const hoje = new Date();
   const mesAtual = hoje.getMonth();
@@ -1228,14 +1233,17 @@ function obterRelatorioVendasMesAtual() {
 
   let relatorio = [];
   for (let i = 1; i < dados.length; i++) {
-    let d = new Date(dados[i][2]);
-    if (!isNaN(d.getTime()) && d.getMonth() === mesAtual && d.getFullYear() === anoAtual) {
-      relatorio.push({
-        idVenda: dados[i][0],
-        cliente: dados[i][1],
-        data: Utilities.formatDate(d, "America/Sao_Paulo", "dd/MM/yyyy"),
-        valor: parseFloat(dados[i][3]) || 0 // Valor Total Contrato
-      });
+    let dataRaw = dados[i][0]; // Coluna A
+    
+    if (dataRaw instanceof Date) {
+      if (dataRaw.getMonth() === mesAtual && dataRaw.getFullYear() === anoAtual) {
+        relatorio.push({
+          idVenda: "V-" + (i + 1),
+          cliente: String(dados[i][1]), // Coluna B
+          data: Utilities.formatDate(dataRaw, "America/Sao_Paulo", "dd/MM/yyyy"),
+          valor: parseFloat(dados[i][2]) || 0 // Coluna C (Índice 2) é o Valor Total
+        });
+      }
     }
   }
   // Ordena pelas mais recentes
@@ -1245,19 +1253,19 @@ function obterRelatorioVendasMesAtual() {
 
 function obterDadosRelatorioVendasPeriodo(inicioISO, fimISO) {
   const ss = SpreadsheetApp.openById(getSpreadsheetId());
-  const abaVendas = ss.getSheetByName("Vendas");
-  const dados = abaVendas.getDataRange().getValues();
+  const abaProjetos = ss.getSheetByName("Projetos");
+  const dados = abaProjetos.getDataRange().getValues();
   
   let limiteInicio = parseInt(inicioISO.replace(/-/g, ""));
   let limiteFim = parseInt(fimISO.replace(/-/g, ""));
 
   let relatorio = [];
   for(let i = 1; i < dados.length; i++) {
-    let dataRaw = dados[i][2];
+    let dataRaw = dados[i][0]; // Coluna A
     let vencNum = 0;
     let dataFormatada = "";
 
-    // Blindagem de leitura de Datas
+    // Tratamento robusto para leitura de datas
     if (dataRaw instanceof Date) {
       vencNum = parseInt(Utilities.formatDate(dataRaw, "America/Sao_Paulo", "yyyyMMdd"));
       dataFormatada = Utilities.formatDate(dataRaw, "America/Sao_Paulo", "dd/MM/yyyy");
@@ -1277,10 +1285,10 @@ function obterDadosRelatorioVendasPeriodo(inicioISO, fimISO) {
 
     if(vencNum >= limiteInicio && vencNum <= limiteFim) {
       relatorio.push({
-        idVenda: dados[i][0],
-        cliente: dados[i][1],
+        idVenda: "V-" + (i + 1),
+        cliente: String(dados[i][1]), // Coluna B
         data: dataFormatada,
-        valor: parseFloat(dados[i][3]) || 0
+        valor: parseFloat(dados[i][2]) || 0 // Coluna C
       });
     }
   }
