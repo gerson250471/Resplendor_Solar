@@ -1,6 +1,6 @@
 {
   "name": "Controle_Financeiro",
-  "version": "1.19.03",
+  "version": "1.20.0",
   "description": "Controle dos pagamentos realizados pelos clientes",
   "main": "codigo,js",
   "author": "Gerson Bernardo",

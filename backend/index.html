@@ -164,7 +164,7 @@
       <div class="p-6">
         <h1 class="text-xl font-bold text-blue-400">MAJB CRM</h1>
         <!-- VERSÃO DO SISTEMA -->
-        <p class="text-xs text-slate-500 mt-1">V 1.19.03 Modular</p>
+        <p class="text-xs text-slate-500 mt-1">V 1.20.0 Modular</p>
       </div>
       <nav class="flex-1 px-4 space-y-1">
         <button
@@ -2191,6 +2191,129 @@
           })
           .obterDadosRelatorioVendasPeriodo(inicio, fim);
       };
+
+      window.gerarRelatorioCliente = function () {
+        const nomeCliente = document
+          .getElementById("filtro-cliente-relatorio")
+          .value.trim();
+        if (!nomeCliente) {
+          mostrarToast("Por favor, digite ou selecione um cliente.", "erro");
+          return;
+        }
+
+        mostrarToast("Buscando histórico do cliente...", "info");
+
+        google.script.run
+          .withSuccessHandler((res) => {
+            if (res.sucesso) {
+              if (res.dados.length > 0) {
+                imprimirExtratoCliente(res.dados, nomeCliente);
+              } else {
+                mostrarToast(
+                  "Nenhum histórico financeiro encontrado para este cliente.",
+                  "erro",
+                );
+              }
+            } else {
+              mostrarToast("Erro: " + res.mensagem, "erro");
+            }
+          })
+          .withFailureHandler((err) => {
+            mostrarToast("Erro de comunicação: " + err.message, "erro");
+          })
+          .obterRelatorioPagamentosCliente(nomeCliente);
+      };
+
+      function imprimirExtratoCliente(dados, nomeCliente) {
+        const janelaPdf = window.open("", "_blank");
+        const dataGeracao = new Date().toLocaleString("pt-BR");
+
+        let totalPago = 0;
+        let totalPendente = 0;
+
+        let htmlString = `
+          <html>
+            <head>
+              <title>Extrato do Cliente - ${nomeCliente}</title>
+              <style>
+                body { font-family: Arial, sans-serif; padding: 20px; }
+                .header { border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 20px; }
+                .data-geracao { font-size: 11px; color: #666; margin-top: -10px; margin-bottom: 15px; }
+                table { width: 100%; border-collapse: collapse; margin-bottom: 20px;}
+                th { background: #0f172a; color: white; padding: 10px; text-align: left; font-size: 12px; }
+                td { padding: 8px; border-bottom: 1px solid #eee; font-size: 11px; }
+                .text-right { text-align: right; }
+                .text-center { text-align: center; }
+                .status-pago { color: #059669; font-weight: bold; }
+                .status-aberto { color: #dc2626; font-weight: bold; }
+                .resumo-box { display: flex; justify-content: flex-end; gap: 20px; font-size: 14px; font-weight: bold; margin-top: 20px;}
+                .resumo-item { padding: 10px 15px; border-radius: 8px; border: 1px solid #e2e8f0; }
+                .bg-pago { background-color: #ecfdf5; color: #059669; border-color: #a7f3d0;}
+                .bg-aberto { background-color: #fef2f2; color: #dc2626; border-color: #fecaca;}
+              </style>
+            </head>
+            <body>
+              <div class="header">
+                <h1>Comprovante de Pagamentos / Extrato</h1>
+                <h2>Cliente: <span style="text-transform: uppercase; color: #3b82f6;">${nomeCliente}</span></h2>
+                <p>MAJB SISTEMAS - Resplendor Solar</p>
+              </div>
+              <div class="data-geracao">Relatório gerado em: ${dataGeracao}</div>
+              
+              <table>
+                <thead>
+                  <tr>
+                    <th>Venda</th>
+                    <th class="text-center">Parcela</th>
+                    <th class="text-center">Vencimento</th>
+                    <th class="text-center">Data Pgto</th>
+                    <th>Status</th>
+                    <th class="text-right">Valor</th>
+                  </tr>
+                </thead>
+                <tbody>
+          `;
+
+        dados.forEach((item) => {
+          let isPago = item.status === "PAGO";
+          if (isPago) {
+            totalPago += item.valor;
+          } else {
+            totalPendente += item.valor;
+          }
+
+          let classeStatus = isPago ? "status-pago" : "status-aberto";
+
+          htmlString += `
+            <tr>
+              <td>${item.idVenda}</td>
+              <td class="text-center">${item.parcela}º</td>
+              <td class="text-center">${item.vencimento}</td>
+              <td class="text-center">${item.pagamento}</td>
+              <td class="${classeStatus}">${item.status}</td>
+              <td class="text-right">R$ ${parseFloat(item.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
+            </tr>
+          `;
+        });
+
+        htmlString += `
+                </tbody>
+              </table>
+              
+              <div class="resumo-box">
+                 <div class="resumo-item bg-aberto">Total Pendente: R$ ${totalPendente.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
+                 <div class="resumo-item bg-pago">Total Pago: R$ ${totalPago.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
+              </div>
+            </body>
+          </html>
+          `;
+
+        janelaPdf.document.write(htmlString);
+        janelaPdf.document.close();
+        setTimeout(() => {
+          janelaPdf.print();
+        }, 500);
+      }
 
       // Gerador Universal de PDF para evitar repetição de código
       function imprimirRelatorioUniversal(dados, titulo, nomeColunaValor) {

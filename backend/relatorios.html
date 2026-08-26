@@ -128,6 +128,47 @@
             </div>
           </div>
         </div>
+        <!-- NOVO: EXTRATO DO CLIENTE -->
+        <div
+          class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col hover:shadow-md transition-all border-l-4 border-l-orange-500"
+        >
+          <div class="flex-1">
+            <div
+              class="w-12 h-12 bg-orange-50 rounded-lg flex items-center justify-center mb-4"
+            >
+              <i data-lucide="user-check" class="w-6 h-6 text-orange-600"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-800 mb-2">
+              Extrato do Cliente
+            </h3>
+            <p class="text-sm text-slate-500 mb-4">
+              Gere um comprovante de pagamentos e saldos pendentes para um
+              cliente específico.
+            </p>
+
+            <div class="mb-6">
+              <label
+                class="text-xs font-bold text-slate-400 uppercase mb-1 block"
+                >Buscar Cliente</label
+              >
+              <input
+                type="text"
+                id="filtro-cliente-relatorio"
+                list="clientes-list"
+                autocomplete="off"
+                class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-sm text-slate-700 font-bold uppercase focus:ring-2 focus:ring-orange-500 outline-none"
+                placeholder="Digite o nome do cliente..."
+              />
+            </div>
+          </div>
+
+          <button
+            onclick="gerarRelatorioCliente()"
+            class="w-full bg-orange-500 text-white font-bold py-2.5 px-4 rounded-lg hover:bg-orange-600 transition-colors flex items-center justify-center gap-2"
+          >
+            <i data-lucide="printer" class="w-4 h-4"></i> Imprimir Extrato
+          </button>
+        </div>
 
         <button
           onclick="gerarRelatorioVendasPeriodo()"

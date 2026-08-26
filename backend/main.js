@@ -1313,3 +1313,59 @@ function obterDadosRelatorioVendasPeriodo(inicioISO, fimISO) {
   }
   return { sucesso: true, dados: relatorio };
 }
+
+function obterRelatorioPagamentosCliente(nomeClienteBusca) {
+  try {
+    const ss = SpreadsheetApp.openById(getSpreadsheetId());
+    const abaVendas = ss.getSheetByName("Vendas");
+    const abaParcelas = ss.getSheetByName("Parcelas");
+
+    const dadosVendas = abaVendas.getDataRange().getValues();
+    const dadosParcelas = abaParcelas.getDataRange().getValues();
+
+    // 1. Encontrar todos os IDs de Venda desse cliente
+    const idsDoCliente = [];
+    const nomeUpper = String(nomeClienteBusca).toUpperCase().trim();
+
+    for (let v = 1; v < dadosVendas.length; v++) {
+      let nomeNaPlanilha = String(dadosVendas[v][1]).toUpperCase().trim();
+      if (nomeNaPlanilha === nomeUpper) {
+        idsDoCliente.push(String(dadosVendas[v][0]).trim());
+      }
+    }
+
+    if (idsDoCliente.length === 0) {
+      return { sucesso: true, dados: [], mensagem: "Nenhuma venda encontrada para este cliente." };
+    }
+
+    // 2. Buscar as parcelas vinculadas a esses IDs
+    let relatorio = [];
+    for (let p = 1; p < dadosParcelas.length; p++) {
+      let idVendaFk = String(dadosParcelas[p][0]).trim();
+
+      if (idsDoCliente.includes(idVendaFk)) {
+        let numParcela = dadosParcelas[p][1];
+        let vencRaw = dadosParcelas[p][2];
+        let valor = parseFloat(dadosParcelas[p][3]) || 0;
+        let pgtoRaw = dadosParcelas[p][4];
+        let status = String(dadosParcelas[p][5]).toUpperCase().trim();
+
+        let vencSeguro = (vencRaw instanceof Date) ? Utilities.formatDate(vencRaw, "America/Sao_Paulo", "dd/MM/yyyy") : String(vencRaw);
+        let pgtoSeguro = (pgtoRaw instanceof Date) ? Utilities.formatDate(pgtoRaw, "America/Sao_Paulo", "dd/MM/yyyy") : String(pgtoRaw || "---");
+
+        relatorio.push({
+          idVenda: idVendaFk,
+          parcela: numParcela,
+          vencimento: vencSeguro,
+          pagamento: status === "PAGO" ? pgtoSeguro : "---",
+          valor: valor,
+          status: status
+        });
+      }
+    }
+
+    return { sucesso: true, dados: relatorio };
+  } catch (e) {
+    return { sucesso: false, mensagem: e.message };
+  }
+}
