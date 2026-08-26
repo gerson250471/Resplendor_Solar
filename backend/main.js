@@ -247,7 +247,7 @@ function getResumoFinanceiro() {
 
     const ss = SpreadsheetApp.openById(getSpreadsheetId());
     const abaParcelas = ss.getSheetByName("Parcelas");
-    const abaVendas = ss.getSheetByName("Vendas");
+    const abaProjetos = ss.getSheetByName("Projetos"); // <-- AGORA LÊ OS PROJETOS
 
     const hoje = new Date();
     const mesAtual = hoje.getMonth();
@@ -257,28 +257,27 @@ function getResumoFinanceiro() {
     const pagasMes = new Array(12).fill(0);
     const receberMes = new Array(12).fill(0);
 
-    // Contagem de Vendas do Mês Atual
-    if (abaVendas) {
-      const dv = abaVendas.getDataRange().getValues();
-      for (let i = 1; i < dv.length; i++) {
-        let d = new Date(dv[i][2]);
+    // 1. Contagem de Vendas do Mês Atual (Lendo do Livro de Projetos)
+    if (abaProjetos) {
+      const dpj = abaProjetos.getDataRange().getValues();
+      for (let i = 1; i < dpj.length; i++) {
+        let d = new Date(dpj[i][0]); // Coluna A (Data)
         if (!isNaN(d.getTime()) && d.getMonth() === mesAtual && d.getFullYear() === anoAtual) {
           vendasMes++;
         }
       }
     }
 
-    // Soma das Parcelas
+    // 2. Soma das Parcelas e Financeiro (Mantém blindado lendo das Parcelas)
     if (abaParcelas) {
       const dp = abaParcelas.getDataRange().getValues();
       for (let i = 1; i < dp.length; i++) {
-        const dataVencimento = new Date(dp[i][2]); // Coluna C (Vencimento)
-        const val = parseFloat(dp[i][3]) || 0;     // Coluna D (Valor)
-        const dataPagamentoRaw = dp[i][4];         // Coluna E (NOVO: Pago em - Índice 4)
-        const status = (dp[i][5] || "").toString().toUpperCase().trim(); // Coluna F (Status - Índice 5)
+        const dataVencimento = new Date(dp[i][2]); 
+        const val = parseFloat(dp[i][3]) || 0;     
+        const dataPagamentoRaw = dp[i][4];         
+        const status = (dp[i][5] || "").toString().toUpperCase().trim(); 
 
         if (status === "PAGO") {
-          // Usa a data do pagamento real, se não houver, cai para o vencimento
           let dataPagamento = new Date(dataPagamentoRaw);
           if (isNaN(dataPagamento.getTime())) dataPagamento = dataVencimento;
 
@@ -300,7 +299,6 @@ function getResumoFinanceiro() {
       }
     }
 
-    // Configuração dos Gráficos
     const meses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
     const gPagas = [["Mês", "R$ Recebido", { role: 'style' }]];
     const gRec = [["Mês", "R$ A Receber", { role: 'style' }]];
@@ -1248,8 +1246,8 @@ function obterRelatorioSaldoTotal() {
 
 function obterRelatorioVendasMesAtual() {
   const ss = SpreadsheetApp.openById(getSpreadsheetId());
-  const abaVendas = ss.getSheetByName("Vendas");
-  const dados = abaVendas.getDataRange().getValues();
+  const abaProjetos = ss.getSheetByName("Projetos"); // <-- MUDANÇA AQUI
+  const dados = abaProjetos.getDataRange().getValues();
 
   const hoje = new Date();
   const mesAtual = hoje.getMonth();
@@ -1257,33 +1255,33 @@ function obterRelatorioVendasMesAtual() {
 
   let relatorio = [];
   for (let i = 1; i < dados.length; i++) {
-    let dataRaw = dados[i][2]; // Coluna C (Data)
+    let dataRaw = dados[i][0]; // Coluna A (Data) no Projetos
     let d = new Date(dataRaw);
 
     if (!isNaN(d.getTime()) && d.getMonth() === mesAtual && d.getFullYear() === anoAtual) {
       relatorio.push({
-        idVenda: dados[i][0],
-        cliente: dados[i][1],
+        idVenda: "PROJ-" + (i + 1), // Identificador visual
+        cliente: String(dados[i][1]).trim(), // Coluna B (Cliente)
         data: Utilities.formatDate(d, "America/Sao_Paulo", "dd/MM/yyyy"),
-        valor: parseFloat(dados[i][3]) || 0 // Coluna D (Valor Total)
+        valor: parseFloat(dados[i][2]) || 0 // Coluna C (Valor Total Contrato)
       });
     }
   }
-  relatorio.reverse();
+  relatorio.reverse(); // Mostra as mais recentes primeiro
   return { sucesso: true, dados: relatorio };
 }
 
 function obterDadosRelatorioVendasPeriodo(inicioISO, fimISO) {
   const ss = SpreadsheetApp.openById(getSpreadsheetId());
-  const abaVendas = ss.getSheetByName("Vendas");
-  const dados = abaVendas.getDataRange().getValues();
+  const abaProjetos = ss.getSheetByName("Projetos"); // <-- MUDANÇA AQUI
+  const dados = abaProjetos.getDataRange().getValues();
 
   let limiteInicio = parseInt(inicioISO.replace(/-/g, ""));
   let limiteFim = parseInt(fimISO.replace(/-/g, ""));
 
   let relatorio = [];
   for(let i = 1; i < dados.length; i++) {
-    let dataRaw = dados[i][2]; // Coluna C (Data)
+    let dataRaw = dados[i][0]; // Coluna A (Data) no Projetos
     let vencNum = 0;
     let dataFormatada = "";
 
@@ -1306,10 +1304,10 @@ function obterDadosRelatorioVendasPeriodo(inicioISO, fimISO) {
 
     if(vencNum >= limiteInicio && vencNum <= limiteFim) {
       relatorio.push({
-        idVenda: dados[i][0],
-        cliente: String(dados[i][1]),
+        idVenda: "PROJ-" + (i + 1),
+        cliente: String(dados[i][1]).trim(), // Coluna B (Cliente)
         data: dataFormatada,
-        valor: parseFloat(dados[i][3]) || 0 // Coluna D (Valor Total)
+        valor: parseFloat(dados[i][2]) || 0 // Coluna C (Valor Total)
       });
     }
   }
