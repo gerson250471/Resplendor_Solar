@@ -130,10 +130,10 @@
         </div>
 
         <button
-          onclick="gerarRelatorioCliente()"
-          class="w-full bg-orange-500 text-white font-bold py-2.5 px-4 rounded-lg hover:bg-orange-600 transition-colors flex items-center justify-center gap-2"
+          onclick="gerarRelatorioVendasPeriodo()"
+          class="w-full bg-purple-600 text-white font-bold py-2.5 px-4 rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"
         >
-          <i data-lucide="printer" class="w-4 h-4"></i> Imprimir Extrato
+          <i data-lucide="download" class="w-4 h-4"></i> Gerar PDF Vendas
         </button>
       </div>
 
@@ -169,11 +169,12 @@
             />
           </div>
         </div>
+        <!--  -->
         <button
-          onclick="gerarRelatorioVendasPeriodo()"
-          class="w-full bg-purple-600 text-white font-bold py-2.5 px-4 rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"
+          onclick="gerarRelatorioCliente()"
+          class="w-full bg-orange-500 text-white font-bold py-2.5 px-4 rounded-lg hover:bg-orange-600 transition-colors flex items-center justify-center gap-2"
         >
-          <i data-lucide="download" class="w-4 h-4"></i> Gerar PDF Vendas
+          <i data-lucide="printer" class="w-4 h-4"></i> Imprimir Extrato
         </button>
       </div>
     </div>
