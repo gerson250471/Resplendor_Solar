@@ -633,6 +633,7 @@
         if (tela === "projetos") {
           carregarListaProjetos();
           carregarParametrosProjetos();
+          carregarListaClientes(); // <-- ADICIONE ESTA LINHA AQUI
         }
         // Tela de Parametros
         if (tela === "parametros") carregarTelaParametros();
@@ -1704,6 +1705,25 @@
       };
 
       window.salvarNovoProjeto = function () {
+        const clienteDigitado = document
+          .getElementById("proj-cliente")
+          .value.trim();
+
+        // --- NOVA TRAVA DE INTEGRIDADE RELACIONAL ---
+        if (clienteDigitado !== "") {
+          const clienteExiste = clientesGlobais.some(
+            (c) => c.nome.toUpperCase() === clienteDigitado.toUpperCase(),
+          );
+
+          if (!clienteExiste) {
+            mostrarToast(
+              "Atenção: Este cliente não está cadastrado no sistema. Cadastre-o primeiro.",
+              "erro",
+            );
+            return; // Aborta a gravação da venda
+          }
+        }
+        // --------------------------------------------
         const obj = {
           linha: document.getElementById("proj-linha").value,
           data: document.getElementById("proj-data").value,
