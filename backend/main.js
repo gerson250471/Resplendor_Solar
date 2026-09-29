@@ -1065,11 +1065,16 @@ function recuperarSenhaEmail(login) {
 function obterPastaAnexosKanban() {
   const nomePasta = "MAJB_CRM_Anexos_Kanban";
   const pastas = DriveApp.getFoldersByName(nomePasta);
+  let pasta;
   if (pastas.hasNext()) {
-    return pastas.next();
+    pasta = pastas.next();
   } else {
-    return DriveApp.createFolder(nomePasta);
+    pasta = DriveApp.createFolder(nomePasta);
   }
+  
+  // Libera visualização via link para não pedir login da conta Google
+  pasta.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  return pasta;
 }
 
 function obterTarefas() {
@@ -1157,6 +1162,9 @@ function salvarTarefaNoServidor(obj) {
       const bytes = Utilities.base64Decode(obj.arquivo.base64);
       const blob = Utilities.newBlob(bytes, obj.arquivo.mimeType, obj.arquivo.nome);
       const file = pasta.createFile(blob);
+      
+      // Libera a visualização direta do documento sem exigir login
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
       
       novoAnexo = {
         id: file.getId(),
