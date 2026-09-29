@@ -1,7 +1,7 @@
 {
   "name": "Controle_Financeiro",
-  "version": "1.20.0",
-  "description": "Controle dos pagamentos realizados pelos clientes",
+  "version": "1.21.0",
+  "description": "CRM Gestão da Empresa",
   "main": "codigo,js",
   "author": "Gerson Bernardo",
   "license": "MIT"
