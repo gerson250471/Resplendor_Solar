@@ -3,7 +3,7 @@
     <div>
       <h2 class="text-2xl font-bold text-slate-800">Quadro de Processos</h2>
       <p class="text-slate-500 text-sm">
-        Arraste os cartões para avançar as etapas.
+        Arraste os cartões para avançar as etapas e arquive documentos.
       </p>
     </div>
     <div class="flex gap-2">
@@ -28,6 +28,7 @@
   ></div>
 </section>
 
+<!-- MODAL DE GERENCIAR COLUNAS -->
 <div
   id="modal-status"
   class="fixed inset-0 bg-slate-900/80 hidden z-[10005] flex items-center justify-center backdrop-blur-sm p-4"
@@ -68,17 +69,23 @@
   </div>
 </div>
 
+<!-- MODAL DO CARTÃO (COM UPLOAD DE DOCUMENTOS) -->
 <div
   id="modal-tarefa"
   class="fixed inset-0 bg-slate-900/80 hidden z-[10005] flex items-center justify-center backdrop-blur-sm p-4"
 >
-  <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-md relative">
-    <h3 id="titulo-modal-tarefa" class="text-xl font-bold text-slate-800 mb-4">
+  <div
+    class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-lg relative max-h-[90vh] flex flex-col"
+  >
+    <h3
+      id="titulo-modal-tarefa"
+      class="text-xl font-bold text-slate-800 mb-4 shrink-0"
+    >
       Novo Cartão
     </h3>
     <input type="hidden" id="tar-linha" />
 
-    <div class="space-y-4">
+    <div class="space-y-4 overflow-y-auto pr-1 flex-1">
       <div>
         <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
           >Título / Processo</label
@@ -96,15 +103,41 @@
         >
         <textarea
           id="tar-descricao"
-          rows="4"
+          rows="3"
           class="input-field resize-none text-sm"
           placeholder="Anotações, links, ou detalhes do processo..."
         ></textarea>
       </div>
+
+      <!-- LISTA DE DOCUMENTOS JÁ ARQUIVADOS -->
+      <div id="box-anexos-existentes" class="hidden">
+        <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
+          >Documentos Arquivados</label
+        >
+        <div
+          id="lista-anexos-tarefa"
+          class="space-y-2 bg-slate-50 p-3 rounded-lg border border-slate-200"
+        ></div>
+      </div>
+
+      <!-- CAMPO PARA ANEXAR NOVO DOCUMENTO -->
+      <div>
+        <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
+          >Arquivar Novo Documento (Opcional)</label
+        >
+        <input
+          type="file"
+          id="tar-arquivo"
+          class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-slate-200 rounded-lg p-1.5 cursor-pointer"
+        />
+        <p class="text-[11px] text-slate-400 mt-1">
+          O documento será salvo no Google Drive e vinculado a este cartão.
+        </p>
+      </div>
     </div>
 
     <div
-      class="flex justify-between items-center mt-6 pt-4 border-t border-slate-100"
+      class="flex justify-between items-center mt-6 pt-4 border-t border-slate-100 shrink-0"
     >
       <button
         id="btn-excluir-tarefa"
@@ -123,6 +156,7 @@
           Cancelar
         </button>
         <button
+          id="btn-salvar-tarefa"
           onclick="salvarTarefa()"
           class="bg-blue-600 px-4 py-2 rounded-lg font-bold text-white shadow-md hover:bg-blue-700"
         >
@@ -135,7 +169,7 @@
 
 <script>
   let tarefasGlobais = [];
-  let colunasGlobais = []; // Guarda os status dinâmicos do banco
+  let colunasGlobais = [];
 
   function carregarQuadroKanban() {
     mostrarToast("Carregando quadro...", "info");
@@ -166,7 +200,6 @@
     colunasGlobais.forEach((colNome, index) => {
       const qtd = tarefasGlobais.filter((t) => t.status === colNome).length;
 
-      // Lógica visual: Primeira coluna (Cinza), Meio (Azul), Última (Verde)
       let corBg = "bg-blue-50 border-blue-100";
       let corHeader = "bg-blue-100/50 border-blue-100 text-blue-800";
       let corBadge = "bg-blue-200 text-blue-800";
@@ -194,7 +227,7 @@
       container.appendChild(colDiv);
     });
 
-    // 2. GERA OS CARTÕES E COLOCA NA COLUNA CERTA
+    // 2. GERA OS CARTÕES E EXIBE INDICADOR DE DOCUMENTOS ANEXADOS
     tarefasGlobais.forEach((t) => {
       const card = document.createElement("div");
       card.className =
@@ -203,17 +236,26 @@
       card.id = "card-" + t.linha;
       card.ondragstart = (e) => dragStart(e, t.linha);
 
+      const qtdAnexos = t.anexos ? t.anexos.length : 0;
+      const badgeAnexos =
+        qtdAnexos > 0
+          ? `<span onclick="editarTarefa(${t.linha})" class="bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 cursor-pointer hover:bg-blue-100" title="Ver documentos arquivados">
+             <i data-lucide="paperclip" class="w-3 h-3"></i> ${qtdAnexos} doc(s)
+           </span>`
+          : "";
+
       card.innerHTML = `
         <div class="flex justify-between items-start mb-2">
           <span class="text-[10px] font-mono text-slate-400 font-bold">${t.id}</span>
-          <button onclick="editarTarefa(${t.linha})" class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-blue-600 transition-opacity">
+          <button onclick="editarTarefa(${t.linha})" class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-blue-600 transition-opacity" title="Abrir / Anexar">
             <i data-lucide="edit-2" class="w-4 h-4"></i>
           </button>
         </div>
         <h4 class="text-sm font-bold text-slate-800 mb-1 leading-tight">${t.titulo}</h4>
         ${t.descricao ? `<p class="text-xs text-slate-500 line-clamp-2">${t.descricao}</p>` : ""}
-        <div class="mt-3 text-[10px] text-slate-400 font-medium flex items-center gap-1">
-          <i data-lucide="calendar" class="w-3 h-3"></i> ${t.data}
+        <div class="mt-3 pt-2 border-t border-slate-50 flex items-center justify-between text-[10px] text-slate-400 font-medium">
+          <span class="flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i> ${t.data}</span>
+          ${badgeAnexos}
         </div>
       `;
 
@@ -303,16 +345,18 @@
       );
       if (t) t.status = novoStatus;
 
-      renderizarQuadro(); // Atualiza a contagem dos números
+      renderizarQuadro();
       google.script.run.atualizarStatusTarefa(linha, novoStatus);
     }
   }
 
-  // --- FUNÇÕES DE TAREFAS ---
+  // --- FUNÇÕES DE TAREFAS E DOCUMENTOS ---
   function abrirModalTarefa() {
     document.getElementById("tar-linha").value = "";
     document.getElementById("tar-titulo").value = "";
     document.getElementById("tar-descricao").value = "";
+    document.getElementById("tar-arquivo").value = "";
+    document.getElementById("box-anexos-existentes").classList.add("hidden");
     document.getElementById("titulo-modal-tarefa").innerText = "Novo Cartão";
     document.getElementById("btn-excluir-tarefa").classList.add("hidden");
     document.getElementById("modal-tarefa").classList.remove("hidden");
@@ -325,9 +369,60 @@
     document.getElementById("tar-linha").value = t.linha;
     document.getElementById("tar-titulo").value = t.titulo;
     document.getElementById("tar-descricao").value = t.descricao;
+    document.getElementById("tar-arquivo").value = "";
     document.getElementById("titulo-modal-tarefa").innerText = "Editar Cartão";
     document.getElementById("btn-excluir-tarefa").classList.remove("hidden");
+
+    renderizarAnexosModal(t.linha, t.anexos || []);
+
     document.getElementById("modal-tarefa").classList.remove("hidden");
+  }
+
+  function renderizarAnexosModal(linha, anexos) {
+    const box = document.getElementById("box-anexos-existentes");
+    const lista = document.getElementById("lista-anexos-tarefa");
+    lista.innerHTML = "";
+
+    if (!anexos || anexos.length === 0) {
+      box.classList.add("hidden");
+      return;
+    }
+
+    box.classList.remove("hidden");
+    anexos.forEach((arq, idx) => {
+      const item = document.createElement("div");
+      item.className =
+        "flex items-center justify-between bg-white p-2 rounded border border-slate-200 text-xs";
+      item.innerHTML = `
+        <a href="${arq.url}" target="_blank" class="flex items-center gap-2 text-blue-600 hover:underline font-bold truncate max-w-[80%]">
+          <i data-lucide="file-text" class="w-4 h-4 shrink-0"></i>
+          <span class="truncate">${arq.nome}</span>
+        </a>
+        <button onclick="removerAnexo(${linha}, ${idx})" class="text-slate-400 hover:text-red-600 p-1" title="Remover documento">
+          <i data-lucide="trash" class="w-3.5 h-3.5"></i>
+        </button>
+      `;
+      lista.appendChild(item);
+    });
+    lucide.createIcons();
+  }
+
+  function removerAnexo(linha, idx) {
+    if (!confirm("Remover este documento do cartão?")) return;
+    mostrarToast("Removendo documento...", "info");
+    google.script.run
+      .withSuccessHandler((res) => {
+        if (res.sucesso) {
+          const t = tarefasGlobais.find((x) => x.linha === linha);
+          if (t) t.anexos = res.anexos;
+          renderizarAnexosModal(linha, res.anexos);
+          renderizarQuadro();
+          mostrarToast("Documento removido!", "sucesso");
+        } else {
+          mostrarToast("Erro: " + res.mensagem, "erro");
+        }
+      })
+      .removerAnexoTarefaBackend(linha, idx);
   }
 
   function fecharModalTarefa() {
@@ -335,24 +430,63 @@
   }
 
   function salvarTarefa() {
-    const obj = {
-      linha: document.getElementById("tar-linha").value,
-      titulo: document.getElementById("tar-titulo").value.trim(),
-      descricao: document.getElementById("tar-descricao").value.trim(),
-    };
-
-    if (!obj.titulo) {
+    const titulo = document.getElementById("tar-titulo").value.trim();
+    if (!titulo) {
       mostrarToast("O título do cartão é obrigatório.", "erro");
       return;
     }
 
-    fecharModalTarefa();
-    mostrarToast("Salvando cartão...", "info");
+    const inputArquivo = document.getElementById("tar-arquivo");
+    const file = inputArquivo.files[0];
 
+    const obj = {
+      linha: document.getElementById("tar-linha").value,
+      titulo: titulo,
+      descricao: document.getElementById("tar-descricao").value.trim(),
+      arquivo: null,
+    };
+
+    const btn = document.getElementById("btn-salvar-tarefa");
+    btn.disabled = true;
+    btn.innerText = "Processando...";
+
+    // Se houver arquivo selecionado, converte para Base64 antes de enviar
+    if (file) {
+      mostrarToast("Enviando documento para o Google Drive...", "info");
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const base64String = e.target.result.split(",")[1];
+        obj.arquivo = {
+          nome: file.name,
+          mimeType: file.type || "application/octet-stream",
+          base64: base64String,
+        };
+        dispararSalvamentoTarefa(obj, btn);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      mostrarToast("Salvando cartão...", "info");
+      dispararSalvamentoTarefa(obj, btn);
+    }
+  }
+
+  function dispararSalvamentoTarefa(obj, btn) {
     google.script.run
       .withSuccessHandler((res) => {
-        if (res.sucesso) carregarQuadroKanban();
-        else mostrarToast(res.mensagem, "erro");
+        btn.disabled = false;
+        btn.innerText = "Salvar Cartão";
+        fecharModalTarefa();
+        if (res.sucesso) {
+          carregarQuadroKanban();
+          mostrarToast("Cartão salvo com sucesso!", "sucesso");
+        } else {
+          mostrarToast("Erro: " + res.mensagem, "erro");
+        }
+      })
+      .withFailureHandler((err) => {
+        btn.disabled = false;
+        btn.innerText = "Salvar Cartão";
+        mostrarToast("Erro no upload: " + err.message, "erro");
       })
       .salvarTarefaNoServidor(obj);
   }

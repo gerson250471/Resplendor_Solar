@@ -1057,17 +1057,28 @@ function recuperarSenhaEmail(login) {
 
 /**
  * ============================================================================
- * MÓDULO KANBAN / TRELLO (GESTÃO DE TAREFAS)
+ * MÓDULO KANBAN / TRELLO (COM GESTÃO DE DOCUMENTOS NO GOOGLE DRIVE)
  * ============================================================================
  */
+
+// Cria ou busca a pasta oficial de anexos no Google Drive automaticamente
+function obterPastaAnexosKanban() {
+  const nomePasta = "MAJB_CRM_Anexos_Kanban";
+  const pastas = DriveApp.getFoldersByName(nomePasta);
+  if (pastas.hasNext()) {
+    return pastas.next();
+  } else {
+    return DriveApp.createFolder(nomePasta);
+  }
+}
 
 function obterTarefas() {
   try {
     const ss = SpreadsheetApp.openById(getSpreadsheetId());
     
-    // 1. GERENCIAMENTO DINÂMICO DE STATUS (Cria a aba sozinha se não existir)
+    // 1. GERENCIAMENTO DINÂMICO DE STATUS
     let abaStatus = ss.getSheetByName("StatusTarefas");
-    let colunasKanban = ["A FAZER", "EM ANDAMENTO", "CONCLUÍDO"]; // Padrão
+    let colunasKanban = ["A FAZER", "EM ANDAMENTO", "CONCLUÍDO"];
     
     if (!abaStatus) {
       abaStatus = ss.insertSheet("StatusTarefas");
@@ -1085,7 +1096,7 @@ function obterTarefas() {
       }
     }
 
-    // 2. BUSCA AS TAREFAS
+    // 2. BUSCA AS TAREFAS E OS ANEXOS (Coluna F / Índice 5)
     const abaTarefas = ss.getSheetByName("Tarefas");
     if (!abaTarefas) return { sucesso: false, mensagem: "Aba 'Tarefas' não encontrada." };
 
@@ -1102,9 +1113,18 @@ function obterTarefas() {
         }
       }
 
-      // Se a tarefa tiver um status apagado, ela cai na primeira coluna automaticamente
       let statusAtual = String(r[3] || colunasKanban[0]).toUpperCase().trim();
-      if(!colunasKanban.includes(statusAtual)) statusAtual = colunasKanban[0];
+      if (!colunasKanban.includes(statusAtual)) statusAtual = colunasKanban[0];
+
+      // Lê a lista de documentos salvos na Coluna F (em formato JSON)
+      let listaAnexos = [];
+      if (r[5]) {
+        try {
+          listaAnexos = JSON.parse(r[5]);
+        } catch (err) {
+          listaAnexos = [];
+        }
+      }
 
       return {
         linha: index + 2,
@@ -1112,12 +1132,87 @@ function obterTarefas() {
         titulo: r[1],
         descricao: r[2],
         status: statusAtual,
-        data: dataSegura
+        data: dataSegura,
+        anexos: listaAnexos
       };
     });
 
-    // Envia para a tela as Tarefas E as Colunas juntas!
     return { sucesso: true, dados: lista, colunas: colunasKanban };
+  } catch (e) {
+    return { sucesso: false, mensagem: e.message };
+  }
+}
+
+function salvarTarefaNoServidor(obj) {
+  try {
+    const ss = SpreadsheetApp.openById(getSpreadsheetId());
+    const aba = ss.getSheetByName("Tarefas");
+    const dataHoje = new Date().toLocaleDateString('pt-BR');
+    const idUnico = "TK-" + new Date().getTime().toString().slice(-6);
+
+    // Se o usuário enviou um arquivo novo, faz o upload para o Google Drive
+    let novoAnexo = null;
+    if (obj.arquivo && obj.arquivo.base64) {
+      const pasta = obterPastaAnexosKanban();
+      const bytes = Utilities.base64Decode(obj.arquivo.base64);
+      const blob = Utilities.newBlob(bytes, obj.arquivo.mimeType, obj.arquivo.nome);
+      const file = pasta.createFile(blob);
+      
+      novoAnexo = {
+        id: file.getId(),
+        nome: obj.arquivo.nome,
+        url: file.getUrl(),
+        data: dataHoje
+      };
+    }
+
+    if (obj.linha) {
+      // Editando cartão existente
+      aba.getRange(obj.linha, 2).setValue(obj.titulo);
+      aba.getRange(obj.linha, 3).setValue(obj.descricao);
+
+      if (novoAnexo) {
+        let anexosAtuais = [];
+        const rawAnexos = aba.getRange(obj.linha, 6).getValue();
+        if (rawAnexos) {
+          try { anexosAtuais = JSON.parse(rawAnexos); } catch (e) { anexosAtuais = []; }
+        }
+        anexosAtuais.push(novoAnexo);
+        aba.getRange(obj.linha, 6).setValue(JSON.stringify(anexosAtuais));
+      }
+    } else {
+      // Criando novo cartão
+      let primeiroStatus = "A FAZER";
+      const abaStatus = ss.getSheetByName("StatusTarefas");
+      if (abaStatus && abaStatus.getLastRow() > 1) {
+        primeiroStatus = String(abaStatus.getRange("A2").getValue()).toUpperCase().trim();
+      }
+      const anexosIniciais = novoAnexo ? JSON.stringify([novoAnexo]) : "";
+      aba.appendRow([idUnico, obj.titulo, obj.descricao, primeiroStatus, dataHoje, anexosIniciais]);
+    }
+    return { sucesso: true };
+  } catch (e) {
+    return { sucesso: false, mensagem: e.message };
+  }
+}
+
+function removerAnexoTarefaBackend(linha, indiceAnexo) {
+  try {
+    const ss = SpreadsheetApp.openById(getSpreadsheetId());
+    const aba = ss.getSheetByName("Tarefas");
+    const rawAnexos = aba.getRange(linha, 6).getValue();
+    if (!rawAnexos) return { sucesso: true };
+
+    let anexosAtuais = JSON.parse(rawAnexos);
+    const removido = anexosAtuais.splice(indiceAnexo, 1)[0];
+
+    // Move o arquivo para a lixeira do Drive por organização
+    if (removido && removido.id) {
+      try { DriveApp.getFileById(removido.id).setTrashed(true); } catch (err) {}
+    }
+
+    aba.getRange(linha, 6).setValue(anexosAtuais.length > 0 ? JSON.stringify(anexosAtuais) : "");
+    return { sucesso: true, anexos: anexosAtuais };
   } catch (e) {
     return { sucesso: false, mensagem: e.message };
   }
@@ -1134,31 +1229,6 @@ function salvarStatusTarefas(listaStatus) {
     listaStatus.forEach(st => {
       if(st.trim() !== "") abaStatus.appendRow([st.toUpperCase().trim()]);
     });
-    return { sucesso: true };
-  } catch (e) {
-    return { sucesso: false, mensagem: e.message };
-  }
-}
-
-function salvarTarefaNoServidor(obj) {
-  try {
-    const ss = SpreadsheetApp.openById(getSpreadsheetId());
-    const aba = ss.getSheetByName("Tarefas");
-    const dataHoje = new Date().toLocaleDateString('pt-BR');
-    const idUnico = "TK-" + new Date().getTime().toString().slice(-6);
-
-    if (obj.linha) {
-      aba.getRange(obj.linha, 2).setValue(obj.titulo);
-      aba.getRange(obj.linha, 3).setValue(obj.descricao);
-    } else {
-      // Busca qual é o primeiro status da lista para colocar o cartão novo lá
-      let primeiroStatus = "A FAZER";
-      const abaStatus = ss.getSheetByName("StatusTarefas");
-      if(abaStatus && abaStatus.getLastRow() > 1) {
-         primeiroStatus = String(abaStatus.getRange("A2").getValue()).toUpperCase().trim();
-      }
-      aba.appendRow([idUnico, obj.titulo, obj.descricao, primeiroStatus, dataHoje]);
-    }
     return { sucesso: true };
   } catch (e) {
     return { sucesso: false, mensagem: e.message };
