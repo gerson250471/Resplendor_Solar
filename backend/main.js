@@ -893,6 +893,7 @@ function obterDadosRelatorioRecebidosMes(inicioISO, fimISO) {
     return { sucesso: false, mensagem: erro.message };
   }
 }
+
 function obterParametrosProjetos() {
   try {
     const ss = SpreadsheetApp.openById(getSpreadsheetId());
@@ -908,12 +909,14 @@ function obterParametrosProjetos() {
       custoDireto: parseFloat(aba.getRange("F17").getValue()) || 0,
       frete: parseFloat(aba.getRange("F19").getValue()) || 0,
       
-      // NOVOS PARÂMETROS DO SIMULADOR
+      // PARÂMETROS DO SIMULADOR E MAQUININHA (6x, 12x, 18x e 21x)
       margemPadrao: parseFloat(aba.getRange("F21").getValue()) || 0,
       taxaPix: parseFloat(aba.getRange("F23").getValue()) || 0,
-      taxaCartao1x: parseFloat(aba.getRange("F25").getValue()) || 0,
+      taxaCartao6x: parseFloat(aba.getRange("F25").getValue()) || 0,
       taxaCartao12x: parseFloat(aba.getRange("F27").getValue()) || 0,
-      taxaFinanciamento: parseFloat(aba.getRange("F29").getValue()) || 0
+      taxaFinanciamento: parseFloat(aba.getRange("F29").getValue()) || 0,
+      taxaCartao18x: parseFloat(aba.getRange("F31").getValue()) || 0,
+      taxaCartao21x: parseFloat(aba.getRange("F33").getValue()) || 0
     };
   } catch (e) {
     return { sucesso: false, mensagem: e.message };
@@ -926,19 +929,21 @@ function salvarParametrosNoServidor(obj) {
     const aba = ss.getSheetByName("ControleVersao");
 
     aba.getRange("F7").setValue(obj.comissao / 100);
-    aba.getRange("F9").setValue(obj.maquininha / 100);
+    aba.getRange("F9").setValue(obj.taxaCartao12x / 100); // Mantém F9 sincronizado por compatibilidade
     aba.getRange("F11").setValue(obj.imposto / 100);
     aba.getRange("F17").setValue(obj.custoDireto / 100);
     aba.getRange("F13").setValue(obj.custoAcima20k);
     aba.getRange("F15").setValue(obj.custoAbaixo20k);
     aba.getRange("F19").setValue(obj.frete);
 
-    // SALVANDO OS NOVOS PARÂMETROS
+    // SALVANDO AS TAXAS DO SIMULADOR E MAQUININHA (6x, 12x, 18x e 21x)
     aba.getRange("F21").setValue(obj.margemPadrao / 100);
     aba.getRange("F23").setValue(obj.taxaPix / 100);
-    aba.getRange("F25").setValue(obj.taxaCartao1x / 100);
+    aba.getRange("F25").setValue(obj.taxaCartao6x / 100);
     aba.getRange("F27").setValue(obj.taxaCartao12x / 100);
     aba.getRange("F29").setValue(obj.taxaFinanciamento / 100);
+    aba.getRange("F31").setValue(obj.taxaCartao18x / 100);
+    aba.getRange("F33").setValue(obj.taxaCartao21x / 100);
 
     return { sucesso: true };
   } catch (e) {

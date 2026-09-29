@@ -1516,9 +1516,9 @@
           parseFloat(document.getElementById("proj-entrada").value) || 0;
 
         const chkComissao = document.getElementById("check-comissao");
-        const chkMaquininha = document.getElementById("check-maquininha");
         const aplicarComissao = chkComissao ? chkComissao.checked : true;
-        const aplicarMaquininha = chkMaquininha ? chkMaquininha.checked : true;
+        const opcaoMaquininha =
+          document.getElementById("select-maquininha")?.value || "0";
 
         // Serviço = Total - Kit
         const servico = total > 0 ? total - kit : 0;
@@ -1538,25 +1538,36 @@
         const campoMaoObra = document.getElementById("proj-mao-obra");
         if (campoMaoObra) campoMaoObra.value = maoDeObra.toFixed(2);
 
-        // Outros Custos (Agora APENAS Frete e Custo Direto, separado da Mão de Obra)
+        // Outros Custos
         const custoDireto = kit * (parametrosProjetos.custoDireto || 0);
         const frete = parametrosProjetos.frete || 0;
         const outros = kit > 0 ? custoDireto + frete : 0;
         document.getElementById("proj-outros").value = outros.toFixed(2);
 
-        // Comissão e Maquininha
+        // Comissão
         const comissao = aplicarComissao
           ? total * parametrosProjetos.comissao
           : 0;
         document.getElementById("proj-comissao").value = comissao.toFixed(2);
 
-        const maquininha = aplicarMaquininha
-          ? total * parametrosProjetos.maquininha
-          : 0;
+        // Maquininha conforme parcelamento escolhido (6x, 12x, 18x, 21x)
+        let maquininha = 0;
+        if (opcaoMaquininha === "6x") {
+          maquininha = total * (parametrosProjetos.taxaCartao6x || 0);
+        } else if (opcaoMaquininha === "12x") {
+          maquininha = total * (parametrosProjetos.taxaCartao12x || 0);
+        } else if (opcaoMaquininha === "18x") {
+          maquininha = total * (parametrosProjetos.taxaCartao18x || 0);
+        } else if (opcaoMaquininha === "21x") {
+          maquininha = total * (parametrosProjetos.taxaCartao21x || 0);
+        } else if (opcaoMaquininha === "historico") {
+          maquininha =
+            parseFloat(document.getElementById("proj-maquininha").value) || 0;
+        }
         document.getElementById("proj-maquininha").value =
           maquininha.toFixed(2);
 
-        // SALDO LÍQUIDO EXATO = Serviço - Impostos - Mão de Obra - Outros Custos - Comissão - Maquininha
+        // SALDO LÍQUIDO EXATO
         const liquido =
           servico - impostos - maoDeObra - outros - comissao - maquininha;
         const campoLiquido = document.getElementById("proj-liquido");
@@ -1653,7 +1664,7 @@
 
         // Em VENDAS NOVAS, os botões vêm marcados por padrão
         document.getElementById("check-comissao").checked = true;
-        document.getElementById("check-maquininha").checked = true;
+        document.getElementById("select-maquininha").value = "12x"; // Padrão ao abrir nova venda
 
         document.getElementById("proj-liquido").value = "R$ 0,00";
         document.getElementById("proj-residual").value = "R$ 0,00";
@@ -1686,8 +1697,8 @@
         // VERIFICA SE OS CHECKBOXES ESTAVAM ATIVOS NA ÉPOCA DA VENDA
         document.getElementById("check-comissao").checked =
           parseFloat(p.comissao) > 0;
-        document.getElementById("check-maquininha").checked =
-          parseFloat(p.maquininha) > 0;
+        document.getElementById("select-maquininha").value =
+          parseFloat(p.maquininha) > 0 ? "historico" : "0";
 
         // RESTAURA O LÍQUIDO E RESIDUAL EXATOS
         document.getElementById("proj-liquido").value =

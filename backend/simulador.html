@@ -193,32 +193,44 @@
               res.imposto * 100
             ).toFixed(2);
 
-            // 2. Constrói o Select de Pagamento com as taxas e nomes REAIS do banco de dados
+            // 2. Constrói o Select de Pagamento com 6x, 12x, 18x e 21x
             const select = document.getElementById("sim-forma-pagamento");
-            select.options.length = 0; // Limpa opções antigas
+            select.options.length = 0;
 
             select.options.add(
               new Option(
-                `À Vista / PIX (${(res.taxaPix * 100).toFixed(2)}%)`,
-                res.taxaPix * 100,
+                `À Vista / PIX (${((res.taxaPix || 0) * 100).toFixed(2)}%)`,
+                (res.taxaPix || 0) * 100,
               ),
             );
             select.options.add(
               new Option(
-                `Cartão de Crédito 12x (${(res.taxaCartao12x * 100).toFixed(2)}%)`,
-                res.taxaCartao1x * 100,
+                `Cartão de Crédito - 6x (${((res.taxaCartao6x || 0) * 100).toFixed(2)}%)`,
+                (res.taxaCartao6x || 0) * 100,
               ),
             );
             select.options.add(
               new Option(
-                `Cartão de Crédito 18x (${(res.taxaCartao18x * 100).toFixed(2)}%)`,
-                res.taxaCartao12x * 100,
+                `Cartão de Crédito - 12x (${((res.taxaCartao12x || 0) * 100).toFixed(2)}%)`,
+                (res.taxaCartao12x || 0) * 100,
               ),
             );
             select.options.add(
               new Option(
-                `Financiamento Bancário (${(res.taxaFinanciamento * 100).toFixed(2)}%)`,
-                res.taxaFinanciamento * 100,
+                `Cartão de Crédito - 18x (${((res.taxaCartao18x || 0) * 100).toFixed(2)}%)`,
+                (res.taxaCartao18x || 0) * 100,
+              ),
+            );
+            select.options.add(
+              new Option(
+                `Cartão de Crédito - 21x (${((res.taxaCartao21x || 0) * 100).toFixed(2)}%)`,
+                (res.taxaCartao21x || 0) * 100,
+              ),
+            );
+            select.options.add(
+              new Option(
+                `Financiamento Bancário (${((res.taxaFinanciamento || 0) * 100).toFixed(2)}%)`,
+                (res.taxaFinanciamento || 0) * 100,
               ),
             );
 

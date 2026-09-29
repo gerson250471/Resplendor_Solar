@@ -113,10 +113,18 @@
       <div>
         <label class="flex justify-between items-center text-sm font-bold text-slate-600 mb-1">
           <span>TAXA MAQUININHA</span>
-          <label class="flex items-center gap-1 cursor-pointer">
-            <input type="checkbox" id="check-maquininha" onchange="calcularRentabilidade()" class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500" checked />
-            <span class="text-xs text-slate-500 font-normal">Aplicar</span>
-          </label>
+          <select
+            id="select-maquininha"
+            onchange="calcularRentabilidade()"
+            class="text-xs bg-white border border-slate-300 rounded px-2 py-0.5 text-blue-700 font-bold focus:ring-1 focus:ring-blue-500 outline-none cursor-pointer"
+          >
+            <option value="0">Sem Taxa (0%)</option>
+            <option value="6x">Cartão 6x</option>
+            <option value="12x" selected>Cartão 12x</option>
+            <option value="18x">Cartão 18x</option>
+            <option value="21x">Cartão 21x</option>
+            <option value="historico" class="hidden">Taxa Salva</option>
+          </select>
         </label>
         <input type="text" id="proj-maquininha" readonly class="w-full p-2 bg-slate-50 border border-slate-300 rounded outline-none text-slate-500 font-medium" placeholder="R$ 0,00" />
       </div>

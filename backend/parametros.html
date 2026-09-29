@@ -15,7 +15,7 @@
         <h3
           class="text-lg font-bold text-blue-800 mb-4 flex items-center gap-2 border-b pb-2"
         >
-          <i data-lucide="percent" class="w-5 h-5"></i> Taxas Variáveis (%)
+          <i data-lucide="percent" class="w-5 h-5"></i> Taxas Operacionais (%)
         </h3>
         <div class="space-y-4">
           <div>
@@ -26,17 +26,6 @@
               type="number"
               step="0.01"
               id="param-comissao"
-              class="input-field bg-slate-50"
-            />
-          </div>
-          <div>
-            <label class="block text-sm font-bold text-slate-600 mb-1"
-              >Taxa Maquininha (%)</label
-            >
-            <input
-              type="number"
-              step="0.01"
-              id="param-maquininha"
               class="input-field bg-slate-50"
             />
           </div>
@@ -108,17 +97,18 @@
         </div>
       </div>
     </div>
-    <div class="md:col-span-2 mt-4">
+
+    <div class="md:col-span-2 mt-8">
       <h3
         class="text-lg font-bold text-amber-600 mb-4 flex items-center gap-2 border-b pb-2"
       >
-        <i data-lucide="calculator" class="w-5 h-5"></i> Taxas do Simulador de
-        Preços (%)
+        <i data-lucide="credit-card" class="w-5 h-5"></i> Taxas da Maquininha e
+        Simulador (%)
       </h3>
-      <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
           <label class="block text-sm font-bold text-slate-600 mb-1"
-            >Margem Padrão</label
+            >Margem Padrão (%)</label
           >
           <input
             type="number"
@@ -129,7 +119,7 @@
         </div>
         <div>
           <label class="block text-sm font-bold text-slate-600 mb-1"
-            >PIX / À Vista</label
+            >PIX / À Vista (%)</label
           >
           <input
             type="number"
@@ -140,29 +130,7 @@
         </div>
         <div>
           <label class="block text-sm font-bold text-slate-600 mb-1"
-            >Cartão 12x</label
-          >
-          <input
-            type="number"
-            step="0.01"
-            id="param-cartao1x"
-            class="input-field bg-slate-50"
-          />
-        </div>
-        <div>
-          <label class="block text-sm font-bold text-slate-600 mb-1"
-            >Cartão 18x</label
-          >
-          <input
-            type="number"
-            step="0.01"
-            id="param-cartao12x"
-            class="input-field bg-slate-50"
-          />
-        </div>
-        <div>
-          <label class="block text-sm font-bold text-slate-600 mb-1"
-            >Financiamento</label
+            >Financiamento (%)</label
           >
           <input
             type="number"
@@ -171,8 +139,55 @@
             class="input-field bg-slate-50"
           />
         </div>
+        <div class="hidden md:block"></div>
+
+        <div>
+          <label class="block text-sm font-bold text-blue-700 mb-1"
+            >Cartão 6x (%)</label
+          >
+          <input
+            type="number"
+            step="0.01"
+            id="param-cartao6x"
+            class="input-field bg-blue-50/40 border-blue-200"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-bold text-blue-700 mb-1"
+            >Cartão 12x (%)</label
+          >
+          <input
+            type="number"
+            step="0.01"
+            id="param-cartao12x"
+            class="input-field bg-blue-50/40 border-blue-200"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-bold text-blue-700 mb-1"
+            >Cartão 18x (%)</label
+          >
+          <input
+            type="number"
+            step="0.01"
+            id="param-cartao18x"
+            class="input-field bg-blue-50/40 border-blue-200"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-bold text-blue-700 mb-1"
+            >Cartão 21x (%)</label
+          >
+          <input
+            type="number"
+            step="0.01"
+            id="param-cartao21x"
+            class="input-field bg-blue-50/40 border-blue-200"
+          />
+        </div>
       </div>
     </div>
+
     <div class="mt-8 border-t pt-6 flex justify-end">
       <button
         onclick="salvarParametrosUI()"
@@ -191,12 +206,8 @@
     google.script.run
       .withSuccessHandler((res) => {
         if (res.sucesso) {
-          // Multiplica por 100 para exibir "5" em vez de "0.05"
           document.getElementById("param-comissao").value = (
             res.comissao * 100
-          ).toFixed(2);
-          document.getElementById("param-maquininha").value = (
-            res.maquininha * 100
           ).toFixed(2);
           document.getElementById("param-imposto").value = (
             res.imposto * 100
@@ -210,20 +221,28 @@
           document.getElementById("param-kitabaixo").value =
             res.custoAbaixo20k.toFixed(2);
           document.getElementById("param-frete").value = res.frete.toFixed(2);
+
           document.getElementById("param-margem").value = (
             res.margemPadrao * 100
           ).toFixed(2);
           document.getElementById("param-pix").value = (
             res.taxaPix * 100
           ).toFixed(2);
-          document.getElementById("param-cartao12x").value = (
-            res.taxaCartao1x * 100
-          ).toFixed(2);
-          document.getElementById("param-cartao18x").value = (
-            res.taxaCartao12x * 100
-          ).toFixed(2);
           document.getElementById("param-financiamento").value = (
             res.taxaFinanciamento * 100
+          ).toFixed(2);
+
+          document.getElementById("param-cartao6x").value = (
+            (res.taxaCartao6x || 0) * 100
+          ).toFixed(2);
+          document.getElementById("param-cartao12x").value = (
+            (res.taxaCartao12x || 0) * 100
+          ).toFixed(2);
+          document.getElementById("param-cartao18x").value = (
+            (res.taxaCartao18x || 0) * 100
+          ).toFixed(2);
+          document.getElementById("param-cartao21x").value = (
+            (res.taxaCartao21x || 0) * 100
           ).toFixed(2);
         }
       })
@@ -234,8 +253,6 @@
     const obj = {
       comissao:
         parseFloat(document.getElementById("param-comissao").value) || 0,
-      maquininha:
-        parseFloat(document.getElementById("param-maquininha").value) || 0,
       imposto: parseFloat(document.getElementById("param-imposto").value) || 0,
       custoDireto:
         parseFloat(document.getElementById("param-custodireto").value) || 0,
@@ -247,12 +264,16 @@
       margemPadrao:
         parseFloat(document.getElementById("param-margem").value) || 0,
       taxaPix: parseFloat(document.getElementById("param-pix").value) || 0,
-      taxaCartao1x:
-        parseFloat(document.getElementById("param-cartao1x").value) || 0,
-      taxaCartao12x:
-        parseFloat(document.getElementById("param-cartao12x").value) || 0,
       taxaFinanciamento:
         parseFloat(document.getElementById("param-financiamento").value) || 0,
+      taxaCartao6x:
+        parseFloat(document.getElementById("param-cartao6x").value) || 0,
+      taxaCartao12x:
+        parseFloat(document.getElementById("param-cartao12x").value) || 0,
+      taxaCartao18x:
+        parseFloat(document.getElementById("param-cartao18x").value) || 0,
+      taxaCartao21x:
+        parseFloat(document.getElementById("param-cartao21x").value) || 0,
     };
 
     const btn = document.getElementById("btn-salvar-parametros");
@@ -268,7 +289,6 @@
 
         if (res.sucesso) {
           mostrarToast("Parâmetros atualizados com sucesso!", "sucesso");
-          // Atualiza a memória global para os relatórios/cálculos usarem os dados frescos
           carregarParametrosProjetos();
         } else {
           mostrarToast("Erro: " + res.mensagem, "erro");
