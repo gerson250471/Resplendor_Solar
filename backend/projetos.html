@@ -154,9 +154,10 @@
 
       <!-- ABA 2: CUSTOS DE EXECUÇÃO -->
       <div id="aba-custos" class="space-y-6 hidden">
+        <!-- 1. MÃO DE OBRA -->
         <div>
           <h4 class="text-sm font-bold text-slate-700 border-b pb-2 mb-3">
-            Custos de Engenharia & Instalação
+            Custos de Engenharia & Mão de Obra
           </h4>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
@@ -201,36 +202,77 @@
           </div>
         </div>
 
+        <!-- 2. MATERIAIS DINÂMICOS -->
+        <div>
+          <div class="flex justify-between items-center border-b pb-2 mb-3">
+            <h4 class="text-sm font-bold text-slate-700">
+              Materiais Gastos na Obra
+            </h4>
+            <button
+              type="button"
+              onclick="adicionarLinhaMaterial()"
+              class="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 bg-blue-50 px-2 py-1 rounded transition-colors"
+            >
+              <i data-lucide="plus-circle" class="w-4 h-4"></i> Adicionar
+              Material
+            </button>
+          </div>
+
+          <div class="grid grid-cols-12 gap-2 mb-1 px-1">
+            <div
+              class="col-span-6 text-[10px] font-bold text-slate-500 uppercase"
+            >
+              Descrição do Material
+            </div>
+            <div
+              class="col-span-2 text-[10px] font-bold text-slate-500 uppercase text-center"
+            >
+              Qtd
+            </div>
+            <div
+              class="col-span-3 text-[10px] font-bold text-slate-500 uppercase text-right"
+            >
+              Total (R$)
+            </div>
+            <div class="col-span-1"></div>
+          </div>
+
+          <div
+            id="lista-materiais-obra"
+            class="space-y-2 max-h-40 overflow-y-auto pr-1"
+          >
+            <!-- Linhas Injetadas por JavaScript -->
+          </div>
+
+          <div class="flex justify-end mt-3 pt-2 border-t border-slate-100">
+            <div class="text-xs font-bold text-slate-500 mr-2 mt-1">
+              Soma dos Materiais:
+            </div>
+            <div
+              class="text-lg font-black text-slate-800"
+              id="total-materiais-display"
+            >
+              R$ 0,00
+            </div>
+            <input type="hidden" id="proj-materiais" value="0" />
+          </div>
+        </div>
+
+        <!-- 3. LOGÍSTICA (POR ÚLTIMO) -->
         <div>
           <h4 class="text-sm font-bold text-slate-700 border-b pb-2 mb-3">
-            Materiais Extras & Logística
+            Logística
           </h4>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label
-                class="block text-xs font-bold text-slate-500 uppercase mb-1"
-                >Materiais Gasto na Obra</label
-              >
-              <input
-                type="number"
-                id="proj-materiais"
-                class="input-field"
-                oninput="calcularRentabilidade()"
-                placeholder="Fios, Disjuntores, etc..."
-              />
-            </div>
-            <div>
-              <label
-                class="block text-xs font-bold text-slate-500 uppercase mb-1"
-                >Frete Estimado</label
-              >
-              <input
-                type="number"
-                id="proj-frete-estimado"
-                class="input-field bg-slate-50 cursor-not-allowed"
-                readonly
-              />
-            </div>
+          <div class="w-1/3">
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
+              >Frete Estimado</label
+            >
+            <input
+              type="number"
+              id="proj-frete-estimado"
+              class="input-field bg-slate-50 font-bold text-slate-700"
+              readonly
+            />
           </div>
         </div>
       </div>

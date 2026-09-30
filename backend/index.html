@@ -788,6 +788,58 @@
           .getResumoFinanceiro();
       }
 
+      // Novas Linha de Materiais
+      window.adicionarLinhaMaterial = function (
+        descricao = "",
+        qtd = 1,
+        valor = "",
+      ) {
+        const container = document.getElementById("lista-materiais-obra");
+        const div = document.createElement("div");
+        div.className = "linha-material grid grid-cols-12 gap-2 items-center";
+
+        div.innerHTML = `
+          <div class="col-span-6">
+            <input type="text" class="input-field text-xs py-1.5" placeholder="Ex: Fio 6mm, Disjuntor..." value="${descricao}" />
+          </div>
+          <div class="col-span-2">
+            <input type="number" class="input-field text-xs py-1.5 text-center" value="${qtd}" min="1" />
+          </div>
+          <div class="col-span-3">
+            <input type="number" class="mat-valor input-field text-xs py-1.5 text-right font-bold text-slate-700" placeholder="0.00" value="${valor}" oninput="calcularTotalMateriais()" />
+          </div>
+          <div class="col-span-1 text-center">
+            <button type="button" onclick="removerLinhaMaterial(this)" class="text-slate-300 hover:text-red-500 transition-colors">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          </div>
+        `;
+
+        container.appendChild(div);
+        lucide.createIcons(); // Ativa o ícone da lixeira na nova linha
+      };
+
+      window.removerLinhaMaterial = function (btn) {
+        btn.closest(".linha-material").remove();
+        calcularTotalMateriais();
+      };
+
+      window.calcularTotalMateriais = function () {
+        let total = 0;
+        // Percorre todas as linhas criadas e soma o valor
+        document.querySelectorAll(".mat-valor").forEach((input) => {
+          total += parseFloat(input.value) || 0;
+        });
+
+        // Atualiza a visualização e guarda o valor para o Saldo Líquido
+        document.getElementById("proj-materiais").value = total;
+        document.getElementById("total-materiais-display").innerText =
+          "R$ " + total.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+
+        // Dispara o cálculo final de rentabilidade da aba financeira
+        calcularRentabilidade();
+      };
+
       window.abrirFiltroStatus = function (status) {
         navegarPara("pagamentos");
         setTimeout(() => {
@@ -1582,6 +1634,14 @@
       };
 
       window.abrirModalProjeto = function () {
+        // Reset Inicial
+        // (Coloque junto das outras variáveis que são limpas no início da função)
+        document.getElementById("lista-materiais-obra").innerHTML = "";
+        adicionarLinhaMaterial(); // Inicia sempre com a primeira linha vazia
+        document.getElementById("proj-materiais").value = 0;
+        document.getElementById("total-materiais-display").innerText =
+          "R$ 0,00";
+
         document.getElementById("proj-linha").value = "";
         document.getElementById("proj-data").value = "";
         document.getElementById("proj-cliente").value = "";
