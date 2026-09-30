@@ -1503,96 +1503,6 @@
         document.getElementById("modal-usuario").classList.remove("hidden");
       };
 
-      function calcularRentabilidade() {
-        if (!parametrosProjetos) {
-          mostrarToast("Aguarde, carregando parâmetros financeiros...", "info");
-          return;
-        }
-
-        const total =
-          parseFloat(document.getElementById("proj-total").value) || 0;
-        const kit = parseFloat(document.getElementById("proj-kit").value) || 0;
-        const entrada =
-          parseFloat(document.getElementById("proj-entrada").value) || 0;
-
-        const chkComissao = document.getElementById("check-comissao");
-        const aplicarComissao = chkComissao ? chkComissao.checked : true;
-        const opcaoMaquininha =
-          document.getElementById("select-maquininha")?.value || "0";
-
-        // Serviço = Total - Kit
-        const servico = total > 0 ? total - kit : 0;
-        document.getElementById("proj-servico").value = servico.toFixed(2);
-
-        // Impostos
-        const impostos = total * parametrosProjetos.imposto;
-        document.getElementById("proj-impostos").value = impostos.toFixed(2);
-
-        // Mão de Obra
-        let maoDeObra = 0;
-        if (kit > 20000) {
-          maoDeObra = parametrosProjetos.custoAcima20k;
-        } else if (kit > 0) {
-          maoDeObra = parametrosProjetos.custoAbaixo20k;
-        }
-        const campoMaoObra = document.getElementById("proj-mao-obra");
-        if (campoMaoObra) campoMaoObra.value = maoDeObra.toFixed(2);
-
-        // Outros Custos
-        const custoDireto = kit * (parametrosProjetos.custoDireto || 0);
-        const frete = parametrosProjetos.frete || 0;
-        const outros = kit > 0 ? custoDireto + frete : 0;
-        document.getElementById("proj-outros").value = outros.toFixed(2);
-
-        // Comissão
-        const comissao = aplicarComissao
-          ? total * parametrosProjetos.comissao
-          : 0;
-        document.getElementById("proj-comissao").value = comissao.toFixed(2);
-
-        // Maquininha conforme parcelamento escolhido (6x, 12x, 18x, 21x)
-        let maquininha = 0;
-        if (opcaoMaquininha === "6x") {
-          maquininha = total * (parametrosProjetos.taxaCartao6x || 0);
-        } else if (opcaoMaquininha === "12x") {
-          maquininha = total * (parametrosProjetos.taxaCartao12x || 0);
-        } else if (opcaoMaquininha === "18x") {
-          maquininha = total * (parametrosProjetos.taxaCartao18x || 0);
-        } else if (opcaoMaquininha === "21x") {
-          maquininha = total * (parametrosProjetos.taxaCartao21x || 0);
-        } else if (opcaoMaquininha === "historico") {
-          maquininha =
-            parseFloat(document.getElementById("proj-maquininha").value) || 0;
-        }
-        document.getElementById("proj-maquininha").value =
-          maquininha.toFixed(2);
-
-        // SALDO LÍQUIDO EXATO
-        const liquido =
-          servico - impostos - maoDeObra - outros - comissao - maquininha;
-        const campoLiquido = document.getElementById("proj-liquido");
-
-        if (campoLiquido) {
-          campoLiquido.value =
-            "R$ " +
-            liquido.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
-
-          if (liquido < 0) {
-            campoLiquido.classList.remove("text-emerald-600", "text-green-600");
-            campoLiquido.classList.add("text-red-600");
-          } else {
-            campoLiquido.classList.remove("text-red-600");
-            campoLiquido.classList.add("text-emerald-600");
-          }
-        }
-
-        // Valor Residual
-        const residual = total - entrada;
-        document.getElementById("proj-residual").value =
-          "R$ " +
-          residual.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
-      }
-
       // --- LÓGICA DE VENDAS E FILTRO ---
       let projetosGlobais = []; // Variável para armazenar dados localmente
 
@@ -1646,34 +1556,141 @@
 
       // --- LÓGICA DO MODAL (NOVO, EDITAR E SALVAR) ---
 
+      window.mudarAbaVenda = function (abaAtiva) {
+        // Esconde todas as abas
+        document.getElementById("aba-dados").classList.add("hidden");
+        document.getElementById("aba-custos").classList.add("hidden");
+        document.getElementById("aba-financeiro").classList.add("hidden");
+
+        // Reseta o estilo dos botões
+        ["dados", "custos", "financeiro"].forEach((id) => {
+          const btn = document.getElementById("btn-aba-" + id);
+          if (btn)
+            btn.className =
+              "flex-1 pb-3 text-sm font-bold text-slate-400 hover:text-blue-500 transition-colors flex items-center justify-center gap-2";
+        });
+
+        // Mostra a aba clicada e aplica estilo ativo
+        document.getElementById("aba-" + abaAtiva).classList.remove("hidden");
+        const btnAtivo = document.getElementById("btn-aba-" + abaAtiva);
+        if (btnAtivo) {
+          // Mantemos o ícone preservando o innerHTML, mudamos apenas a classe
+          const htmlIcone = btnAtivo.innerHTML;
+          btnAtivo.className =
+            "flex-1 pb-3 text-sm font-bold text-blue-600 border-b-2 border-blue-600 transition-colors flex items-center justify-center gap-2";
+        }
+      };
+
       window.abrirModalProjeto = function () {
         document.getElementById("proj-linha").value = "";
-
-        // Limpa os campos para uma venda nova limpa
         document.getElementById("proj-data").value = "";
         document.getElementById("proj-cliente").value = "";
         document.getElementById("proj-total").value = "";
         document.getElementById("proj-kit").value = "";
-        document.getElementById("proj-servico").value = "";
-        document.getElementById("proj-impostos").value = "";
-        document.getElementById("proj-mao-obra").value = "";
-        document.getElementById("proj-outros").value = "";
-        document.getElementById("proj-comissao").value = "";
-        document.getElementById("proj-maquininha").value = "";
-        document.getElementById("proj-entrada").value = "";
 
-        // Em VENDAS NOVAS, os botões vêm marcados por padrão
+        // Reset dos novos custos de execução
+        document.getElementById("proj-engenharia").value = "400";
+        document.getElementById("proj-mo-instalador").value = "";
+        document.getElementById("proj-mo-pedreiro").value = "";
+        document.getElementById("proj-materiais").value = "";
+
+        document.getElementById("proj-entrada").value = "";
         document.getElementById("check-comissao").checked = true;
-        document.getElementById("select-maquininha").value = "12x"; // Padrão ao abrir nova venda
+        document.getElementById("select-maquininha").value = "12x";
 
         document.getElementById("proj-liquido").value = "R$ 0,00";
         document.getElementById("proj-residual").value = "R$ 0,00";
-        document.getElementById("proj-status").value = "AGUARDANDO KIT";
 
-        document.querySelector("#modal-projeto h3").innerText =
+        mudarAbaVenda("dados"); // Abre sempre na primeira aba
+        document.getElementById("titulo-modal-projeto").innerText =
           "Cadastrar Venda";
         document.getElementById("modal-projeto").classList.remove("hidden");
+        lucide.createIcons();
       };
+
+      function calcularRentabilidade() {
+        if (!parametrosProjetos) return;
+
+        const total =
+          parseFloat(document.getElementById("proj-total").value) || 0;
+        const kit = parseFloat(document.getElementById("proj-kit").value) || 0;
+        const entrada =
+          parseFloat(document.getElementById("proj-entrada").value) || 0;
+
+        // Custos de Execução
+        const engenharia =
+          parseFloat(document.getElementById("proj-engenharia").value) || 0;
+        const instalador =
+          parseFloat(document.getElementById("proj-mo-instalador").value) || 0;
+        const pedreiro =
+          parseFloat(document.getElementById("proj-mo-pedreiro").value) || 0;
+        const materiais =
+          parseFloat(document.getElementById("proj-materiais").value) || 0;
+
+        // Frete fixo via parâmetros
+        const frete = parametrosProjetos.frete || 0;
+        document.getElementById("proj-frete-estimado").value = frete.toFixed(2);
+
+        // Somatórios
+        const maoDeObraTotal = instalador + pedreiro;
+        const materiaisTotais = materiais + frete;
+
+        // Taxas e Impostos
+        const aplicarComissao =
+          document.getElementById("check-comissao").checked;
+        const opcaoMaquininha =
+          document.getElementById("select-maquininha").value;
+
+        const impostos = total * parametrosProjetos.imposto;
+        document.getElementById("proj-impostos").value =
+          "R$ " + impostos.toFixed(2);
+
+        const comissao = aplicarComissao
+          ? total * parametrosProjetos.comissao
+          : 0;
+        document.getElementById("proj-comissao").value =
+          "R$ " + comissao.toFixed(2);
+
+        let maquininha = 0;
+        if (opcaoMaquininha === "6x")
+          maquininha = total * (parametrosProjetos.taxaCartao6x || 0);
+        else if (opcaoMaquininha === "12x")
+          maquininha = total * (parametrosProjetos.taxaCartao12x || 0);
+        else if (opcaoMaquininha === "18x")
+          maquininha = total * (parametrosProjetos.taxaCartao18x || 0);
+        else if (opcaoMaquininha === "21x")
+          maquininha = total * (parametrosProjetos.taxaCartao21x || 0);
+        document.getElementById("proj-maquininha-valor").value =
+          "R$ " + maquininha.toFixed(2);
+
+        // NOVO SALDO LÍQUIDO REAL = (Valor do Contrato) - (Kit) - (Engenharia) - (Mão de Obra) - (Materiais) - (Impostos) - (Comissão) - (Maquininha)
+        const liquido =
+          total -
+          kit -
+          engenharia -
+          maoDeObraTotal -
+          materiaisTotais -
+          impostos -
+          comissao -
+          maquininha;
+
+        const campoLiquido = document.getElementById("proj-liquido");
+        if (campoLiquido) {
+          campoLiquido.value =
+            "R$ " +
+            liquido.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+          if (liquido < 0) {
+            campoLiquido.classList.replace("text-emerald-700", "text-red-600");
+          } else {
+            campoLiquido.classList.replace("text-red-600", "text-emerald-700");
+          }
+        }
+
+        const residual = total - entrada;
+        document.getElementById("proj-residual").value =
+          "R$ " +
+          residual.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+      }
 
       window.editarProjeto = function (linha) {
         const p = projetosGlobais.find((x) => x.linha === linha);

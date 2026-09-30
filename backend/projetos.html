@@ -51,123 +51,310 @@
   class="fixed inset-0 bg-slate-900/80 hidden z-[10002] flex items-center justify-center backdrop-blur-sm p-4"
 >
   <div
-    class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-4xl overflow-y-auto max-h-[90vh]"
+    class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]"
   >
-    <h3 class="text-xl font-bold text-slate-800 mb-4">Cadastrar Venda Solar</h3>
+    <div class="flex justify-between items-center mb-4 shrink-0">
+      <h3 class="text-xl font-bold text-slate-800" id="titulo-modal-projeto">
+        Cadastrar Venda Solar
+      </h3>
+      <button
+        onclick="fecharModalProjeto()"
+        class="text-slate-400 hover:text-red-500 transition-colors"
+      >
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
     <input type="hidden" id="proj-linha" />
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div class="md:col-span-1">
-        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Data da Venda</label>
-        <input type="date" id="proj-data" class="input-field" />
-      </div>
-      <div class="md:col-span-2">
-        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Cliente</label>
-        <input 
-            type="text" 
-            id="proj-cliente" 
-            list="clientes-list" 
-            autocomplete="off"
-            class="input-field font-bold text-slate-800 uppercase" 
-            placeholder="Digite para buscar um cliente cadastrado..." 
-          />
-      </div>
+    <!-- NAVEGAÇÃO DAS ABAS -->
+    <div class="flex border-b border-slate-200 mb-6 shrink-0 overflow-x-auto">
+      <button
+        id="btn-aba-dados"
+        onclick="mudarAbaVenda('dados')"
+        class="flex-1 pb-3 text-sm font-bold text-blue-600 border-b-2 border-blue-600 transition-colors flex items-center justify-center gap-2"
+      >
+        <i data-lucide="clipboard-list" class="w-4 h-4"></i> 1. Dados do
+        Contrato
+      </button>
+      <button
+        id="btn-aba-custos"
+        onclick="mudarAbaVenda('custos')"
+        class="flex-1 pb-3 text-sm font-bold text-slate-400 hover:text-blue-500 transition-colors flex items-center justify-center gap-2"
+      >
+        <i data-lucide="wrench" class="w-4 h-4"></i> 2. Custos de Execução
+      </button>
+      <button
+        id="btn-aba-financeiro"
+        onclick="mudarAbaVenda('financeiro')"
+        class="flex-1 pb-3 text-sm font-bold text-slate-400 hover:text-blue-500 transition-colors flex items-center justify-center gap-2"
+      >
+        <i data-lucide="pie-chart" class="w-4 h-4"></i> 3. Resumo Financeiro
+      </button>
+    </div>
 
-      <div>
-        <label class="block text-xs font-bold text-blue-600 uppercase mb-1">Valor Total (Contrato)</label>
-        <input type="number" id="proj-total" class="input-field font-bold border-blue-300" oninput="calcularRentabilidade()" />
-      </div>
-      <div>
-        <label class="block text-xs font-bold text-blue-600 uppercase mb-1">Valor do Kit</label>
-        <input type="number" id="proj-kit" class="input-field font-bold border-blue-300" oninput="calcularRentabilidade()" />
-      </div>
-      <div>
-        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Valor do Serviço</label>
-        <input type="number" id="proj-servico" class="input-field bg-slate-100 cursor-not-allowed text-slate-500" readonly />
-      </div>
-
-      <div>
-        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Mão de Obra</label>
-        <input type="number" id="proj-mao-obra" class="input-field bg-slate-100 cursor-not-allowed text-slate-500" readonly />
-      </div>
-      <div>
-        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Impostos s/ Venda</label>
-        <input type="number" id="proj-impostos" class="input-field bg-slate-100 cursor-not-allowed text-slate-500" readonly />
-      </div>
-      <div>
-        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Outros Custos</label>
-        <input type="number" id="proj-outros" class="input-field bg-slate-100 cursor-not-allowed text-slate-500" readonly />
-      </div>
-
-      <div>
-        <label class="flex justify-between items-center text-sm font-bold text-slate-600 mb-1">
-          <span>COMISSÃO</span>
-          <label class="flex items-center gap-1 cursor-pointer">
-            <input type="checkbox" id="check-comissao" onchange="calcularRentabilidade()" class="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500" checked />
-            <span class="text-xs text-slate-500 font-normal">Aplicar</span>
-          </label>
-        </label>
-        <input type="text" id="proj-comissao" readonly class="w-full p-2 bg-slate-50 border border-slate-300 rounded outline-none text-slate-500 font-medium" placeholder="R$ 0,00" />
-      </div>
-
-      <div>
-        <label class="flex justify-between items-center text-sm font-bold text-slate-600 mb-1">
-          <span>TAXA MAQUININHA</span>
-          <select
-            id="select-maquininha"
-            onchange="calcularRentabilidade()"
-            class="text-xs bg-white border border-slate-300 rounded px-2 py-0.5 text-blue-700 font-bold focus:ring-1 focus:ring-blue-500 outline-none cursor-pointer"
-          >
-            <option value="0">Sem Taxa (0%)</option>
-            <option value="6x">Cartão 6x</option>
-            <option value="12x" selected>Cartão 12x</option>
-            <option value="18x">Cartão 18x</option>
-            <option value="21x">Cartão 21x</option>
-            <option value="historico" class="hidden">Taxa Salva</option>
+    <!-- CONTEÚDO SCROLLÁVEL -->
+    <div class="overflow-y-auto flex-1 pr-2 pb-4">
+      <!-- ABA 1: DADOS DO CONTRATO -->
+      <div id="aba-dados" class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="md:col-span-1">
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
+              >Data da Venda</label
+            >
+            <input type="date" id="proj-data" class="input-field" />
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
+              >Cliente</label
+            >
+            <input
+              type="text"
+              id="proj-cliente"
+              list="clientes-list"
+              autocomplete="off"
+              class="input-field font-bold text-slate-800 uppercase"
+              placeholder="Buscar cliente..."
+            />
+          </div>
+        </div>
+        <div
+          class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-blue-50/50 p-4 rounded-xl border border-blue-100"
+        >
+          <div>
+            <label class="block text-xs font-bold text-blue-700 uppercase mb-1"
+              >Valor Total (Contrato)</label
+            >
+            <input
+              type="number"
+              id="proj-total"
+              class="input-field font-bold border-blue-300 text-lg"
+              oninput="calcularRentabilidade()"
+              placeholder="R$ 0,00"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-blue-700 uppercase mb-1"
+              >Valor do Kit (Fornecedor)</label
+            >
+            <input
+              type="number"
+              id="proj-kit"
+              class="input-field font-bold border-blue-300 text-lg"
+              oninput="calcularRentabilidade()"
+              placeholder="R$ 0,00"
+            />
+          </div>
+        </div>
+        <div class="hidden">
+          <select id="proj-status" class="input-field">
+            <option value="AGUARDANDO KIT">Aguardando Kit</option>
           </select>
-        </label>
-        <input type="text" id="proj-maquininha" readonly class="w-full p-2 bg-slate-50 border border-slate-300 rounded outline-none text-slate-500 font-medium" placeholder="R$ 0,00" />
+        </div>
       </div>
 
-      <div class="bg-emerald-50 p-3 rounded-lg border border-emerald-100">
-        <label class="block text-xs font-bold text-emerald-600 uppercase mb-1">Saldo Líquido (Lucro)</label>
-        <input type="text" id="proj-liquido" class="bg-transparent border-none font-bold text-emerald-700 outline-none w-full" readonly value="R$ 0,00" />
+      <!-- ABA 2: CUSTOS DE EXECUÇÃO -->
+      <div id="aba-custos" class="space-y-6 hidden">
+        <div>
+          <h4 class="text-sm font-bold text-slate-700 border-b pb-2 mb-3">
+            Custos de Engenharia & Instalação
+          </h4>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label
+                class="block text-xs font-bold text-slate-500 uppercase mb-1"
+                >Projeto / Homologação</label
+              >
+              <input
+                type="number"
+                id="proj-engenharia"
+                class="input-field"
+                oninput="calcularRentabilidade()"
+                value="400"
+              />
+            </div>
+            <div>
+              <label
+                class="block text-xs font-bold text-slate-500 uppercase mb-1"
+                >Instalador Principal</label
+              >
+              <input
+                type="number"
+                id="proj-mo-instalador"
+                class="input-field"
+                oninput="calcularRentabilidade()"
+                placeholder="R$ 0,00"
+              />
+            </div>
+            <div>
+              <label
+                class="block text-xs font-bold text-slate-500 uppercase mb-1"
+                >Pedreiro / Ajudante</label
+              >
+              <input
+                type="number"
+                id="proj-mo-pedreiro"
+                class="input-field"
+                oninput="calcularRentabilidade()"
+                placeholder="R$ 0,00"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="text-sm font-bold text-slate-700 border-b pb-2 mb-3">
+            Materiais Extras & Logística
+          </h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label
+                class="block text-xs font-bold text-slate-500 uppercase mb-1"
+                >Materiais Gasto na Obra</label
+              >
+              <input
+                type="number"
+                id="proj-materiais"
+                class="input-field"
+                oninput="calcularRentabilidade()"
+                placeholder="Fios, Disjuntores, etc..."
+              />
+            </div>
+            <div>
+              <label
+                class="block text-xs font-bold text-slate-500 uppercase mb-1"
+                >Frete Estimado</label
+              >
+              <input
+                type="number"
+                id="proj-frete-estimado"
+                class="input-field bg-slate-50 cursor-not-allowed"
+                readonly
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div>
-        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Valor de Entrada</label>
-        <input type="number" id="proj-entrada" class="input-field" oninput="calcularRentabilidade()" />
-      </div>
-      <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 md:col-span-2">
-        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Valor Residual</label>
-        <input type="text" id="proj-residual" class="bg-transparent border-none font-bold text-slate-700 outline-none w-full" readonly value="R$ 0,00" />
-      </div>
+      <!-- ABA 3: RESUMO FINANCEIRO -->
+      <div id="aba-financeiro" class="space-y-4 hidden">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label
+              class="flex justify-between items-center text-xs font-bold text-slate-600 mb-1 uppercase"
+            >
+              <span>Comissão</span>
+              <input
+                type="checkbox"
+                id="check-comissao"
+                onchange="calcularRentabilidade()"
+                class="w-3 h-3 text-blue-600 rounded"
+                checked
+              />
+            </label>
+            <input
+              type="text"
+              id="proj-comissao"
+              readonly
+              class="input-field bg-slate-50 text-slate-500 font-medium"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1 uppercase"
+              >Impostos s/ Venda</label
+            >
+            <input
+              type="text"
+              id="proj-impostos"
+              readonly
+              class="input-field bg-slate-50 text-slate-500 font-medium"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1 uppercase"
+              >Taxa Maquininha</label
+            >
+            <select
+              id="select-maquininha"
+              onchange="calcularRentabilidade()"
+              class="input-field mb-1 bg-white"
+            >
+              <option value="0">Sem Taxa (0%)</option>
+              <option value="6x">Cartão 6x</option>
+              <option value="12x" selected>Cartão 12x</option>
+              <option value="18x">Cartão 18x</option>
+              <option value="21x">Cartão 21x</option>
+            </select>
+            <input
+              type="text"
+              id="proj-maquininha-valor"
+              readonly
+              class="input-field bg-slate-50 text-slate-500 font-medium h-8"
+            />
+          </div>
+        </div>
 
-      <div class="hidden">
-        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Status das Vendas</label>
-        <select id="proj-status" class="input-field">
-          <option value="AGUARDANDO KIT">Aguardando Kit</option>
-          <option value="EM INSTALAÇÃO">Em Instalação</option>
-          <option value="VISTORIA">Vistoria</option>
-          <option value="HOMOLOGADO">Homologado</option>
-          <option value="CANCELADO">Cancelado</option>
-        </select>
+        <div
+          class="bg-emerald-50 p-4 rounded-xl border border-emerald-200 mt-4 flex justify-between items-center"
+        >
+          <div>
+            <h4 class="text-sm font-bold text-emerald-800 uppercase">
+              Lucro Líquido Real
+            </h4>
+            <p class="text-[10px] text-emerald-600">
+              Total - Kit - Custos Execução - Taxas
+            </p>
+          </div>
+          <input
+            type="text"
+            id="proj-liquido"
+            class="bg-transparent border-none font-black text-2xl text-emerald-700 outline-none text-right w-1/2"
+            readonly
+            value="R$ 0,00"
+          />
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mt-4 border-t pt-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
+              >Valor de Entrada R$</label
+            >
+            <input
+              type="number"
+              id="proj-entrada"
+              class="input-field font-bold text-blue-600"
+              oninput="calcularRentabilidade()"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
+              >A Receber (Residual)</label
+            >
+            <input
+              type="text"
+              id="proj-residual"
+              readonly
+              class="input-field bg-slate-50 font-bold text-slate-700"
+              value="R$ 0,00"
+            />
+          </div>
+        </div>
       </div>
     </div>
-      <div class="flex gap-3 mt-6">
-        <button
-          onclick="fecharModalProjeto()"
-          class="flex-1 bg-slate-100 py-3 rounded-xl font-bold text-slate-600"
-        >
-          Cancelar
-        </button>
-        <button
-          onclick="salvarNovoProjeto()"
-          class="flex-1 bg-blue-600 py-3 rounded-xl font-bold text-white shadow-lg hover:bg-blue-700"
-        >
-          Salvar Venda
-        </button>
-      </div>
+
+    <!-- BOTÕES FIXOS NO RODAPÉ -->
+    <div class="flex gap-3 pt-4 border-t border-slate-100 shrink-0 mt-2">
+      <button
+        onclick="fecharModalProjeto()"
+        class="flex-1 bg-slate-100 py-3 rounded-xl font-bold text-slate-600 hover:bg-slate-200 transition-colors"
+      >
+        Cancelar
+      </button>
+      <button
+        onclick="salvarNovoProjeto()"
+        class="flex-1 bg-blue-600 py-3 rounded-xl font-bold text-white shadow-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+      >
+        <i data-lucide="check-circle" class="w-5 h-5"></i> Salvar Venda
+      </button>
     </div>
   </div>
 </div>
