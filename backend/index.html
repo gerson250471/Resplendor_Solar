@@ -875,7 +875,9 @@
         const clienteObj = {
           id: document.getElementById("cli-id").value,
           nome: document.getElementById("cli-nome").value,
-          cpf: document.getElementById("cli-cpf") ? document.getElementById("cli-cpf").value : "", // Nova linha
+          cpf: document.getElementById("cli-cpf")
+            ? document.getElementById("cli-cpf").value
+            : "", // Nova linha
           celular: document.getElementById("cli-celular").value,
           cidade: document.getElementById("cli-cidade").value,
           bairro: document.getElementById("cli-bairro").value,
@@ -972,21 +974,29 @@
 
       // 2. Atualiza a trava da Venda para aceitar a estrutura nova e retro-compatibilidade
       window.salvarNovoProjeto = function () {
-        const clienteDigitado = document.getElementById("proj-cliente").value.trim();
+        const clienteDigitado = document
+          .getElementById("proj-cliente")
+          .value.trim();
 
         if (clienteDigitado !== "") {
           const clienteExiste = clientesGlobais.some((c) => {
             const textoCompleto = c.cpf ? `${c.nome} - ${c.cpf}` : c.nome;
             // Aceita se bater com "Nome - CPF" ou apenas "Nome" (para vendas antigas editadas)
-            return textoCompleto.toUpperCase() === clienteDigitado.toUpperCase() ||
-                   c.nome.toUpperCase() === clienteDigitado.toUpperCase();
+            return (
+              textoCompleto.toUpperCase() === clienteDigitado.toUpperCase() ||
+              c.nome.toUpperCase() === clienteDigitado.toUpperCase()
+            );
           });
 
           if (!clienteExiste) {
-            mostrarToast("Atenção: Este cliente não está cadastrado ou o formato foi alterado.", "erro");
+            mostrarToast(
+              "Atenção: Este cliente não está cadastrado ou o formato foi alterado.",
+              "erro",
+            );
             return;
           }
         }
+      };
 
       function gerarParcelas() {
         const total =
@@ -1253,7 +1263,6 @@
 
       // 1. Ao clicar na Lupa
 
-
       window.editarCliente = function (id) {
         const cliente = clientesGlobais.find((c) => c.id === id);
         if (!cliente) return;
@@ -1261,15 +1270,20 @@
         document.getElementById("cli-id").value = cliente.id;
         document.getElementById("cli-nome").value = cliente.nome;
         // Se o campo do CPF já existir no HTML, preenche-o
-        if (document.getElementById("cli-cpf")) document.getElementById("cli-cpf").value = cliente.cpf || "";
+        if (document.getElementById("cli-cpf"))
+          document.getElementById("cli-cpf").value = cliente.cpf || "";
         document.getElementById("cli-celular").value = cliente.celular;
         document.getElementById("cli-cidade").value = cliente.cidade;
         document.getElementById("cli-bairro").value = cliente.bairro;
         document.getElementById("cli-endereco").value = cliente.endereco;
 
         document.getElementById("cli-id").readOnly = true;
-        document.getElementById("botoes-cliente-standard").classList.add("hidden");
-        document.getElementById("botoes-cliente-edicao").classList.remove("hidden");
+        document
+          .getElementById("botoes-cliente-standard")
+          .classList.add("hidden");
+        document
+          .getElementById("botoes-cliente-edicao")
+          .classList.remove("hidden");
 
         document.getElementById("cli-nome").focus();
         lucide.createIcons();
@@ -1279,7 +1293,9 @@
         const obj = {
           id: document.getElementById("cli-id").value.trim(),
           nome: document.getElementById("cli-nome").value.trim(),
-          cpf: document.getElementById("cli-cpf") ? document.getElementById("cli-cpf").value.trim() : "",
+          cpf: document.getElementById("cli-cpf")
+            ? document.getElementById("cli-cpf").value.trim()
+            : "",
           celular: document.getElementById("cli-celular").value.trim(),
           cidade: document.getElementById("cli-cidade").value.trim(),
           bairro: document.getElementById("cli-bairro").value.trim(),
@@ -1307,7 +1323,8 @@
 
       window.cancelarEdicaoCliente = function () {
         document.getElementById("cli-nome").value = "";
-        if (document.getElementById("cli-cpf")) document.getElementById("cli-cpf").value = "";
+        if (document.getElementById("cli-cpf"))
+          document.getElementById("cli-cpf").value = "";
         document.getElementById("cli-celular").value = "";
         document.getElementById("cli-cidade").value = "";
         document.getElementById("cli-bairro").value = "";
@@ -1315,8 +1332,12 @@
 
         carregarProximoIdCliente();
 
-        document.getElementById("botoes-cliente-standard").classList.remove("hidden");
-        document.getElementById("botoes-cliente-edicao").classList.add("hidden");
+        document
+          .getElementById("botoes-cliente-standard")
+          .classList.remove("hidden");
+        document
+          .getElementById("botoes-cliente-edicao")
+          .classList.add("hidden");
         lucide.createIcons();
       };
 
