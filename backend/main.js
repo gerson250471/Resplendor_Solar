@@ -69,20 +69,6 @@ function include(filename) {
  * MÓDULO DE CLIENTES
  * ============================================================================
  */
-
-function salvarClienteNoServidor(obj) {
-  try {
-    const ss = SpreadsheetApp.openById(getSpreadsheetId());
-    const aba = ss.getSheetByName("Clientes");
-
-    // Insere os dados na próxima linha vazia
-    aba.appendRow([obj.id, obj.nome, obj.celular, obj.cidade, obj.bairro, obj.endereco]);
-    return { sucesso: true };
-  } catch (e) {
-    return { sucesso: false, mensagem: e.message };
-  }
-}
-
 function carregarListaClientes() {
   try {
     const ss = SpreadsheetApp.openById(getSpreadsheetId());
@@ -97,10 +83,67 @@ function carregarListaClientes() {
         celular: dados[i][2] || "",
         cidade: dados[i][3] || "",
         bairro: dados[i][4] || "",
-        endereco: dados[i][5] || ""
+        endereco: dados[i][5] || "",
+        cpf: dados[i][6] || "" // Lendo o CPF na Coluna G
       });
     }
     return { sucesso: true, dados: lista };
+  } catch (e) {
+    return { sucesso: false, mensagem: e.message };
+  }
+}
+
+function salvarCliente(obj) {
+  try {
+    const ss = SpreadsheetApp.openById(getSpreadsheetId());
+    const abaClientes = ss.getSheetByName("Clientes");
+    const dados = abaClientes.getDataRange().getValues();
+    let linhaDestino = -1;
+
+    // Trava de Segurança: Evita cadastrar o mesmo CPF em IDs diferentes
+    if (obj.cpf && obj.cpf.trim() !== "") {
+      for (let i = 1; i < dados.length; i++) {
+        let cpfNaPlanilha = String(dados[i][6] || "").trim();
+        let idNaPlanilha = String(dados[i][0]).trim();
+        if (cpfNaPlanilha === obj.cpf.trim() && idNaPlanilha !== obj.id.toString().trim()) {
+          return { sucesso: false, mensagem: "Este CPF/CNPJ já está cadastrado para outro cliente!" };
+        }
+      }
+    }
+
+    for (let i = 1; i < dados.length; i++) {
+      if (dados[i][0].toString() === obj.id.toString()) {
+        linhaDestino = i + 1;
+        break;
+      }
+    }
+
+    // A matriz agora tem 7 posições (O CPF fica no final para não desalinhar a planilha atual)
+    const novaLinha = [obj.id, obj.nome, obj.celular, obj.cidade, obj.bairro, obj.endereco, obj.cpf];
+
+    if (linhaDestino !== -1) {
+      abaClientes.getRange(linhaDestino, 1, 1, 7).setValues([novaLinha]);
+      return { sucesso: true, mensagem: "Cliente atualizado com sucesso!" };
+    } else {
+      abaClientes.appendRow(novaLinha);
+      const abaControle = ss.getSheetByName("ControleVersao");
+      const numeroSalvo = parseInt(obj.id.replace(/\D/g, ''), 10);
+      if (!isNaN(numeroSalvo)) abaControle.getRange("F1").setValue(numeroSalvo);
+      return { sucesso: true, mensagem: "Novo cliente cadastrado!" };
+    }
+  } catch (e) {
+    return { sucesso: false, mensagem: "Erro: " + e.message };
+  }
+}
+
+function salvarClienteNoServidor(obj) {
+  try {
+    const ss = SpreadsheetApp.openById(getSpreadsheetId());
+    const aba = ss.getSheetByName("Clientes");
+
+    // Insere os dados na próxima linha vazia (agora com 7 colunas, incluindo o CPF)
+    aba.appendRow([obj.id, obj.nome, obj.celular, obj.cidade, obj.bairro, obj.endereco, obj.cpf]);
+    return { sucesso: true };
   } catch (e) {
     return { sucesso: false, mensagem: e.message };
   }
@@ -510,53 +553,7 @@ function registrarBaixaParcela(linhaPlanilha, valorPago) {
 /**
  * GRAVAR OU ATUALIZAR CLIENTE
  */
-function salvarCliente(obj) {
-  try {
-    const ss = SpreadsheetApp.openById(getSpreadsheetId());
-    const abaClientes = ss.getSheetByName("Clientes");
-    const dados = abaClientes.getDataRange().getValues();
-    let linhaDestino = -1;
 
-    // 1. Verifica se o cliente já existe (para Atualizar)
-    for (let i = 1; i < dados.length; i++) {
-      if (dados[i][0].toString() === obj.id.toString()) {
-        linhaDestino = i + 1;
-        break;
-      }
-    }
-
-    const novaLinha = [obj.id, obj.nome, obj.celular, obj.cidade, obj.bairro, obj.endereco];
-
-    if (linhaDestino !== -1) {
-      // 2A. ATUALIZAR CLIENTE EXISTENTE
-      abaClientes.getRange(linhaDestino, 1, 1, 6).setValues([novaLinha]);
-      return { sucesso: true, mensagem: "Cliente atualizado com sucesso!" };
-
-    } else {
-      // 2B. CADASTRAR NOVO CLIENTE
-      abaClientes.appendRow(novaLinha);
-
-      // =======================================================
-      // 3. ATUALIZAR A ABA 'ControleVersao' COM O NOVO CÓDIGO
-      // =======================================================
-      const abaControle = ss.getSheetByName("ControleVersao");
-
-      // Extrai apenas os números do ID que chegou do formulário.
-      // Exemplo: Transforma a string "CLI-195" no número inteiro 195
-      const numeroSalvo = parseInt(obj.id.replace(/\D/g, ''), 10);
-
-      // Se a extração for um número válido, atualiza a célula F1
-      if (!isNaN(numeroSalvo)) {
-        abaControle.getRange("F1").setValue(numeroSalvo);
-      }
-      // =======================================================
-
-      return { sucesso: true, mensagem: "Novo cliente cadastrado!" };
-    }
-  } catch (e) {
-    return { sucesso: false, mensagem: "Erro: " + e.message };
-  }
-}
 
 /**
  * GERA O PRÓXIMO ID DE CLIENTE (PADRÃO CLI-X)

@@ -875,6 +875,7 @@
         const clienteObj = {
           id: document.getElementById("cli-id").value,
           nome: document.getElementById("cli-nome").value,
+          cpf: document.getElementById("cli-cpf") ? document.getElementById("cli-cpf").value : "", // Nova linha
           celular: document.getElementById("cli-celular").value,
           cidade: document.getElementById("cli-cidade").value,
           bairro: document.getElementById("cli-bairro").value,
@@ -957,15 +958,35 @@
         atualizarDatalistClientes();
       }
 
+      // 1. Atualiza a lista inteligente para mostrar "NOME - CPF"
       function atualizarDatalistClientes() {
         const dataList = document.getElementById("clientes-list");
         if (!dataList) return;
 
         dataList.innerHTML = "";
         clientesGlobais.forEach((c) => {
-          dataList.innerHTML += `<option value="${c.nome}">`;
+          const textoBusca = c.cpf ? `${c.nome} - ${c.cpf}` : c.nome;
+          dataList.innerHTML += `<option value="${textoBusca}">`;
         });
       }
+
+      // 2. Atualiza a trava da Venda para aceitar a estrutura nova e retro-compatibilidade
+      window.salvarNovoProjeto = function () {
+        const clienteDigitado = document.getElementById("proj-cliente").value.trim();
+
+        if (clienteDigitado !== "") {
+          const clienteExiste = clientesGlobais.some((c) => {
+            const textoCompleto = c.cpf ? `${c.nome} - ${c.cpf}` : c.nome;
+            // Aceita se bater com "Nome - CPF" ou apenas "Nome" (para vendas antigas editadas)
+            return textoCompleto.toUpperCase() === clienteDigitado.toUpperCase() ||
+                   c.nome.toUpperCase() === clienteDigitado.toUpperCase();
+          });
+
+          if (!clienteExiste) {
+            mostrarToast("Atenção: Este cliente não está cadastrado ou o formato foi alterado.", "erro");
+            return;
+          }
+        }
 
       function gerarParcelas() {
         const total =
@@ -1231,37 +1252,34 @@
       };
 
       // 1. Ao clicar na Lupa
+
+
       window.editarCliente = function (id) {
-        // Busca todas as informações do cliente na nossa lista global
         const cliente = clientesGlobais.find((c) => c.id === id);
         if (!cliente) return;
 
-        // Preenche TODOS os campos do formulário
         document.getElementById("cli-id").value = cliente.id;
         document.getElementById("cli-nome").value = cliente.nome;
+        // Se o campo do CPF já existir no HTML, preenche-o
+        if (document.getElementById("cli-cpf")) document.getElementById("cli-cpf").value = cliente.cpf || "";
         document.getElementById("cli-celular").value = cliente.celular;
         document.getElementById("cli-cidade").value = cliente.cidade;
         document.getElementById("cli-bairro").value = cliente.bairro;
         document.getElementById("cli-endereco").value = cliente.endereco;
 
         document.getElementById("cli-id").readOnly = true;
-
-        document
-          .getElementById("botoes-cliente-standard")
-          .classList.add("hidden");
-        document
-          .getElementById("botoes-cliente-edicao")
-          .classList.remove("hidden");
+        document.getElementById("botoes-cliente-standard").classList.add("hidden");
+        document.getElementById("botoes-cliente-edicao").classList.remove("hidden");
 
         document.getElementById("cli-nome").focus();
         lucide.createIcons();
       };
 
-      // 2. Coleta todos os dados para salvar
       window.confirmarSalvarCliente = function () {
         const obj = {
           id: document.getElementById("cli-id").value.trim(),
           nome: document.getElementById("cli-nome").value.trim(),
+          cpf: document.getElementById("cli-cpf") ? document.getElementById("cli-cpf").value.trim() : "",
           celular: document.getElementById("cli-celular").value.trim(),
           cidade: document.getElementById("cli-cidade").value.trim(),
           bairro: document.getElementById("cli-bairro").value.trim(),
@@ -1274,13 +1292,12 @@
         }
 
         mostrarToast("A salvar dados...", "info");
-
         google.script.run
           .withSuccessHandler((res) => {
             if (res.sucesso) {
               mostrarToast(res.mensagem);
-              cancelarEdicaoCliente(); // Limpa a tela e volta os botões
-              carregarListaClientes(); // Atualiza a tabela
+              cancelarEdicaoCliente();
+              carregarListaClientes();
             } else {
               mostrarToast(res.mensagem, "erro");
             }
@@ -1288,25 +1305,21 @@
           .salvarCliente(obj);
       };
 
-      // 3. Limpa todos os campos ao cancelar
       window.cancelarEdicaoCliente = function () {
         document.getElementById("cli-nome").value = "";
+        if (document.getElementById("cli-cpf")) document.getElementById("cli-cpf").value = "";
         document.getElementById("cli-celular").value = "";
         document.getElementById("cli-cidade").value = "";
         document.getElementById("cli-bairro").value = "";
         document.getElementById("cli-endereco").value = "";
 
-        carregarProximoIdCliente(); // Gera novo ID
+        carregarProximoIdCliente();
 
-        document
-          .getElementById("botoes-cliente-standard")
-          .classList.remove("hidden");
-        document
-          .getElementById("botoes-cliente-edicao")
-          .classList.add("hidden");
-
+        document.getElementById("botoes-cliente-standard").classList.remove("hidden");
+        document.getElementById("botoes-cliente-edicao").classList.add("hidden");
         lucide.createIcons();
       };
+
       function carregarProximoIdCliente() {
         google.script.run
           .withSuccessHandler((novoId) => {
@@ -2351,7 +2364,7 @@
                 <p>MAJB SISTEMAS - Resplendor Solar</p>
               </div>
               <div class="data-geracao">Relatório gerado em: ${dataGeracao}</div>
-              
+
               <table>
                 <thead>
                   <tr>
@@ -2391,7 +2404,7 @@
         htmlString += `
                 </tbody>
               </table>
-              
+
               <div class="resumo-box">
                  <div class="resumo-item bg-aberto">Total Pendente: R$ ${totalPendente.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
                  <div class="resumo-item bg-pago">Total Pago: R$ ${totalPago.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
