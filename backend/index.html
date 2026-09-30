@@ -973,30 +973,6 @@
       }
 
       // 2. Atualiza a trava da Venda para aceitar a estrutura nova e retro-compatibilidade
-      window.salvarNovoProjeto = function () {
-        const clienteDigitado = document
-          .getElementById("proj-cliente")
-          .value.trim();
-
-        if (clienteDigitado !== "") {
-          const clienteExiste = clientesGlobais.some((c) => {
-            const textoCompleto = c.cpf ? `${c.nome} - ${c.cpf}` : c.nome;
-            // Aceita se bater com "Nome - CPF" ou apenas "Nome" (para vendas antigas editadas)
-            return (
-              textoCompleto.toUpperCase() === clienteDigitado.toUpperCase() ||
-              c.nome.toUpperCase() === clienteDigitado.toUpperCase()
-            );
-          });
-
-          if (!clienteExiste) {
-            mostrarToast(
-              "Atenção: Este cliente não está cadastrado ou o formato foi alterado.",
-              "erro",
-            );
-            return;
-          }
-        }
-      };
 
       function gerarParcelas() {
         const total =
@@ -1682,18 +1658,21 @@
         document.getElementById("proj-total").value = "";
         document.getElementById("proj-kit").value = "";
 
-        // Reset dos novos custos de execução
-        document.getElementById("proj-engenharia").value = "400";
-        document.getElementById("proj-mo-instalador").value = "";
-        document.getElementById("proj-mo-pedreiro").value = "";
-        document.getElementById("proj-materiais").value = "";
-
         document.getElementById("proj-entrada").value = "";
         document.getElementById("check-comissao").checked = true;
         document.getElementById("select-maquininha").value = "12x";
 
         document.getElementById("proj-liquido").value = "R$ 0,00";
         document.getElementById("proj-residual").value = "R$ 0,00";
+
+        // Novos campos
+        // Reset dos novos custos de execução
+        document.getElementById("proj-engenharia").value = "400";
+        document.getElementById("proj-mo-eletricista").value = "";
+        document.getElementById("proj-mo-instalador").value = "";
+        document.getElementById("proj-mo-pedreiro").value = "";
+        document.getElementById("proj-mo-ajudante").value = "";
+        document.getElementById("proj-materiais").value = "0";
 
         mudarAbaVenda("dados"); // Abre sempre na primeira aba
         document.getElementById("titulo-modal-projeto").innerText =
@@ -1786,11 +1765,100 @@
           residual.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
       }
 
+      window.salvarNovoProjeto = function () {
+        const clienteDigitado = document
+          .getElementById("proj-cliente")
+          .value.trim();
+
+        if (clienteDigitado !== "") {
+          const clienteExiste = clientesGlobais.some((c) => {
+            const textoCompleto = c.cpf ? `${c.nome} - ${c.cpf}` : c.nome;
+            return (
+              textoCompleto.toUpperCase() === clienteDigitado.toUpperCase() ||
+              c.nome.toUpperCase() === clienteDigitado.toUpperCase()
+            );
+          });
+
+          if (!clienteExiste) {
+            mostrarToast(
+              "Atenção: Este cliente não está cadastrado ou o formato foi alterado.",
+              "erro",
+            );
+            return;
+          }
+        }
+
+        // 1. Lemos os detalhes exatos da Mão de Obra da tela
+        const engenharia =
+          parseFloat(document.getElementById("proj-engenharia").value) || 0;
+        const eletricista =
+          parseFloat(document.getElementById("proj-mo-eletricista").value) || 0;
+        const instalador =
+          parseFloat(document.getElementById("proj-mo-instalador").value) || 0;
+        const pedreiro =
+          parseFloat(document.getElementById("proj-mo-pedreiro").value) || 0;
+        const ajudante =
+          parseFloat(document.getElementById("proj-mo-ajudante").value) || 0;
+
+        // 2. Fazemos a soma para a coluna principal
+        const totalMaoDeObra = eletricista + instalador + pedreiro + ajudante;
+
+        const obj = {
+          linha: document.getElementById("proj-linha").value,
+          data: document.getElementById("proj-data").value,
+          cliente: document.getElementById("proj-cliente").value,
+          total: document.getElementById("proj-total").value || 0,
+          kit: document.getElementById("proj-kit").value || 0,
+          servico: document.getElementById("proj-servico").value || 0,
+          impostos: document.getElementById("proj-impostos").value || 0,
+          maoDeObra: totalMaoDeObra, // Mantém a soma total para não quebrar dashboards
+          outros: document.getElementById("proj-outros").value || 0,
+          comissao: document.getElementById("proj-comissao").value || 0,
+          maquininha: document.getElementById("proj-maquininha").value || 0,
+          liquido: document.getElementById("proj-liquido").value,
+          entrada: document.getElementById("proj-entrada").value || 0,
+          residual: document.getElementById("proj-residual").value,
+          status: document.getElementById("proj-status").value,
+
+          // 3. Enviamos o "Raio-X" detalhado para o histórico
+          engenharia: engenharia,
+          eletricista: eletricista,
+          instaladorDetalhe: instalador,
+          pedreiro: pedreiro,
+          ajudante: ajudante,
+        };
+
+        if (!obj.data || !obj.cliente || !obj.total) {
+          mostrarToast("Preencha Data, Cliente e Valor Total.", "erro");
+          return;
+        }
+
+        mostrarToast(
+          obj.linha ? "Atualizando projeto..." : "A salvar novo projeto...",
+          "info",
+        );
+
+        google.script.run
+          .withSuccessHandler((res) => {
+            if (res.sucesso) {
+              mostrarToast(
+                obj.linha
+                  ? "Projeto atualizado com sucesso!"
+                  : "Projeto gravado com sucesso!",
+              );
+              fecharModalProjeto();
+              carregarListaProjetos();
+            } else {
+              mostrarToast("Erro ao gravar: " + res.mensagem, "erro");
+            }
+          })
+          .salvarProjetoNoServidor(obj);
+      };
+
       window.editarProjeto = function (linha) {
         const p = projetosGlobais.find((x) => x.linha === linha);
         if (!p) return;
 
-        // INJETA OS NÚMEROS EXATOS DO BANCO DE DADOS (SEM RECALCULAR)
         document.getElementById("proj-linha").value = p.linha;
         document.getElementById("proj-data").value = p.dataISO;
         document.getElementById("proj-cliente").value = p.cliente;
@@ -1798,7 +1866,6 @@
         document.getElementById("proj-kit").value = p.kit;
         document.getElementById("proj-servico").value = p.servico;
         document.getElementById("proj-impostos").value = p.impostos;
-        document.getElementById("proj-mao-obra").value = p.maoDeObra;
         document.getElementById("proj-outros").value = p.outros;
         document.getElementById("proj-comissao").value = p.comissao;
         document.getElementById("proj-maquininha").value = p.maquininha;
@@ -1811,7 +1878,36 @@
         document.getElementById("select-maquininha").value =
           parseFloat(p.maquininha) > 0 ? "historico" : "0";
 
-        // RESTAURA O LÍQUIDO E RESIDUAL EXATOS
+        // ====================================================================
+        // RESTAURAÇÃO DO RAIO-X DE CUSTOS COM RETROCOMPATIBILIDADE
+        // ====================================================================
+        document.getElementById("proj-engenharia").value =
+          p.engenharia > 0 ? p.engenharia : "400";
+        document.getElementById("proj-mo-eletricista").value =
+          p.eletricista > 0 ? p.eletricista : "";
+
+        // Se a obra for recente e tiver o detalhe, preenche normalmente
+        if (
+          p.eletricista > 0 ||
+          p.instaladorDetalhe > 0 ||
+          p.pedreiro > 0 ||
+          p.ajudante > 0
+        ) {
+          document.getElementById("proj-mo-instalador").value =
+            p.instaladorDetalhe > 0 ? p.instaladorDetalhe : "";
+          document.getElementById("proj-mo-pedreiro").value =
+            p.pedreiro > 0 ? p.pedreiro : "";
+          document.getElementById("proj-mo-ajudante").value =
+            p.ajudante > 0 ? p.ajudante : "";
+        } else {
+          // Se for uma obra antiga que só tem a soma na "Mão de Obra", joga esse valor no Instalador para o Renan saber
+          document.getElementById("proj-mo-instalador").value =
+            p.maoDeObra > 0 ? p.maoDeObra : "";
+          document.getElementById("proj-mo-pedreiro").value = "";
+          document.getElementById("proj-mo-ajudante").value = "";
+        }
+        // ====================================================================
+
         document.getElementById("proj-liquido").value =
           typeof p.liquido === "number"
             ? "R$ " +
@@ -1825,9 +1921,6 @@
 
         document.querySelector("#modal-projeto h3").innerText = "Editar Venda";
         document.getElementById("modal-projeto").classList.remove("hidden");
-
-        // IMPORTANTE: A função "calcularRentabilidade()" foi removida daqui!
-        // O sistema agora respeita cegamente o que estava no Banco de Dados!
       };
 
       window.salvarNovoProjeto = function () {

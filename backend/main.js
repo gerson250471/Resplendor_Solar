@@ -731,14 +731,21 @@ function obterListaProjetos() {
       kit: parseFloat(r[3]) || 0,
       servico: parseFloat(r[4]) || 0,
       impostos: parseFloat(r[5]) || 0,
-      maoDeObra: parseFloat(r[6]) || 0, // Coluna G (Alinhado com a Valéria)
-      comissao: parseFloat(r[7]) || 0,  // Coluna H
-      maquininha: parseFloat(r[8]) || 0,// Coluna I
-      liquido: r[9] || 0,               // Coluna J
-      entrada: parseFloat(r[10]) || 0,  // Coluna K
-      residual: r[11] || 0,             // Coluna L
-      status: r[12] || "AGUARDANDO KIT",// Coluna M
-      outros: parseFloat(r[13]) || 0    // Coluna N (Nova gaveta para Outros Custos)
+      maoDeObra: parseFloat(r[6]) || 0, // Coluna G (Soma Total)
+      comissao: parseFloat(r[7]) || 0,  
+      maquininha: parseFloat(r[8]) || 0,
+      liquido: r[9] || 0,               
+      entrada: parseFloat(r[10]) || 0,  
+      residual: r[11] || 0,             
+      status: r[12] || "AGUARDANDO KIT",
+      outros: parseFloat(r[13]) || 0,   // Coluna N (Materiais + Frete)
+      
+      // NOVAS COLUNAS DE HISTÓRICO DETALHADO (O, P, Q, R, S)
+      engenharia: parseFloat(r[14]) || 0,
+      eletricista: parseFloat(r[15]) || 0,
+      instaladorDetalhe: parseFloat(r[16]) || 0,
+      pedreiro: parseFloat(r[17]) || 0,
+      ajudante: parseFloat(r[18]) || 0
     };
   });
 }
@@ -748,11 +755,13 @@ function salvarProjetoNoServidor(obj) {
     const ss = SpreadsheetApp.openById(getSpreadsheetId());
     const aba = ss.getSheetByName("Projetos");
 
-    // Gravamos exatamente nas posições corretas
+    // Gravamos exatamente nas posições corretas (agora com 19 colunas)
     const arrayDados = [
       obj.data, obj.cliente, obj.total, obj.kit, obj.servico,
       obj.impostos, obj.maoDeObra, obj.comissao, obj.maquininha,
-      obj.liquido, obj.entrada, obj.residual, obj.status, obj.outros
+      obj.liquido, obj.entrada, obj.residual, obj.status, obj.outros,
+      // HISTÓRICO DETALHADO DA MÃO DE OBRA
+      obj.engenharia, obj.eletricista, obj.instaladorDetalhe, obj.pedreiro, obj.ajudante
     ];
 
     if (obj.linha && obj.linha !== "") {
