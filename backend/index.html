@@ -907,32 +907,41 @@
         const filtro = document
           .getElementById("filtro-cli")
           .value.toUpperCase();
-        if (!tabela) return;
 
+        if (!tabela) return;
         tabela.innerHTML = "";
 
+        // NOVA LÓGICA DE FILTRO: Busca por Nome, ID, CPF ou Cidade!
         const filtrados = clientesGlobais.filter((c) => {
-          const nomeTexto = String(c.nome).toUpperCase();
-          const idTexto = String(c.id).toUpperCase();
-          return nomeTexto.includes(filtro) || idTexto.includes(filtro);
+          const nomeTexto = String(c.nome || "").toUpperCase();
+          const idTexto = String(c.id || "").toUpperCase();
+          const cpfTexto = String(c.cpf || "").toUpperCase();
+          const cidadeTexto = String(c.cidade || "").toUpperCase();
+
+          return (
+            nomeTexto.includes(filtro) ||
+            idTexto.includes(filtro) ||
+            cpfTexto.includes(filtro) ||
+            cidadeTexto.includes(filtro)
+          );
         });
 
         filtrados.forEach((c) => {
           tabela.innerHTML += `
-                <tr class="border-b hover:bg-slate-50 transition-colors">
-                  <td class="p-3 text-sm font-mono font-bold text-blue-600">${c.id}</td>
-                  <td class="p-3 text-sm uppercase font-medium text-slate-700">${c.nome}</td>
-                  <td class="p-3 text-sm text-slate-500">${c.cidade || "---"}</td>
-                  <td class="p-3 text-center">
-                    <button
-                      onclick="editarCliente('${c.id}')"
-                      class="bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white border border-blue-200 px-3 py-1.5 rounded-md text-xs font-bold transition-all shadow-sm"
-                    >
-                      Ver Detalhes
-                    </button>
-                  </td>
-                </tr>
-              `;
+            <tr class="border-b hover:bg-slate-50 transition-colors">
+              <td class="p-3 text-sm font-mono font-bold text-blue-600">${c.id}</td>
+              <td class="p-3 text-sm uppercase font-medium text-slate-700">${c.nome}</td>
+              <td class="p-3 text-sm text-slate-500">${c.cidade || "---"}</td>
+              <td class="p-3 text-center">
+                <button
+                  onclick="editarCliente('${c.id}')"
+                  class="bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white border border-blue-200 px-3 py-1.5 rounded-md text-xs font-bold transition-all shadow-sm"
+                >
+                  Ver Detalhes
+                </button>
+              </td>
+            </tr>
+          `;
         });
       }
 
