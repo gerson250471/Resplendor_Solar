@@ -1793,7 +1793,123 @@
           residual.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
       }
 
-        // 1. Lemos os detalhes exatos da Mão de Obra da tela
+      // --------------------------------
+      window.editarProjeto = function (linha) {
+        const p = projetosGlobais.find((x) => x.linha === linha);
+        if (!p) return;
+
+        document.getElementById("proj-linha").value = p.linha;
+        document.getElementById("proj-data").value = p.dataISO;
+        document.getElementById("proj-cliente").value = p.cliente;
+        document.getElementById("proj-total").value = p.total;
+        document.getElementById("proj-kit").value = p.kit;
+        document.getElementById("proj-servico").value = p.servico;
+        document.getElementById("proj-impostos").value = p.impostos;
+        document.getElementById("proj-outros").value = p.outros;
+        document.getElementById("proj-comissao").value = p.comissao;
+        document.getElementById("proj-maquininha").value = p.maquininha;
+        document.getElementById("proj-entrada").value = p.entrada;
+        document.getElementById("proj-status").value = p.status;
+
+        document.getElementById("check-comissao").checked =
+          parseFloat(p.comissao) > 0;
+        document.getElementById("select-maquininha").value =
+          parseFloat(p.maquininha) > 0 ? "historico" : "0";
+
+        // RESTAURAÇÃO DO RAIO-X DE CUSTOS COM RETROCOMPATIBILIDADE
+        document.getElementById("proj-engenharia").value =
+          p.engenharia > 0 ? p.engenharia : "400";
+        document.getElementById("proj-mo-eletricista").value =
+          p.eletricista > 0 ? p.eletricista : "";
+
+        if (
+          p.eletricista > 0 ||
+          p.instaladorDetalhe > 0 ||
+          p.pedreiro > 0 ||
+          p.ajudante > 0
+        ) {
+          document.getElementById("proj-mo-instalador").value =
+            p.instaladorDetalhe > 0 ? p.instaladorDetalhe : "";
+          document.getElementById("proj-mo-pedreiro").value =
+            p.pedreiro > 0 ? p.pedreiro : "";
+          document.getElementById("proj-mo-ajudante").value =
+            p.ajudante > 0 ? p.ajudante : "";
+        } else {
+          document.getElementById("proj-mo-instalador").value =
+            p.maoDeObra > 0 ? p.maoDeObra : "";
+          document.getElementById("proj-mo-pedreiro").value = "";
+          document.getElementById("proj-mo-ajudante").value = "";
+        }
+
+        // RESTAURAÇÃO DOS MATERIAIS DINÂMICOS
+        document.getElementById("lista-materiais-obra").innerHTML = "";
+        let matUsados = [];
+        try {
+          matUsados = JSON.parse(p.materiaisJson);
+        } catch (e) {
+          matUsados = [];
+        }
+
+        if (matUsados.length > 0) {
+          matUsados.forEach((m) =>
+            window.adicionarLinhaMaterial(
+              m.descricao,
+              m.quantidade,
+              m.valorTotal,
+            ),
+          );
+          window.calcularTotalMateriais();
+        } else {
+          window.adicionarLinhaMaterial();
+        }
+
+        document.getElementById("proj-liquido").value =
+          typeof p.liquido === "number"
+            ? "R$ " +
+              p.liquido.toLocaleString("pt-BR", { minimumFractionDigits: 2 })
+            : p.liquido;
+        document.getElementById("proj-residual").value =
+          typeof p.residual === "number"
+            ? "R$ " +
+              p.residual.toLocaleString("pt-BR", { minimumFractionDigits: 2 })
+            : p.residual;
+
+        document.querySelector("#modal-projeto h3").innerText = "Editar Venda";
+        document.getElementById("modal-projeto").classList.remove("hidden");
+      };
+
+      window.salvarNovoProjeto = function () {
+        const clienteDigitado = document
+          .getElementById("proj-cliente")
+          .value.trim()
+          .toUpperCase();
+
+        // --- NOVA TRAVA DE INTEGRIDADE RELACIONAL COM CPF ---
+        if (clienteDigitado !== "") {
+          const clienteExiste = clientesGlobais.some((c) => {
+            const nomeLimpo = String(c.nome || "")
+              .trim()
+              .toUpperCase();
+            const cpfLimpo = String(c.cpf || "")
+              .trim()
+              .toUpperCase();
+            const textoCompleto = cpfLimpo
+              ? `${nomeLimpo} - ${cpfLimpo}`
+              : nomeLimpo;
+            return (
+              textoCompleto === clienteDigitado || nomeLimpo === clienteDigitado
+            );
+          });
+
+          if (!clienteExiste) {
+            mostrarToast(
+              "Atenção: Este cliente não está cadastrado ou o formato foi alterado.",
+              "erro",
+            );
+            return;
+          }
+        }
+
         const engenharia =
           parseFloat(document.getElementById("proj-engenharia").value) || 0;
         const eletricista =
@@ -1805,10 +1921,8 @@
         const ajudante =
           parseFloat(document.getElementById("proj-mo-ajudante").value) || 0;
 
-        // 2. Fazemos a soma para a coluna principal da Mão de Obra
         const totalMaoDeObra = eletricista + instalador + pedreiro + ajudante;
 
-        // 3. LER MATERIAIS DA TELA E EMPACOTAR EM JSON
         const linhasMateriaisDOM = document.querySelectorAll(".linha-material");
         const arrayMateriaisUsados = [];
 
@@ -1836,7 +1950,7 @@
           kit: document.getElementById("proj-kit").value || 0,
           servico: document.getElementById("proj-servico").value || 0,
           impostos: document.getElementById("proj-impostos").value || 0,
-          maoDeObra: totalMaoDeObra, // Mantém a soma total para não quebrar os dashboards
+          maoDeObra: totalMaoDeObra,
           outros: document.getElementById("proj-outros").value || 0,
           comissao: document.getElementById("proj-comissao").value || 0,
           maquininha: document.getElementById("proj-maquininha").value || 0,
@@ -1844,8 +1958,6 @@
           entrada: document.getElementById("proj-entrada").value || 0,
           residual: document.getElementById("proj-residual").value,
           status: document.getElementById("proj-status").value,
-
-          // Enviamos o "Raio-X" detalhado para as novas colunas
           engenharia: engenharia,
           eletricista: eletricista,
           instaladorDetalhe: instalador,
@@ -1872,150 +1984,6 @@
                   ? "Projeto atualizado com sucesso!"
                   : "Projeto gravado com sucesso!",
               );
-              fecharModalProjeto();
-              carregarListaProjetos();
-            } else {
-              mostrarToast("Erro ao gravar: " + res.mensagem, "erro");
-            }
-          })
-          .salvarProjetoNoServidor(obj);
-      };
-
-      // --------------------------------
-      window.editarProjeto = function (linha) {
-        const p = projetosGlobais.find((x) => x.linha === linha);
-        if (!p) return;
-
-        document.getElementById("proj-linha").value = p.linha;
-        document.getElementById("proj-data").value = p.dataISO;
-        document.getElementById("proj-cliente").value = p.cliente;
-        document.getElementById("proj-total").value = p.total;
-        document.getElementById("proj-kit").value = p.kit;
-        document.getElementById("proj-servico").value = p.servico;
-        document.getElementById("proj-impostos").value = p.impostos;
-        document.getElementById("proj-outros").value = p.outros;
-        document.getElementById("proj-comissao").value = p.comissao;
-        document.getElementById("proj-maquininha").value = p.maquininha;
-        document.getElementById("proj-entrada").value = p.entrada;
-        document.getElementById("proj-status").value = p.status;
-
-        document.getElementById("check-comissao").checked = parseFloat(p.comissao) > 0;
-        document.getElementById("select-maquininha").value = parseFloat(p.maquininha) > 0 ? "historico" : "0";
-
-        // RESTAURAÇÃO DO RAIO-X DE CUSTOS COM RETROCOMPATIBILIDADE
-        document.getElementById("proj-engenharia").value = p.engenharia > 0 ? p.engenharia : "400";
-        document.getElementById("proj-mo-eletricista").value = p.eletricista > 0 ? p.eletricista : "";
-
-        if (p.eletricista > 0 || p.instaladorDetalhe > 0 || p.pedreiro > 0 || p.ajudante > 0) {
-          document.getElementById("proj-mo-instalador").value = p.instaladorDetalhe > 0 ? p.instaladorDetalhe : "";
-          document.getElementById("proj-mo-pedreiro").value = p.pedreiro > 0 ? p.pedreiro : "";
-          document.getElementById("proj-mo-ajudante").value = p.ajudante > 0 ? p.ajudante : "";
-        } else {
-          document.getElementById("proj-mo-instalador").value = p.maoDeObra > 0 ? p.maoDeObra : "";
-          document.getElementById("proj-mo-pedreiro").value = "";
-          document.getElementById("proj-mo-ajudante").value = "";
-        }
-
-        // RESTAURAÇÃO DOS MATERIAIS DINÂMICOS
-        document.getElementById("lista-materiais-obra").innerHTML = "";
-        let matUsados = [];
-        try {
-          matUsados = JSON.parse(p.materiaisJson);
-        } catch (e) {
-          matUsados = [];
-        }
-
-        if (matUsados.length > 0) {
-          matUsados.forEach((m) =>
-            window.adicionarLinhaMaterial(m.descricao, m.quantidade, m.valorTotal)
-          );
-          window.calcularTotalMateriais();
-        } else {
-          window.adicionarLinhaMaterial();
-        }
-
-        document.getElementById("proj-liquido").value = typeof p.liquido === "number" ? "R$ " + p.liquido.toLocaleString("pt-BR", { minimumFractionDigits: 2 }) : p.liquido;
-        document.getElementById("proj-residual").value = typeof p.residual === "number" ? "R$ " + p.residual.toLocaleString("pt-BR", { minimumFractionDigits: 2 }) : p.residual;
-
-        document.querySelector("#modal-projeto h3").innerText = "Editar Venda";
-        document.getElementById("modal-projeto").classList.remove("hidden");
-      };
-
-      window.salvarNovoProjeto = function () {
-        const clienteDigitado = document.getElementById("proj-cliente").value.trim().toUpperCase();
-
-        // --- NOVA TRAVA DE INTEGRIDADE RELACIONAL COM CPF ---
-        if (clienteDigitado !== "") {
-          const clienteExiste = clientesGlobais.some((c) => {
-            const nomeLimpo = String(c.nome || "").trim().toUpperCase();
-            const cpfLimpo = String(c.cpf || "").trim().toUpperCase();
-            const textoCompleto = cpfLimpo ? `${nomeLimpo} - ${cpfLimpo}` : nomeLimpo;
-            return textoCompleto === clienteDigitado || nomeLimpo === clienteDigitado;
-          });
-
-          if (!clienteExiste) {
-            mostrarToast("Atenção: Este cliente não está cadastrado ou o formato foi alterado.", "erro");
-            return;
-          }
-        }
-
-        const engenharia = parseFloat(document.getElementById("proj-engenharia").value) || 0;
-        const eletricista = parseFloat(document.getElementById("proj-mo-eletricista").value) || 0;
-        const instalador = parseFloat(document.getElementById("proj-mo-instalador").value) || 0;
-        const pedreiro = parseFloat(document.getElementById("proj-mo-pedreiro").value) || 0;
-        const ajudante = parseFloat(document.getElementById("proj-mo-ajudante").value) || 0;
-
-        const totalMaoDeObra = eletricista + instalador + pedreiro + ajudante;
-
-        const linhasMateriaisDOM = document.querySelectorAll(".linha-material");
-        const arrayMateriaisUsados = [];
-
-        linhasMateriaisDOM.forEach((linha) => {
-          const desc = linha.querySelector(".mat-desc").value;
-          const qtd = parseFloat(linha.querySelector(".mat-qtd").value) || 0;
-          const valorTotalMat = parseFloat(linha.querySelector(".mat-valor").value) || 0;
-
-          if (desc.trim() !== "") {
-            arrayMateriaisUsados.push({ descricao: desc, quantidade: qtd, valorTotal: valorTotalMat });
-          }
-        });
-        const materiaisJSONString = JSON.stringify(arrayMateriaisUsados);
-
-        const obj = {
-          linha: document.getElementById("proj-linha").value,
-          data: document.getElementById("proj-data").value,
-          cliente: document.getElementById("proj-cliente").value,
-          total: document.getElementById("proj-total").value || 0,
-          kit: document.getElementById("proj-kit").value || 0,
-          servico: document.getElementById("proj-servico").value || 0,
-          impostos: document.getElementById("proj-impostos").value || 0,
-          maoDeObra: totalMaoDeObra,
-          outros: document.getElementById("proj-outros").value || 0,
-          comissao: document.getElementById("proj-comissao").value || 0,
-          maquininha: document.getElementById("proj-maquininha").value || 0,
-          liquido: document.getElementById("proj-liquido").value,
-          entrada: document.getElementById("proj-entrada").value || 0,
-          residual: document.getElementById("proj-residual").value,
-          status: document.getElementById("proj-status").value,
-          engenharia: engenharia,
-          eletricista: eletricista,
-          instaladorDetalhe: instalador,
-          pedreiro: pedreiro,
-          ajudante: ajudante,
-          materiaisJson: materiaisJSONString
-        };
-
-        if (!obj.data || !obj.cliente || !obj.total) {
-          mostrarToast("Preencha Data, Cliente e Valor Total.", "erro");
-          return;
-        }
-
-        mostrarToast(obj.linha ? "Atualizando projeto..." : "A salvar novo projeto...", "info");
-
-        google.script.run
-          .withSuccessHandler((res) => {
-            if (res.sucesso) {
-              mostrarToast(obj.linha ? "Projeto atualizado com sucesso!" : "Projeto gravado com sucesso!");
               fecharModalProjeto();
               carregarListaProjetos();
             } else {
@@ -2640,4 +2608,4 @@
     </script>
   </body>
 </html>
-<!-- 26.10.01 1541 -->
+<!-- 26.10.01 1604 -->
