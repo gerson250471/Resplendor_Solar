@@ -1803,13 +1803,22 @@
         document.getElementById("proj-cliente").value = p.cliente;
         document.getElementById("proj-total").value = p.total;
         document.getElementById("proj-kit").value = p.kit;
-        document.getElementById("proj-servico").value = p.servico;
-        document.getElementById("proj-impostos").value = p.impostos;
-        document.getElementById("proj-outros").value = p.outros;
-        document.getElementById("proj-comissao").value = p.comissao;
-        document.getElementById("proj-maquininha").value = p.maquininha;
         document.getElementById("proj-entrada").value = p.entrada;
-        document.getElementById("proj-status").value = p.status;
+
+        if (document.getElementById("proj-status")) {
+          document.getElementById("proj-status").value = p.status;
+        }
+
+        // PREENCHIMENTO SEGURO: Só tenta preencher se o campo existir no HTML
+        if (document.getElementById("proj-impostos"))
+          document.getElementById("proj-impostos").value =
+            "R$ " + parseFloat(p.impostos || 0).toFixed(2);
+        if (document.getElementById("proj-comissao"))
+          document.getElementById("proj-comissao").value =
+            "R$ " + parseFloat(p.comissao || 0).toFixed(2);
+        if (document.getElementById("proj-maquininha-valor"))
+          document.getElementById("proj-maquininha-valor").value =
+            "R$ " + parseFloat(p.maquininha || 0).toFixed(2);
 
         document.getElementById("check-comissao").checked =
           parseFloat(p.comissao) > 0;
@@ -1835,6 +1844,7 @@
           document.getElementById("proj-mo-ajudante").value =
             p.ajudante > 0 ? p.ajudante : "";
         } else {
+          // Retrocompatibilidade para projetos antigos
           document.getElementById("proj-mo-instalador").value =
             p.maoDeObra > 0 ? p.maoDeObra : "";
           document.getElementById("proj-mo-pedreiro").value = "";
@@ -1884,7 +1894,6 @@
           .value.trim()
           .toUpperCase();
 
-        // --- NOVA TRAVA DE INTEGRIDADE RELACIONAL COM CPF ---
         if (clienteDigitado !== "") {
           const clienteExiste = clientesGlobais.some((c) => {
             const nomeLimpo = String(c.nome || "")
@@ -1942,22 +1951,51 @@
         });
         const materiaisJSONString = JSON.stringify(arrayMateriaisUsados);
 
+        // FUNÇÃO DE BLINDAGEM: Limpa as letras "R$" e formatações para salvar como número real no banco
+        const limparMoeda = (id) => {
+          const el = document.getElementById(id);
+          if (!el) return 0;
+          return (
+            parseFloat(
+              String(el.value)
+                .replace(/[R$\s.]/g, "")
+                .replace(",", "."),
+            ) || 0
+          );
+        };
+
+        const totalCalc =
+          parseFloat(document.getElementById("proj-total").value) || 0;
+        const kitCalc =
+          parseFloat(document.getElementById("proj-kit").value) || 0;
+
+        // Lê de forma segura se o campo existir, ou joga 0
+        const freteCalc = document.getElementById("proj-frete-estimado")
+          ? parseFloat(document.getElementById("proj-frete-estimado").value) ||
+            0
+          : 0;
+        const materiaisCalc = document.getElementById("proj-materiais")
+          ? parseFloat(document.getElementById("proj-materiais").value) || 0
+          : 0;
+
         const obj = {
           linha: document.getElementById("proj-linha").value,
           data: document.getElementById("proj-data").value,
           cliente: document.getElementById("proj-cliente").value,
-          total: document.getElementById("proj-total").value || 0,
-          kit: document.getElementById("proj-kit").value || 0,
-          servico: document.getElementById("proj-servico").value || 0,
-          impostos: document.getElementById("proj-impostos").value || 0,
+          total: totalCalc,
+          kit: kitCalc,
+          servico: totalCalc - kitCalc, // Valor calculado internamente (Total - Kit)
+          impostos: limparMoeda("proj-impostos"),
           maoDeObra: totalMaoDeObra,
-          outros: document.getElementById("proj-outros").value || 0,
-          comissao: document.getElementById("proj-comissao").value || 0,
-          maquininha: document.getElementById("proj-maquininha").value || 0,
+          outros: materiaisCalc + freteCalc, // Valor calculado internamente (Materiais + Frete)
+          comissao: limparMoeda("proj-comissao"),
+          maquininha: limparMoeda("proj-maquininha-valor"), // O ID correto foi inserido aqui!
           liquido: document.getElementById("proj-liquido").value,
           entrada: document.getElementById("proj-entrada").value || 0,
           residual: document.getElementById("proj-residual").value,
-          status: document.getElementById("proj-status").value,
+          status: document.getElementById("proj-status")
+            ? document.getElementById("proj-status").value
+            : "AGUARDANDO KIT",
           engenharia: engenharia,
           eletricista: eletricista,
           instaladorDetalhe: instalador,
@@ -2608,4 +2646,4 @@
     </script>
   </body>
 </html>
-<!-- 26.10.01 1604 -->
+<!-- 26.10.01 1650 -->
