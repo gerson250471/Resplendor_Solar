@@ -44,3 +44,6 @@ src/
 
 #Qualquer vídeo de solicitação
 *.ogg
+
+#Qualquer documento word
+*.docx

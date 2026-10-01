@@ -367,6 +367,7 @@
         </div>
       </section>
       <datalist id="clientes-list"></datalist>
+      <datalist id="materiais-list"></datalist>
     </main>
 
     <div
@@ -634,6 +635,7 @@
           carregarListaProjetos();
           carregarParametrosProjetos();
           carregarListaClientes(); // <-- ADICIONE ESTA LINHA AQUI
+          carregarCatalogoMateriais();
         }
         // Tela de Parametros
         if (tela === "parametros") carregarTelaParametros();
@@ -800,13 +802,13 @@
 
         div.innerHTML = `
           <div class="col-span-6">
-            <input type="text" class="input-field text-xs py-1.5" placeholder="Ex: Fio 6mm, Disjuntor..." value="${descricao}" />
+            <input type="text" class="mat-desc input-field text-xs py-1.5 font-bold uppercase text-slate-700" list="materiais-list" autocomplete="off" placeholder="Buscar material..." value="${descricao}" />
           </div>
           <div class="col-span-2">
-            <input type="number" class="input-field text-xs py-1.5 text-center" value="${qtd}" min="1" />
+            <input type="number" class="mat-qtd input-field text-xs py-1.5 text-center font-bold" value="${qtd}" min="1" />
           </div>
           <div class="col-span-3">
-            <input type="number" class="mat-valor input-field text-xs py-1.5 text-right font-bold text-slate-700" placeholder="0.00" value="${valor}" oninput="calcularTotalMateriais()" />
+            <input type="number" class="mat-valor input-field text-xs py-1.5 text-right font-bold text-blue-700" placeholder="0.00" value="${valor}" oninput="calcularTotalMateriais()" />
           </div>
           <div class="col-span-1 text-center">
             <button type="button" onclick="removerLinhaMaterial(this)" class="text-slate-300 hover:text-red-500 transition-colors">
@@ -814,9 +816,8 @@
             </button>
           </div>
         `;
-
         container.appendChild(div);
-        lucide.createIcons(); // Ativa o ícone da lixeira na nova linha
+        lucide.createIcons();
       };
 
       window.removerLinhaMaterial = function (btn) {
@@ -858,6 +859,24 @@
        */
 
       let clientesGlobais = [];
+      let catalogoMateriaisGlobais = [];
+
+      function carregarCatalogoMateriais() {
+        google.script.run
+          .withSuccessHandler((res) => {
+            if (res.sucesso) {
+              catalogoMateriaisGlobais = res.dados;
+              const dataList = document.getElementById("materiais-list");
+              if (dataList) {
+                dataList.innerHTML = "";
+                catalogoMateriaisGlobais.forEach((m) => {
+                  dataList.innerHTML += `<option value="${m.descricao}">`;
+                });
+              }
+            }
+          })
+          .obterCatalogoMateriais();
+      }
 
       function carregarListaClientes() {
         google.script.run
@@ -1835,6 +1854,7 @@
           instaladorDetalhe: instalador,
           pedreiro: pedreiro,
           ajudante: ajudante,
+          materiaisJson: materiaisJSONString,
         };
 
         if (!obj.data || !obj.cliente || !obj.total) {
@@ -1916,6 +1936,29 @@
           document.getElementById("proj-mo-ajudante").value = "";
         }
         // ====================================================================
+        // ====================================================================
+        // RESTAURAÇÃO DOS MATERIAIS DINÂMICOS
+        // ====================================================================
+        document.getElementById("lista-materiais-obra").innerHTML = "";
+        let matUsados = [];
+        try {
+          matUsados = JSON.parse(p.materiaisJson);
+        } catch (e) {
+          matUsados = [];
+        }
+
+        if (matUsados.length > 0) {
+          matUsados.forEach((m) =>
+            window.adicionarLinhaMaterial(
+              m.descricao,
+              m.quantidade,
+              m.valorTotal,
+            ),
+          );
+          window.calcularTotalMateriais();
+        } else {
+          window.adicionarLinhaMaterial(); // Inicia com uma vazia se não tiver nada
+        }
 
         document.getElementById("proj-liquido").value =
           typeof p.liquido === "number"

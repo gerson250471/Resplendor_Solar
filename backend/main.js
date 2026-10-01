@@ -731,21 +731,22 @@ function obterListaProjetos() {
       kit: parseFloat(r[3]) || 0,
       servico: parseFloat(r[4]) || 0,
       impostos: parseFloat(r[5]) || 0,
-      maoDeObra: parseFloat(r[6]) || 0, // Coluna G (Soma Total)
+      maoDeObra: parseFloat(r[6]) || 0,
       comissao: parseFloat(r[7]) || 0,  
       maquininha: parseFloat(r[8]) || 0,
       liquido: r[9] || 0,               
       entrada: parseFloat(r[10]) || 0,  
       residual: r[11] || 0,             
       status: r[12] || "AGUARDANDO KIT",
-      outros: parseFloat(r[13]) || 0,   // Coluna N (Materiais + Frete)
-      
-      // NOVAS COLUNAS DE HISTÓRICO DETALHADO (O, P, Q, R, S)
+      outros: parseFloat(r[13]) || 0,   
       engenharia: parseFloat(r[14]) || 0,
       eletricista: parseFloat(r[15]) || 0,
       instaladorDetalhe: parseFloat(r[16]) || 0,
       pedreiro: parseFloat(r[17]) || 0,
-      ajudante: parseFloat(r[18]) || 0
+      ajudante: parseFloat(r[18]) || 0,
+      
+      // COLUNA T (Índice 19) - LISTA DE MATERIAIS EM JSON
+      materiaisJson: r[19] || "[]"
     };
   });
 }
@@ -755,13 +756,14 @@ function salvarProjetoNoServidor(obj) {
     const ss = SpreadsheetApp.openById(getSpreadsheetId());
     const aba = ss.getSheetByName("Projetos");
 
-    // Gravamos exatamente nas posições corretas (agora com 19 colunas)
+    // Gravamos exatamente nas posições corretas (agora com 20 colunas)
     const arrayDados = [
       obj.data, obj.cliente, obj.total, obj.kit, obj.servico,
       obj.impostos, obj.maoDeObra, obj.comissao, obj.maquininha,
       obj.liquido, obj.entrada, obj.residual, obj.status, obj.outros,
-      // HISTÓRICO DETALHADO DA MÃO DE OBRA
-      obj.engenharia, obj.eletricista, obj.instaladorDetalhe, obj.pedreiro, obj.ajudante
+      obj.engenharia, obj.eletricista, obj.instaladorDetalhe, obj.pedreiro, obj.ajudante,
+      // NOVO: MATERIAIS
+      obj.materiaisJson
     ];
 
     if (obj.linha && obj.linha !== "") {
@@ -774,6 +776,23 @@ function salvarProjetoNoServidor(obj) {
   } catch (e) {
     return { sucesso: false, mensagem: e.message };
   }
+}
+
+// NOVO MÓDULO PARA O PROTÓTIPO: Catálogo Fictício (Na Fase 3 leremos da aba Catalogo_Materiais)
+function obterCatalogoMateriais() {
+  return {
+    sucesso: true,
+    dados: [
+      { id: "MAT-001", descricao: "Cabo Solar 6mm Preto (Metro)" },
+      { id: "MAT-002", descricao: "Cabo Solar 6mm Vermelho (Metro)" },
+      { id: "MAT-003", descricao: "Disjuntor CC 32A" },
+      { id: "MAT-004", descricao: "Disjuntor CA 40A" },
+      { id: "MAT-005", descricao: "Quadro de Distribuição 8 Disjuntores" },
+      { id: "MAT-006", descricao: "Conector MC4 (Par)" },
+      { id: "MAT-007", descricao: "Estrutura Telhado Colonial (Kit 4 Módulos)" },
+      { id: "MAT-008", descricao: "Eletroduto Corrugado 3/4 (Metro)" }
+    ]
+  };
 }
 
 // --- NO ARQUIVO MAIN.GS ---
