@@ -1796,14 +1796,25 @@
       window.salvarNovoProjeto = function () {
         const clienteDigitado = document
           .getElementById("proj-cliente")
-          .value.trim();
+          .value.trim()
+          .toUpperCase();
 
+        // --- NOVA TRAVA DE INTEGRIDADE RELACIONAL COM CPF ---
         if (clienteDigitado !== "") {
           const clienteExiste = clientesGlobais.some((c) => {
-            const textoCompleto = c.cpf ? `${c.nome} - ${c.cpf}` : c.nome;
+            const nomeLimpo = String(c.nome || "")
+              .trim()
+              .toUpperCase();
+            const cpfLimpo = String(c.cpf || "")
+              .trim()
+              .toUpperCase();
+            const textoCompleto = cpfLimpo
+              ? `${nomeLimpo} - ${cpfLimpo}`
+              : nomeLimpo;
+
+            // Compara ignorando espaços extra e letras minúsculas
             return (
-              textoCompleto.toUpperCase() === clienteDigitado.toUpperCase() ||
-              c.nome.toUpperCase() === clienteDigitado.toUpperCase()
+              textoCompleto === clienteDigitado || nomeLimpo === clienteDigitado
             );
           });
 
@@ -1812,9 +1823,10 @@
               "Atenção: Este cliente não está cadastrado ou o formato foi alterado.",
               "erro",
             );
-            return;
+            return; // Aborta a gravação da venda
           }
         }
+        // --------------------------------------------
 
         // 1. Lemos os detalhes exatos da Mão de Obra da tela
         const engenharia =
@@ -1828,8 +1840,28 @@
         const ajudante =
           parseFloat(document.getElementById("proj-mo-ajudante").value) || 0;
 
-        // 2. Fazemos a soma para a coluna principal
+        // 2. Fazemos a soma para a coluna principal da Mão de Obra
         const totalMaoDeObra = eletricista + instalador + pedreiro + ajudante;
+
+        // 3. LER MATERIAIS DA TELA E EMPACOTAR EM JSON
+        const linhasMateriaisDOM = document.querySelectorAll(".linha-material");
+        const arrayMateriaisUsados = [];
+
+        linhasMateriaisDOM.forEach((linha) => {
+          const desc = linha.querySelector(".mat-desc").value;
+          const qtd = parseFloat(linha.querySelector(".mat-qtd").value) || 0;
+          const valorTotalMat =
+            parseFloat(linha.querySelector(".mat-valor").value) || 0;
+
+          if (desc.trim() !== "") {
+            arrayMateriaisUsados.push({
+              descricao: desc,
+              quantidade: qtd,
+              valorTotal: valorTotalMat,
+            });
+          }
+        });
+        const materiaisJSONString = JSON.stringify(arrayMateriaisUsados);
 
         const obj = {
           linha: document.getElementById("proj-linha").value,
@@ -1839,7 +1871,7 @@
           kit: document.getElementById("proj-kit").value || 0,
           servico: document.getElementById("proj-servico").value || 0,
           impostos: document.getElementById("proj-impostos").value || 0,
-          maoDeObra: totalMaoDeObra, // Mantém a soma total para não quebrar dashboards
+          maoDeObra: totalMaoDeObra, // Mantém a soma total para não quebrar os dashboards
           outros: document.getElementById("proj-outros").value || 0,
           comissao: document.getElementById("proj-comissao").value || 0,
           maquininha: document.getElementById("proj-maquininha").value || 0,
@@ -1848,7 +1880,7 @@
           residual: document.getElementById("proj-residual").value,
           status: document.getElementById("proj-status").value,
 
-          // 3. Enviamos o "Raio-X" detalhado para o histórico
+          // Enviamos o "Raio-X" detalhado para as novas colunas
           engenharia: engenharia,
           eletricista: eletricista,
           instaladorDetalhe: instalador,
