@@ -144,6 +144,65 @@
               placeholder="R$ 0,00"
             />
           </div>
+          <!-- NOVO: DIMENSIONAMENTO DO SISTEMA (PLACAS E METRAGEM) -->
+          <div class="md:col-span-2 mt-2 pt-4 border-t border-blue-200/60">
+            <h4
+              class="text-xs font-bold text-slate-500 uppercase mb-3 flex items-center gap-1.5"
+            >
+              <i data-lucide="layout-grid" class="w-4 h-4 text-amber-500"></i>
+              Dimensionamento Físico do Kit
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label
+                  class="block text-xs font-bold text-slate-600 uppercase mb-1"
+                >
+                  Qtd. de Placas
+                </label>
+                <input
+                  type="number"
+                  id="proj-qtd-placas"
+                  class="input-field font-bold text-center text-slate-800"
+                  placeholder="Ex: 12"
+                  min="0"
+                  oninput="calcularMetragemPlacas()"
+                />
+              </div>
+
+              <div>
+                <label
+                  class="block text-xs font-bold text-slate-600 uppercase mb-1"
+                >
+                  Tamanho da Placa (m²)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  id="proj-tam-placa"
+                  class="input-field font-bold text-center text-slate-600 bg-slate-50"
+                  value="2.60"
+                  min="0"
+                  oninput="calcularMetragemPlacas()"
+                  title="Média padrão: 2.20m² a 2.80m² por módulo"
+                />
+              </div>
+
+              <div>
+                <label
+                  class="block text-xs font-bold text-emerald-700 uppercase mb-1"
+                >
+                  Área Total Ocupada
+                </label>
+                <input
+                  type="text"
+                  id="proj-area-total"
+                  class="input-field font-extrabold text-center text-emerald-700 bg-emerald-50 border-emerald-200"
+                  value="0,00 m²"
+                  readonly
+                />
+              </div>
+            </div>
+          </div>
         </div>
         <div class="hidden">
           <select id="proj-status" class="input-field">
@@ -156,15 +215,25 @@
       <div id="aba-custos" class="space-y-6 hidden">
         <!-- 1. MÃO DE OBRA POR DIÁRIA E QUANTIDADE -->
         <div>
-          <div class="flex justify-between items-center border-b pb-2 mb-3">
+          <div
+            class="flex flex-wrap justify-between items-center border-b pb-2 mb-3 gap-2"
+          >
             <h4 class="text-sm font-bold text-slate-700">
               Dimensionamento de Equipe & Mão de Obra
             </h4>
-            <span
-              class="text-xs font-semibold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full"
-            >
-              Cálculo por Diária
-            </span>
+            <div class="flex items-center gap-2">
+              <span
+                id="badge-area-custos"
+                class="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full"
+              >
+                📐 0 Placas (0,00 m²)
+              </span>
+              <span
+                class="text-xs font-semibold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full"
+              >
+                Cálculo por Diária
+              </span>
+            </div>
           </div>
 
           <!-- Linha 1: Engenharia e Duração da Obra -->

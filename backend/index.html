@@ -801,21 +801,21 @@
         div.className = "linha-material grid grid-cols-12 gap-2 items-center";
 
         div.innerHTML = `
-          <div class="col-span-6">
-            <input type="text" class="mat-desc input-field text-xs py-1.5 font-bold uppercase text-slate-700" list="materiais-list" autocomplete="off" placeholder="Buscar material..." value="${descricao}" />
-          </div>
-          <div class="col-span-2">
-            <input type="number" class="mat-qtd input-field text-xs py-1.5 text-center font-bold" value="${qtd}" min="1" />
-          </div>
-          <div class="col-span-3">
-            <input type="number" class="mat-valor input-field text-xs py-1.5 text-right font-bold text-blue-700" placeholder="0.00" value="${valor}" oninput="calcularTotalMateriais()" />
-          </div>
-          <div class="col-span-1 text-center">
-            <button type="button" onclick="removerLinhaMaterial(this)" class="text-slate-300 hover:text-red-500 transition-colors">
-              <i data-lucide="trash-2" class="w-4 h-4"></i>
-            </button>
-          </div>
-        `;
+                <div class="col-span-6">
+                  <input type="text" class="mat-desc input-field text-xs py-1.5 font-bold uppercase text-slate-700" list="materiais-list" autocomplete="off" placeholder="Buscar material..." value="${descricao}" />
+                </div>
+                <div class="col-span-2">
+                  <input type="number" class="mat-qtd input-field text-xs py-1.5 text-center font-bold" value="${qtd}" min="1" />
+                </div>
+                <div class="col-span-3">
+                  <input type="number" class="mat-valor input-field text-xs py-1.5 text-right font-bold text-blue-700" placeholder="0.00" value="${valor}" oninput="calcularTotalMateriais()" />
+                </div>
+                <div class="col-span-1 text-center">
+                  <button type="button" onclick="removerLinhaMaterial(this)" class="text-slate-300 hover:text-red-500 transition-colors">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                  </button>
+                </div>
+              `;
         container.appendChild(div);
         lucide.createIcons();
       };
@@ -947,20 +947,20 @@
 
         filtrados.forEach((c) => {
           tabela.innerHTML += `
-            <tr class="border-b hover:bg-slate-50 transition-colors">
-              <td class="p-3 text-sm font-mono font-bold text-blue-600">${c.id}</td>
-              <td class="p-3 text-sm uppercase font-medium text-slate-700">${c.nome}</td>
-              <td class="p-3 text-sm text-slate-500">${c.cidade || "---"}</td>
-              <td class="p-3 text-center">
-                <button
-                  onclick="editarCliente('${c.id}')"
-                  class="bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white border border-blue-200 px-3 py-1.5 rounded-md text-xs font-bold transition-all shadow-sm"
-                >
-                  Ver Detalhes
-                </button>
-              </td>
-            </tr>
-          `;
+                  <tr class="border-b hover:bg-slate-50 transition-colors">
+                    <td class="p-3 text-sm font-mono font-bold text-blue-600">${c.id}</td>
+                    <td class="p-3 text-sm uppercase font-medium text-slate-700">${c.nome}</td>
+                    <td class="p-3 text-sm text-slate-500">${c.cidade || "---"}</td>
+                    <td class="p-3 text-center">
+                      <button
+                        onclick="editarCliente('${c.id}')"
+                        class="bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white border border-blue-200 px-3 py-1.5 rounded-md text-xs font-bold transition-all shadow-sm"
+                      >
+                        Ver Detalhes
+                      </button>
+                    </td>
+                  </tr>
+                `;
         });
       }
 
@@ -1027,12 +1027,12 @@
           let valorDestaParcela = i === 1 ? valorBase + resto : valorBase;
 
           listaHtml.innerHTML += `
-                <tr class="border-b">
-                  <td class="py-2 text-slate-500">${i}º</td>
-                  <td class="text-slate-800 font-medium">${dataProvisoria.toLocaleDateString("pt-BR")}</td>
-                  <td class="text-right font-bold text-emerald-700">R$ ${valorDestaParcela.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
-                </tr>
-              `;
+                      <tr class="border-b">
+                        <td class="py-2 text-slate-500">${i}º</td>
+                        <td class="text-slate-800 font-medium">${dataProvisoria.toLocaleDateString("pt-BR")}</td>
+                        <td class="text-right font-bold text-emerald-700">R$ ${valorDestaParcela.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
+                      </tr>
+                    `;
 
           dataProvisoria.setMonth(dataProvisoria.getMonth() + 1);
         }
@@ -1177,23 +1177,23 @@
 
           // NOVO: HTML da linha com a coluna Parcela exibindo número e a nova coluna de Status
           tr.innerHTML = `
-          <td class="p-3 text-sm font-mono">${p.idVenda}</td>
-          <td class="p-3 text-sm uppercase font-medium text-slate-700">${p.cliente}</td>
-          <td class="p-3 text-sm font-bold text-slate-500 text-center">${p.parcela}º</td>
-          <td class="p-3 text-sm text-center">
-            <span class="${corStatus} bg-slate-100 px-2 py-1 rounded-full text-[10px] tracking-wide">${p.status}</span>
-          </td>
-          <td class="p-3 text-sm text-center">${p.vencimento}</td>
-          <td class="p-3 text-sm font-bold text-right">R$ ${p.valor}</td>
-          <td class="p-3 text-center flex items-center justify-center gap-2">
-            <button onclick="iniciarBaixa(${p.linha}, '${p.valor}')" class="bg-blue-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-blue-700 shadow-md transition-colors">
-              BAIXAR
-            </button>
-            <button onclick="abrirModalExcluirLancamento('${p.idVenda}')" class="bg-red-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-red-700 shadow-md transition-colors">
-              Excluir
-            </button>
-          </td>
-        `;
+                <td class="p-3 text-sm font-mono">${p.idVenda}</td>
+                <td class="p-3 text-sm uppercase font-medium text-slate-700">${p.cliente}</td>
+                <td class="p-3 text-sm font-bold text-slate-500 text-center">${p.parcela}º</td>
+                <td class="p-3 text-sm text-center">
+                  <span class="${corStatus} bg-slate-100 px-2 py-1 rounded-full text-[10px] tracking-wide">${p.status}</span>
+                </td>
+                <td class="p-3 text-sm text-center">${p.vencimento}</td>
+                <td class="p-3 text-sm font-bold text-right">R$ ${p.valor}</td>
+                <td class="p-3 text-center flex items-center justify-center gap-2">
+                  <button onclick="iniciarBaixa(${p.linha}, '${p.valor}')" class="bg-blue-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-blue-700 shadow-md transition-colors">
+                    BAIXAR
+                  </button>
+                  <button onclick="abrirModalExcluirLancamento('${p.idVenda}')" class="bg-red-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-red-700 shadow-md transition-colors">
+                    Excluir
+                  </button>
+                </td>
+              `;
           tabela.appendChild(tr);
         });
       }
@@ -1412,12 +1412,12 @@
 
         // Reseta a tabela de previsão
         document.getElementById("lista-parcelas").innerHTML = `
-              <tr>
-                <td colspan="3" class="pt-2 text-center text-slate-400">
-                  Informe o valor total para calcular.
-                </td>
-              </tr>
-            `;
+                    <tr>
+                      <td colspan="3" class="pt-2 text-center text-slate-400">
+                        Informe o valor total para calcular.
+                      </td>
+                    </tr>
+                  `;
       }
 
       // Função para ser chamada no botão de excluir lançamento
@@ -1509,16 +1509,16 @@
               ? "text-blue-600 bg-blue-50"
               : "text-slate-600 bg-slate-50";
           tbody.innerHTML += `
-          <tr class="border-b hover:bg-slate-50 transition-colors">
-            <td class="p-3 text-sm font-medium text-slate-700">${u.nome}</td>
-            <td class="p-3 text-sm font-mono">${u.login}</td>
-            <td class="p-3 text-xs"><span class="${corNivel} px-2 py-1 rounded-full font-bold">${u.nivel}</span></td>
-            <td class="p-3 text-sm">${u.trocar ? "✅ Sim" : "❌ Não"}</td>
-            <td class="p-3 text-center">
-              <button onclick="editarUsuario('${u.login}')" class="text-blue-600 p-1 hover:bg-blue-100 rounded transition-colors"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
-            </td>
-          </tr>
-        `;
+                <tr class="border-b hover:bg-slate-50 transition-colors">
+                  <td class="p-3 text-sm font-medium text-slate-700">${u.nome}</td>
+                  <td class="p-3 text-sm font-mono">${u.login}</td>
+                  <td class="p-3 text-xs"><span class="${corNivel} px-2 py-1 rounded-full font-bold">${u.nivel}</span></td>
+                  <td class="p-3 text-sm">${u.trocar ? "✅ Sim" : "❌ Não"}</td>
+                  <td class="p-3 text-center">
+                    <button onclick="editarUsuario('${u.login}')" class="text-blue-600 p-1 hover:bg-blue-100 rounded transition-colors"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                  </td>
+                </tr>
+              `;
         });
         lucide.createIcons();
       }
@@ -1626,20 +1626,20 @@
 
         filtrados.forEach((p) => {
           tbody.innerHTML += `
-                <tr class="border-b hover:bg-slate-50 transition-colors">
-                  <td class="p-3 text-sm">${p.dataBR}</td>
-                  <td class="p-3 text-sm font-medium uppercase">${p.cliente}</td>
-                  <td class="p-3 text-sm font-bold">R$ ${p.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
-                  <td class="p-3 text-sm text-emerald-600 font-bold">${typeof p.liquido === "number" ? "R$ " + p.liquido.toLocaleString("pt-BR", { minimumFractionDigits: 2 }) : p.liquido}</td>
-                  <td class="p-3 text-xs hidden"><span class="bg-slate-100 px-2 py-1 rounded-full font-bold uppercase text-slate-600">${p.status}</span></td>
-                  <td class="p-3 text-center">
-                     <button onclick="editarProjeto(${p.linha})" class="text-blue-600 hover:bg-blue-50 p-2 rounded transition-colors" title="Editar"><i data-lucide="edit" class="w-4 h-4"></i></button>
-                     <button onclick="confirmarExclusaoProjeto(${p.linha})" class="text-red-500 hover:bg-red-50 p-2 rounded transition-colors" title="Excluir">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                     </button>
-                  </td>
-                </tr>
-              `;
+                      <tr class="border-b hover:bg-slate-50 transition-colors">
+                        <td class="p-3 text-sm">${p.dataBR}</td>
+                        <td class="p-3 text-sm font-medium uppercase">${p.cliente}</td>
+                        <td class="p-3 text-sm font-bold">R$ ${p.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
+                        <td class="p-3 text-sm text-emerald-600 font-bold">${typeof p.liquido === "number" ? "R$ " + p.liquido.toLocaleString("pt-BR", { minimumFractionDigits: 2 }) : p.liquido}</td>
+                        <td class="p-3 text-xs hidden"><span class="bg-slate-100 px-2 py-1 rounded-full font-bold uppercase text-slate-600">${p.status}</span></td>
+                        <td class="p-3 text-center">
+                           <button onclick="editarProjeto(${p.linha})" class="text-blue-600 hover:bg-blue-50 p-2 rounded transition-colors" title="Editar"><i data-lucide="edit" class="w-4 h-4"></i></button>
+                           <button onclick="confirmarExclusaoProjeto(${p.linha})" class="text-red-500 hover:bg-red-50 p-2 rounded transition-colors" title="Excluir">
+                              <i data-lucide="trash-2" class="w-4 h-4"></i>
+                           </button>
+                        </td>
+                      </tr>
+                    `;
         });
         lucide.createIcons();
       }
@@ -1674,8 +1674,32 @@
       // Variável temporária para segurar as diárias históricas quando estiver a editar uma obra antiga
       let diariasHistoricasAtivas = null;
 
+      // NOVA FUNÇÃO: Calcula a área em m² automaticamente e atualiza o crachá na Aba 2
+      window.calcularMetragemPlacas = function () {
+        const qtd =
+          parseFloat(document.getElementById("proj-qtd-placas")?.value) || 0;
+        const tam =
+          parseFloat(document.getElementById("proj-tam-placa")?.value) || 0;
+        const areaTotal = qtd * tam;
+
+        const areaFormatada =
+          areaTotal.toLocaleString("pt-BR", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          }) + " m²";
+
+        const inputArea = document.getElementById("proj-area-total");
+        if (inputArea) inputArea.value = areaFormatada;
+
+        const badgeCustos = document.getElementById("badge-area-custos");
+        if (badgeCustos) {
+          badgeCustos.innerText = `📐 ${qtd} Placas (${areaFormatada})`;
+        }
+      };
+
+      // --------------------------------------------------
+      // 2. Abre o modal limpo para um novo cadastro
       window.abrirModalProjeto = function () {
-        // Como é uma venda NOVA, limpa a memória histórica para usar os Parâmetros atuais
         diariasHistoricasAtivas = null;
 
         document.getElementById("lista-materiais-obra").innerHTML = "";
@@ -1694,6 +1718,13 @@
         document.getElementById("select-maquininha").value = "12x";
         document.getElementById("proj-liquido").value = "R$ 0,00";
         document.getElementById("proj-residual").value = "R$ 0,00";
+
+        // Reset de Placas e Metragem (Padrão: 2.60 m² por placa solar comercial)
+        if (document.getElementById("proj-qtd-placas"))
+          document.getElementById("proj-qtd-placas").value = "";
+        if (document.getElementById("proj-tam-placa"))
+          document.getElementById("proj-tam-placa").value = "2.60";
+        calcularMetragemPlacas();
 
         const engPadrao =
           parametrosProjetos && parametrosProjetos.valorEngenharia
@@ -1717,6 +1748,7 @@
         lucide.createIcons();
       };
 
+      // 3. O Motor Matemático: Calcula Diárias, Impostos, Taxas e Lucro Líquido Real
       function calcularRentabilidade() {
         if (!parametrosProjetos) return;
 
@@ -1726,8 +1758,7 @@
         const entrada =
           parseFloat(document.getElementById("proj-entrada").value) || 0;
 
-        // 1. INTELIGÊNCIA DE HISTÓRICO: Se estiver a editar uma obra antiga que já tinha diária gravada,
-        // usa a diária da época! Se for obra nova, usa a tabela de Parâmetros atual.
+        // INTELIGÊNCIA DE HISTÓRICO: Usa a diária da época (se for edição) ou a atual dos Parâmetros
         const vlrDiariaEle =
           diariasHistoricasAtivas &&
           diariasHistoricasAtivas.diariaEle !== undefined
@@ -1758,7 +1789,7 @@
         document.getElementById("label-diaria-aju").innerText =
           `Diária: R$ ${vlrDiariaAju.toFixed(2)}`;
 
-        // 2. Lê as Quantidades e Dias
+        // Lê as Quantidades e Dias
         const engenharia =
           parseFloat(document.getElementById("proj-engenharia").value) || 0;
         const diasObra =
@@ -1773,7 +1804,7 @@
         const qtdAju =
           parseFloat(document.getElementById("proj-qtd-ajudante").value) || 0;
 
-        // 3. Calcula os Totais
+        // Calcula os Totais da Mão de Obra
         const somaDiariaEquipe =
           qtdEle * vlrDiariaEle +
           qtdIns * vlrDiariaIns +
@@ -1801,14 +1832,14 @@
         document.getElementById("mo-custo-total-display").innerText =
           `R$ ${maoDeObraTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
 
-        // 4. Materiais e Frete
+        // Materiais e Frete
         const materiais =
           parseFloat(document.getElementById("proj-materiais").value) || 0;
         const frete = parametrosProjetos.frete || 0;
         document.getElementById("proj-frete-estimado").value = frete.toFixed(2);
         const materiaisTotais = materiais + frete;
 
-        // 5. Taxas e Impostos
+        // Taxas e Impostos
         const aplicarComissao =
           document.getElementById("check-comissao").checked;
         const opcaoMaquininha =
@@ -1836,7 +1867,7 @@
         document.getElementById("proj-maquininha-valor").value =
           "R$ " + maquininha.toFixed(2);
 
-        // 6. Saldo Líquido Real
+        // Saldo Líquido Real
         const liquido =
           total -
           kit -
@@ -1865,6 +1896,7 @@
           residual.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
       }
 
+      // 4. Salva ou Atualiza o Projeto na Planilha
       window.salvarNovoProjeto = function () {
         const clienteDigitado = document
           .getElementById("proj-cliente")
@@ -1896,7 +1928,6 @@
           }
         }
 
-        // Usa a diária histórica (se for edição) ou a atual (se for novo) para salvar
         const vlrDiariaEle =
           diariasHistoricasAtivas &&
           diariasHistoricasAtivas.diariaEle !== undefined
@@ -1932,6 +1963,13 @@
         const qtdAju =
           parseFloat(document.getElementById("proj-qtd-ajudante").value) || 0;
 
+        // Lê os dados de Placas e Metragem
+        const qtdPlacas =
+          parseFloat(document.getElementById("proj-qtd-placas")?.value) || 0;
+        const tamPlaca =
+          parseFloat(document.getElementById("proj-tam-placa")?.value) || 2.6;
+        const areaTotalM2 = parseFloat((qtdPlacas * tamPlaca).toFixed(2));
+
         const eletricistaValor = qtdEle * vlrDiariaEle * diasObra;
         const instaladorValor = qtdIns * vlrDiariaIns * diasObra;
         const pedreiroValor = qtdPed * vlrDiariaPed * diasObra;
@@ -1940,8 +1978,11 @@
         const totalMaoDeObra =
           eletricistaValor + instaladorValor + pedreiroValor + ajudanteValor;
 
-        // AGORA SIM: Guardamos Quantidades, Dias E o Valor da Diária da época na Coluna U!
+        // Salva Placas, Metragem, Equipe, Dias e Diárias Históricas tudo junto na Coluna U!
         const equipeJSONString = JSON.stringify({
+          qtdPlacas: qtdPlacas,
+          tamPlaca: tamPlaca,
+          areaTotalM2: areaTotalM2,
           dias: diasObra,
           qtdEle: qtdEle,
           qtdIns: qtdIns,
@@ -2050,6 +2091,7 @@
           .salvarProjetoNoServidor(obj);
       };
 
+      // 5. Carrega os dados do Projeto para Edição
       window.editarProjeto = function (linha) {
         const p = projetosGlobais.find((x) => x.linha === linha);
         if (!p) return;
@@ -2087,7 +2129,7 @@
             : (parametrosProjetos && parametrosProjetos.valorEngenharia) || 400;
         inputEng.readOnly = perfilUsuarioAtual === "COLABORADOR";
 
-        // RESTAURAÇÃO DAS QUANTIDADES, DIAS E DIÁRIAS HISTÓRICAS DA ÉPOCA
+        // RESTAURAÇÃO DE PLACAS, METRAGEM, QUANTIDADES, DIAS E DIÁRIAS HISTÓRICAS
         let eq = {};
         try {
           eq = JSON.parse(p.equipeJson || "{}");
@@ -2095,7 +2137,6 @@
           eq = {};
         }
 
-        // Se o JSON guardado já tiver as diárias da época, ativa a trava histórica!
         if (eq.diariaEle !== undefined) {
           diariasHistoricasAtivas = {
             diariaEle: eq.diariaEle,
@@ -2106,6 +2147,14 @@
         } else {
           diariasHistoricasAtivas = null;
         }
+
+        if (document.getElementById("proj-qtd-placas"))
+          document.getElementById("proj-qtd-placas").value =
+            eq.qtdPlacas !== undefined ? eq.qtdPlacas : "";
+        if (document.getElementById("proj-tam-placa"))
+          document.getElementById("proj-tam-placa").value =
+            eq.tamPlaca !== undefined ? eq.tamPlaca : "2.60";
+        calcularMetragemPlacas();
 
         document.getElementById("proj-dias-obra").value =
           eq.dias !== undefined ? eq.dias : 1;
@@ -2209,60 +2258,60 @@
         let totalAberto = 0;
 
         let htmlString = `
-        <html>
-          <head>
-            <title>Relatório de Valores a Receber</title>
-            <style>
-              body { font-family: Arial, sans-serif; padding: 20px; }
-              .header { border-bottom: 2px solid #1e3a8a; padding-bottom: 10px; margin-bottom: 20px; }
-              .data-geracao { font-size: 11px; color: #666; margin-top: -10px; margin-bottom: 15px; }
-              table { width: 100%; border-collapse: collapse; }
-              th { background: #1e3a8a; color: white; padding: 10px; text-align: left; font-size: 12px; }
-              td { padding: 8px; border-bottom: 1px solid #eee; font-size: 11px; }
-              .text-right { text-align: right; }
-              .text-red { color: #dc2626; font-weight: bold; }
-              .total-box { margin-top: 20px; text-align: right; font-size: 18px; font-weight: bold; color: #1e3a8a; }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <h1>Valores a Receber: ${periodo}</h1>
-              <p>MAJB SISTEMAS - Resplendor Solar</p>
-            </div>
-            <div class="data-geracao">Relatório gerado em: ${dataGeracao}</div>
-            <table>
-              <thead>
-                <tr>
-                  <th>ID Venda</th>
-                  <th>Cliente</th>
-                  <th>Data Venda</th>
-                  <th class="text-right">Valor Total</th>
-                  <th class="text-right">Valor a Receber</th>
-                </tr>
-              </thead>
-              <tbody>
-        `;
+              <html>
+                <head>
+                  <title>Relatório de Valores a Receber</title>
+                  <style>
+                    body { font-family: Arial, sans-serif; padding: 20px; }
+                    .header { border-bottom: 2px solid #1e3a8a; padding-bottom: 10px; margin-bottom: 20px; }
+                    .data-geracao { font-size: 11px; color: #666; margin-top: -10px; margin-bottom: 15px; }
+                    table { width: 100%; border-collapse: collapse; }
+                    th { background: #1e3a8a; color: white; padding: 10px; text-align: left; font-size: 12px; }
+                    td { padding: 8px; border-bottom: 1px solid #eee; font-size: 11px; }
+                    .text-right { text-align: right; }
+                    .text-red { color: #dc2626; font-weight: bold; }
+                    .total-box { margin-top: 20px; text-align: right; font-size: 18px; font-weight: bold; color: #1e3a8a; }
+                  </style>
+                </head>
+                <body>
+                  <div class="header">
+                    <h1>Valores a Receber: ${periodo}</h1>
+                    <p>MAJB SISTEMAS - Resplendor Solar</p>
+                  </div>
+                  <div class="data-geracao">Relatório gerado em: ${dataGeracao}</div>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>ID Venda</th>
+                        <th>Cliente</th>
+                        <th>Data Venda</th>
+                        <th class="text-right">Valor Total</th>
+                        <th class="text-right">Valor a Receber</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+              `;
 
         dados.forEach((venda) => {
           totalAberto += parseFloat(venda.saldoDevedor);
           htmlString += `
-          <tr>
-            <td>${venda.idVenda}</td>
-            <td style="text-transform: uppercase;">${venda.cliente}</td>
-            <td>${venda.dataVenda}</td>
-            <td class="text-right">R$ ${parseFloat(venda.valorTotal).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
-            <td class="text-right text-red">R$ ${parseFloat(venda.saldoDevedor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
-          </tr>
-        `;
+                <tr>
+                  <td>${venda.idVenda}</td>
+                  <td style="text-transform: uppercase;">${venda.cliente}</td>
+                  <td>${venda.dataVenda}</td>
+                  <td class="text-right">R$ ${parseFloat(venda.valorTotal).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
+                  <td class="text-right text-red">R$ ${parseFloat(venda.saldoDevedor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
+                </tr>
+              `;
         });
 
         htmlString += `
-              </tbody>
-            </table>
-            <div class="total-box">TOTAL A RECEBER: R$ ${totalAberto.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
-          </body>
-        </html>
-      `;
+                    </tbody>
+                  </table>
+                  <div class="total-box">TOTAL A RECEBER: R$ ${totalAberto.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
+                </body>
+              </html>
+            `;
 
         janelaPdf.document.write(htmlString);
         janelaPdf.document.close();
@@ -2309,57 +2358,57 @@
         let totalGeral = 0;
 
         let html = `
-        <html>
-          <head>
-            <style>
-              body { font-family: Arial, sans-serif; padding: 20px; }
-              .header { border-bottom: 2px solid #059669; padding-bottom: 10px; margin-bottom: 20px; }
-              .data-geracao { font-size: 11px; color: #666; margin-top: -10px; margin-bottom: 15px; }
-              table { width: 100%; border-collapse: collapse; }
-              th { background: #059669; color: white; padding: 10px; text-align: left; font-size: 12px; }
-              td { padding: 8px; border-bottom: 1px solid #eee; font-size: 11px; }
-              .total-box { margin-top: 20px; text-align: right; font-size: 18px; font-weight: bold; color: #059669; }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <h1>Relatório de Recebidos: ${periodo}</h1>
-              <p>MAJB SISTEMAS - Resplendor Solar</p>
-            </div>
-            <div class="data-geracao">Relatório gerado em: ${dataGeracao}</div>
-            <table>
-              <thead>
-                <tr>
-                  <th>Data Pgto</th>
-                  <th>Cliente</th>
-                  <th>ID Venda</th>
-                  <th>Parcela</th>
-                  <th style="text-align: right;">Valor Recebido</th>
-                </tr>
-              </thead>
-              <tbody>
-        `;
+              <html>
+                <head>
+                  <style>
+                    body { font-family: Arial, sans-serif; padding: 20px; }
+                    .header { border-bottom: 2px solid #059669; padding-bottom: 10px; margin-bottom: 20px; }
+                    .data-geracao { font-size: 11px; color: #666; margin-top: -10px; margin-bottom: 15px; }
+                    table { width: 100%; border-collapse: collapse; }
+                    th { background: #059669; color: white; padding: 10px; text-align: left; font-size: 12px; }
+                    td { padding: 8px; border-bottom: 1px solid #eee; font-size: 11px; }
+                    .total-box { margin-top: 20px; text-align: right; font-size: 18px; font-weight: bold; color: #059669; }
+                  </style>
+                </head>
+                <body>
+                  <div class="header">
+                    <h1>Relatório de Recebidos: ${periodo}</h1>
+                    <p>MAJB SISTEMAS - Resplendor Solar</p>
+                  </div>
+                  <div class="data-geracao">Relatório gerado em: ${dataGeracao}</div>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Data Pgto</th>
+                        <th>Cliente</th>
+                        <th>ID Venda</th>
+                        <th>Parcela</th>
+                        <th style="text-align: right;">Valor Recebido</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+              `;
 
         dados.forEach((item) => {
           totalGeral += parseFloat(item.valor);
           html += `
-          <tr>
-            <td>${item.dataPgto}</td>
-            <td style="text-transform: uppercase;">${item.cliente}</td>
-            <td>${item.idVenda}</td>
-            <td>${item.parcela}º</td>
-            <td style="text-align: right;">R$ ${parseFloat(item.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
-          </tr>
-        `;
+                <tr>
+                  <td>${item.dataPgto}</td>
+                  <td style="text-transform: uppercase;">${item.cliente}</td>
+                  <td>${item.idVenda}</td>
+                  <td>${item.parcela}º</td>
+                  <td style="text-align: right;">R$ ${parseFloat(item.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
+                </tr>
+              `;
         });
 
         html += `
-              </tbody>
-            </table>
-            <div class="total-box">TOTAL RECEBIDO: R$ ${totalGeral.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
-          </body>
-        </html>
-      `;
+                    </tbody>
+                  </table>
+                  <div class="total-box">TOTAL RECEBIDO: R$ ${totalGeral.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
+                </body>
+              </html>
+            `;
 
         janela.document.write(html);
         janela.document.close();
@@ -2621,47 +2670,47 @@
         let totalPendente = 0;
 
         let htmlString = `
-          <html>
-            <head>
-              <title>Extrato do Cliente - ${nomeCliente}</title>
-              <style>
-                body { font-family: Arial, sans-serif; padding: 20px; }
-                .header { border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 20px; }
-                .data-geracao { font-size: 11px; color: #666; margin-top: -10px; margin-bottom: 15px; }
-                table { width: 100%; border-collapse: collapse; margin-bottom: 20px;}
-                th { background: #0f172a; color: white; padding: 10px; text-align: left; font-size: 12px; }
-                td { padding: 8px; border-bottom: 1px solid #eee; font-size: 11px; }
-                .text-right { text-align: right; }
-                .text-center { text-align: center; }
-                .status-pago { color: #059669; font-weight: bold; }
-                .status-aberto { color: #dc2626; font-weight: bold; }
-                .resumo-box { display: flex; justify-content: flex-end; gap: 20px; font-size: 14px; font-weight: bold; margin-top: 20px;}
-                .resumo-item { padding: 10px 15px; border-radius: 8px; border: 1px solid #e2e8f0; }
-                .bg-pago { background-color: #ecfdf5; color: #059669; border-color: #a7f3d0;}
-                .bg-aberto { background-color: #fef2f2; color: #dc2626; border-color: #fecaca;}
-              </style>
-            </head>
-            <body>
-              <div class="header">
-                <h1>Comprovante de Pagamentos / Extrato</h1>
-                <h2>Cliente: <span style="text-transform: uppercase; color: #3b82f6;">${nomeCliente}</span></h2>
-                <p>MAJB SISTEMAS - Resplendor Solar</p>
-              </div>
-              <div class="data-geracao">Relatório gerado em: ${dataGeracao}</div>
+                <html>
+                  <head>
+                    <title>Extrato do Cliente - ${nomeCliente}</title>
+                    <style>
+                      body { font-family: Arial, sans-serif; padding: 20px; }
+                      .header { border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 20px; }
+                      .data-geracao { font-size: 11px; color: #666; margin-top: -10px; margin-bottom: 15px; }
+                      table { width: 100%; border-collapse: collapse; margin-bottom: 20px;}
+                      th { background: #0f172a; color: white; padding: 10px; text-align: left; font-size: 12px; }
+                      td { padding: 8px; border-bottom: 1px solid #eee; font-size: 11px; }
+                      .text-right { text-align: right; }
+                      .text-center { text-align: center; }
+                      .status-pago { color: #059669; font-weight: bold; }
+                      .status-aberto { color: #dc2626; font-weight: bold; }
+                      .resumo-box { display: flex; justify-content: flex-end; gap: 20px; font-size: 14px; font-weight: bold; margin-top: 20px;}
+                      .resumo-item { padding: 10px 15px; border-radius: 8px; border: 1px solid #e2e8f0; }
+                      .bg-pago { background-color: #ecfdf5; color: #059669; border-color: #a7f3d0;}
+                      .bg-aberto { background-color: #fef2f2; color: #dc2626; border-color: #fecaca;}
+                    </style>
+                  </head>
+                  <body>
+                    <div class="header">
+                      <h1>Comprovante de Pagamentos / Extrato</h1>
+                      <h2>Cliente: <span style="text-transform: uppercase; color: #3b82f6;">${nomeCliente}</span></h2>
+                      <p>MAJB SISTEMAS - Resplendor Solar</p>
+                    </div>
+                    <div class="data-geracao">Relatório gerado em: ${dataGeracao}</div>
 
-              <table>
-                <thead>
-                  <tr>
-                    <th>Venda</th>
-                    <th class="text-center">Parcela</th>
-                    <th class="text-center">Vencimento</th>
-                    <th class="text-center">Data Pgto</th>
-                    <th>Status</th>
-                    <th class="text-right">Valor</th>
-                  </tr>
-                </thead>
-                <tbody>
-          `;
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Venda</th>
+                          <th class="text-center">Parcela</th>
+                          <th class="text-center">Vencimento</th>
+                          <th class="text-center">Data Pgto</th>
+                          <th>Status</th>
+                          <th class="text-right">Valor</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                `;
 
         dados.forEach((item) => {
           let isPago = item.status === "PAGO";
@@ -2674,28 +2723,28 @@
           let classeStatus = isPago ? "status-pago" : "status-aberto";
 
           htmlString += `
-            <tr>
-              <td>${item.idVenda}</td>
-              <td class="text-center">${item.parcela}º</td>
-              <td class="text-center">${item.vencimento}</td>
-              <td class="text-center">${item.pagamento}</td>
-              <td class="${classeStatus}">${item.status}</td>
-              <td class="text-right">R$ ${parseFloat(item.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
-            </tr>
-          `;
+                  <tr>
+                    <td>${item.idVenda}</td>
+                    <td class="text-center">${item.parcela}º</td>
+                    <td class="text-center">${item.vencimento}</td>
+                    <td class="text-center">${item.pagamento}</td>
+                    <td class="${classeStatus}">${item.status}</td>
+                    <td class="text-right">R$ ${parseFloat(item.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                `;
         });
 
         htmlString += `
-                </tbody>
-              </table>
+                      </tbody>
+                    </table>
 
-              <div class="resumo-box">
-                 <div class="resumo-item bg-aberto">Total Pendente: R$ ${totalPendente.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
-                 <div class="resumo-item bg-pago">Total Pago: R$ ${totalPago.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
-              </div>
-            </body>
-          </html>
-          `;
+                    <div class="resumo-box">
+                       <div class="resumo-item bg-aberto">Total Pendente: R$ ${totalPendente.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
+                       <div class="resumo-item bg-pago">Total Pago: R$ ${totalPago.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
+                    </div>
+                  </body>
+                </html>
+                `;
 
         janelaPdf.document.write(htmlString);
         janelaPdf.document.close();
@@ -2711,57 +2760,57 @@
         let somaValores = 0;
 
         let htmlString = `
-        <html>
-          <head>
-            <title>${titulo}</title>
-            <style>
-              body { font-family: Arial, sans-serif; padding: 20px; }
-              .header { border-bottom: 2px solid #3b82f6; padding-bottom: 10px; margin-bottom: 20px; }
-              .data-geracao { font-size: 11px; color: #666; margin-top: -10px; margin-bottom: 15px; }
-              table { width: 100%; border-collapse: collapse; }
-              th { background: #3b82f6; color: white; padding: 10px; text-align: left; font-size: 12px; }
-              td { padding: 8px; border-bottom: 1px solid #eee; font-size: 11px; }
-              .text-right { text-align: right; }
-              .total-box { margin-top: 20px; text-align: right; font-size: 18px; font-weight: bold; color: #3b82f6; }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <h1>${titulo}</h1>
-              <p>MAJB SISTEMAS - Resplendor Solar</p>
-            </div>
-            <div class="data-geracao">Relatório gerado em: ${dataGeracao}</div>
-            <table>
-              <thead>
-                <tr>
-                  <th>Data</th>
-                  <th>ID Venda</th>
-                  <th>Cliente</th>
-                  <th class="text-right">${nomeColunaValor}</th>
-                </tr>
-              </thead>
-              <tbody>
-        `;
+              <html>
+                <head>
+                  <title>${titulo}</title>
+                  <style>
+                    body { font-family: Arial, sans-serif; padding: 20px; }
+                    .header { border-bottom: 2px solid #3b82f6; padding-bottom: 10px; margin-bottom: 20px; }
+                    .data-geracao { font-size: 11px; color: #666; margin-top: -10px; margin-bottom: 15px; }
+                    table { width: 100%; border-collapse: collapse; }
+                    th { background: #3b82f6; color: white; padding: 10px; text-align: left; font-size: 12px; }
+                    td { padding: 8px; border-bottom: 1px solid #eee; font-size: 11px; }
+                    .text-right { text-align: right; }
+                    .total-box { margin-top: 20px; text-align: right; font-size: 18px; font-weight: bold; color: #3b82f6; }
+                  </style>
+                </head>
+                <body>
+                  <div class="header">
+                    <h1>${titulo}</h1>
+                    <p>MAJB SISTEMAS - Resplendor Solar</p>
+                  </div>
+                  <div class="data-geracao">Relatório gerado em: ${dataGeracao}</div>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Data</th>
+                        <th>ID Venda</th>
+                        <th>Cliente</th>
+                        <th class="text-right">${nomeColunaValor}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+              `;
 
         dados.forEach((item) => {
           somaValores += parseFloat(item.valor) || 0;
           htmlString += `
-          <tr>
-            <td>${item.data}</td>
-            <td>${item.idVenda}</td>
-            <td style="text-transform: uppercase;">${item.cliente}</td>
-            <td class="text-right">R$ ${parseFloat(item.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
-          </tr>
-        `;
+                <tr>
+                  <td>${item.data}</td>
+                  <td>${item.idVenda}</td>
+                  <td style="text-transform: uppercase;">${item.cliente}</td>
+                  <td class="text-right">R$ ${parseFloat(item.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
+                </tr>
+              `;
         });
 
         htmlString += `
-              </tbody>
-            </table>
-            <div class="total-box">TOTAL: R$ ${somaValores.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
-          </body>
-        </html>
-        `;
+                    </tbody>
+                  </table>
+                  <div class="total-box">TOTAL: R$ ${somaValores.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</div>
+                </body>
+              </html>
+              `;
 
         janelaPdf.document.write(htmlString);
         janelaPdf.document.close();
@@ -2772,4 +2821,4 @@
     </script>
   </body>
 </html>
-<!-- 26.10.12 1440 -->
+<!-- 26.10.12 1511 -->
