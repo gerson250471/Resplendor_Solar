@@ -1671,7 +1671,13 @@
         }
       };
 
+      // Variável temporária para segurar as diárias históricas quando estiver a editar uma obra antiga
+      let diariasHistoricasAtivas = null;
+
       window.abrirModalProjeto = function () {
+        // Como é uma venda NOVA, limpa a memória histórica para usar os Parâmetros atuais
+        diariasHistoricasAtivas = null;
+
         document.getElementById("lista-materiais-obra").innerHTML = "";
         adicionarLinhaMaterial();
         document.getElementById("proj-materiais").value = 0;
@@ -1689,18 +1695,14 @@
         document.getElementById("proj-liquido").value = "R$ 0,00";
         document.getElementById("proj-residual").value = "R$ 0,00";
 
-        // Puxa o valor padrão da Engenharia dos Parâmetros (ou 400)
         const engPadrao =
           parametrosProjetos && parametrosProjetos.valorEngenharia
             ? parametrosProjetos.valorEngenharia
             : 400;
         const inputEng = document.getElementById("proj-engenharia");
         inputEng.value = engPadrao;
-
-        // Regra pedida pelo Renan: Colaborador não edita o valor da Engenharia/Homologação
         inputEng.readOnly = perfilUsuarioAtual === "COLABORADOR";
 
-        // Reset das quantidades e dias (Padrão inicial: 1 dia e 0 profissionais para preencher)
         document.getElementById("proj-dias-obra").value = "1";
         document.getElementById("proj-qtd-eletricista").value = "0";
         document.getElementById("proj-qtd-instalador").value = "0";
@@ -1724,13 +1726,29 @@
         const entrada =
           parseFloat(document.getElementById("proj-entrada").value) || 0;
 
-        // 1. Lê valores unitários das diárias cadastradas nos Parâmetros
-        const vlrDiariaEle = parametrosProjetos.diariaEletricista || 0;
-        const vlrDiariaIns = parametrosProjetos.diariaInstalador || 0;
-        const vlrDiariaPed = parametrosProjetos.diariaPedreiro || 0;
-        const vlrDiariaAju = parametrosProjetos.diariaAjudante || 0;
+        // 1. INTELIGÊNCIA DE HISTÓRICO: Se estiver a editar uma obra antiga que já tinha diária gravada,
+        // usa a diária da época! Se for obra nova, usa a tabela de Parâmetros atual.
+        const vlrDiariaEle =
+          diariasHistoricasAtivas &&
+          diariasHistoricasAtivas.diariaEle !== undefined
+            ? diariasHistoricasAtivas.diariaEle
+            : parametrosProjetos.diariaEletricista || 0;
+        const vlrDiariaIns =
+          diariasHistoricasAtivas &&
+          diariasHistoricasAtivas.diariaIns !== undefined
+            ? diariasHistoricasAtivas.diariaIns
+            : parametrosProjetos.diariaInstalador || 0;
+        const vlrDiariaPed =
+          diariasHistoricasAtivas &&
+          diariasHistoricasAtivas.diariaPed !== undefined
+            ? diariasHistoricasAtivas.diariaPed
+            : parametrosProjetos.diariaPedreiro || 0;
+        const vlrDiariaAju =
+          diariasHistoricasAtivas &&
+          diariasHistoricasAtivas.diariaAju !== undefined
+            ? diariasHistoricasAtivas.diariaAju
+            : parametrosProjetos.diariaAjudante || 0;
 
-        // Atualiza os rótulos visuais das diárias no modal
         document.getElementById("label-diaria-ele").innerText =
           `Diária: R$ ${vlrDiariaEle.toFixed(2)}`;
         document.getElementById("label-diaria-ins").innerText =
@@ -1740,7 +1758,7 @@
         document.getElementById("label-diaria-aju").innerText =
           `Diária: R$ ${vlrDiariaAju.toFixed(2)}`;
 
-        // 2. Lê as Quantidades de Profissionais e os Dias de Obra
+        // 2. Lê as Quantidades e Dias
         const engenharia =
           parseFloat(document.getElementById("proj-engenharia").value) || 0;
         const diasObra =
@@ -1755,7 +1773,7 @@
         const qtdAju =
           parseFloat(document.getElementById("proj-qtd-ajudante").value) || 0;
 
-        // 3. Calcula o Custo do Dia e o Custo Total por Função (Qtd * Diária * Dias)
+        // 3. Calcula os Totais
         const somaDiariaEquipe =
           qtdEle * vlrDiariaEle +
           qtdIns * vlrDiariaIns +
@@ -1769,7 +1787,6 @@
 
         const maoDeObraTotal = somaDiariaEquipe * diasObra;
 
-        // Atualiza os subtotais na tela
         document.getElementById("sub-mo-ele").innerText =
           `Total: R$ ${custoTotalEle.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
         document.getElementById("sub-mo-ins").innerText =
@@ -1879,15 +1896,27 @@
           }
         }
 
-        // 1. Calcula os custos exatos baseados nas Quantidades x Diárias x Dias
+        // Usa a diária histórica (se for edição) ou a atual (se for novo) para salvar
         const vlrDiariaEle =
-          (parametrosProjetos && parametrosProjetos.diariaEletricista) || 0;
+          diariasHistoricasAtivas &&
+          diariasHistoricasAtivas.diariaEle !== undefined
+            ? diariasHistoricasAtivas.diariaEle
+            : (parametrosProjetos && parametrosProjetos.diariaEletricista) || 0;
         const vlrDiariaIns =
-          (parametrosProjetos && parametrosProjetos.diariaInstalador) || 0;
+          diariasHistoricasAtivas &&
+          diariasHistoricasAtivas.diariaIns !== undefined
+            ? diariasHistoricasAtivas.diariaIns
+            : (parametrosProjetos && parametrosProjetos.diariaInstalador) || 0;
         const vlrDiariaPed =
-          (parametrosProjetos && parametrosProjetos.diariaPedreiro) || 0;
+          diariasHistoricasAtivas &&
+          diariasHistoricasAtivas.diariaPed !== undefined
+            ? diariasHistoricasAtivas.diariaPed
+            : (parametrosProjetos && parametrosProjetos.diariaPedreiro) || 0;
         const vlrDiariaAju =
-          (parametrosProjetos && parametrosProjetos.diariaAjudante) || 0;
+          diariasHistoricasAtivas &&
+          diariasHistoricasAtivas.diariaAju !== undefined
+            ? diariasHistoricasAtivas.diariaAju
+            : (parametrosProjetos && parametrosProjetos.diariaAjudante) || 0;
 
         const engenharia =
           parseFloat(document.getElementById("proj-engenharia").value) || 0;
@@ -1911,16 +1940,19 @@
         const totalMaoDeObra =
           eletricistaValor + instaladorValor + pedreiroValor + ajudanteValor;
 
-        // Guarda a configuração da equipe em JSON para restaurar na edição
+        // AGORA SIM: Guardamos Quantidades, Dias E o Valor da Diária da época na Coluna U!
         const equipeJSONString = JSON.stringify({
           dias: diasObra,
           qtdEle: qtdEle,
           qtdIns: qtdIns,
           qtdPed: qtdPed,
           qtdAju: qtdAju,
+          diariaEle: vlrDiariaEle,
+          diariaIns: vlrDiariaIns,
+          diariaPed: vlrDiariaPed,
+          diariaAju: vlrDiariaAju,
         });
 
-        // 2. Empacota os Materiais em JSON
         const linhasMateriaisDOM = document.querySelectorAll(".linha-material");
         const arrayMateriaisUsados = [];
 
@@ -1982,7 +2014,6 @@
           status: document.getElementById("proj-status")
             ? document.getElementById("proj-status").value
             : "AGUARDANDO KIT",
-          // Salva os valores financeiros nas colunas O, P, Q, R, S para histórico e confronto!
           engenharia: engenharia,
           eletricista: eletricistaValor,
           instaladorDetalhe: instaladorValor,
@@ -2056,12 +2087,24 @@
             : (parametrosProjetos && parametrosProjetos.valorEngenharia) || 400;
         inputEng.readOnly = perfilUsuarioAtual === "COLABORADOR";
 
-        // RESTAURAÇÃO DAS QUANTIDADES DE PROFISSIONAIS E DIAS
+        // RESTAURAÇÃO DAS QUANTIDADES, DIAS E DIÁRIAS HISTÓRICAS DA ÉPOCA
         let eq = {};
         try {
           eq = JSON.parse(p.equipeJson || "{}");
         } catch (e) {
           eq = {};
+        }
+
+        // Se o JSON guardado já tiver as diárias da época, ativa a trava histórica!
+        if (eq.diariaEle !== undefined) {
+          diariasHistoricasAtivas = {
+            diariaEle: eq.diariaEle,
+            diariaIns: eq.diariaIns,
+            diariaPed: eq.diariaPed,
+            diariaAju: eq.diariaAju,
+          };
+        } else {
+          diariasHistoricasAtivas = null;
         }
 
         document.getElementById("proj-dias-obra").value =
@@ -2729,4 +2772,4 @@
     </script>
   </body>
 </html>
-<!-- 26.10.12 1414 -->
+<!-- 26.10.12 1440 -->
