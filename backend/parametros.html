@@ -188,6 +188,78 @@
       </div>
     </div>
 
+    <!-- BLOCO DE CADASTRO DE DIÁRIAS DOS PROFISSIONAIS -->
+    <div class="finance-card mt-8 bg-slate-50/50">
+      <h3
+        class="text-lg font-bold text-slate-800 mb-4 border-b pb-2 flex items-center gap-2"
+      >
+        <i data-lucide="hard-hat" class="w-5 h-5 text-amber-500"></i>
+        Tabela de Diárias & Engenharia (Custo Base)
+      </h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
+            >Engenharia (Fixo R$)</label
+          >
+          <input
+            type="number"
+            step="0.01"
+            id="param-engenharia"
+            class="input-field bg-white"
+            placeholder="400.00"
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
+            >Diária Eletricista (R$)</label
+          >
+          <input
+            type="number"
+            step="0.01"
+            id="param-diaria-eletricista"
+            class="input-field bg-white"
+            placeholder="150.00"
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
+            >Diária Instalador (R$)</label
+          >
+          <input
+            type="number"
+            step="0.01"
+            id="param-diaria-instalador"
+            class="input-field bg-white"
+            placeholder="120.00"
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
+            >Diária Pedreiro (R$)</label
+          >
+          <input
+            type="number"
+            step="0.01"
+            id="param-diaria-pedreiro"
+            class="input-field bg-white"
+            placeholder="150.00"
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
+            >Diária Ajudante (R$)</label
+          >
+          <input
+            type="number"
+            step="0.01"
+            id="param-diaria-ajudante"
+            class="input-field bg-white"
+            placeholder="80.00"
+          />
+        </div>
+      </div>
+    </div>
+
     <div class="mt-8 border-t pt-6 flex justify-end">
       <button
         onclick="salvarParametrosUI()"
@@ -244,6 +316,23 @@
           document.getElementById("param-cartao21x").value = (
             (res.taxaCartao21x || 0) * 100
           ).toFixed(2);
+
+          // CARREGA OS NOVOS VALORES DE ENGENHARIA E DIÁRIAS
+          document.getElementById("param-engenharia").value = (
+            res.valorEngenharia || 400
+          ).toFixed(2);
+          document.getElementById("param-diaria-eletricista").value = (
+            res.diariaEletricista || 150
+          ).toFixed(2);
+          document.getElementById("param-diaria-instalador").value = (
+            res.diariaInstalador || 120
+          ).toFixed(2);
+          document.getElementById("param-diaria-pedreiro").value = (
+            res.diariaPedreiro || 150
+          ).toFixed(2);
+          document.getElementById("param-diaria-ajudante").value = (
+            res.diariaAjudante || 80
+          ).toFixed(2);
         }
       })
       .obterParametrosProjetos();
@@ -274,6 +363,20 @@
         parseFloat(document.getElementById("param-cartao18x").value) || 0,
       taxaCartao21x:
         parseFloat(document.getElementById("param-cartao21x").value) || 0,
+
+      // ENVIA OS NOVOS VALORES DE ENGENHARIA E DIÁRIAS PARA O SERVIDOR
+      valorEngenharia:
+        parseFloat(document.getElementById("param-engenharia").value) || 0,
+      diariaEletricista:
+        parseFloat(document.getElementById("param-diaria-eletricista").value) ||
+        0,
+      diariaInstalador:
+        parseFloat(document.getElementById("param-diaria-instalador").value) ||
+        0,
+      diariaPedreiro:
+        parseFloat(document.getElementById("param-diaria-pedreiro").value) || 0,
+      diariaAjudante:
+        parseFloat(document.getElementById("param-diaria-ajudante").value) || 0,
     };
 
     const btn = document.getElementById("btn-salvar-parametros");

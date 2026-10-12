@@ -745,8 +745,9 @@ function obterListaProjetos() {
       pedreiro: parseFloat(r[17]) || 0,
       ajudante: parseFloat(r[18]) || 0,
       
-      // COLUNA T (Índice 19) - LISTA DE MATERIAIS EM JSON
-      materiaisJson: r[19] || "[]"
+      // Final do return em obterListaProjetos():
+      materiaisJson: r[19] || "[]",
+      equipeJson: r[20] || "{}" // COLUNA U (Índice 20) - QTD PROFISSIONAIS E DIAS
     };
   });
 }
@@ -756,16 +757,16 @@ function salvarProjetoNoServidor(obj) {
     const ss = SpreadsheetApp.openById(getSpreadsheetId());
     const aba = ss.getSheetByName("Projetos");
 
-    // Gravamos exatamente nas posições corretas (agora com 20 colunas)
+    // Em salvarProjetoNoServidor(obj):
     const arrayDados = [
       obj.data, obj.cliente, obj.total, obj.kit, obj.servico,
       obj.impostos, obj.maoDeObra, obj.comissao, obj.maquininha,
       obj.liquido, obj.entrada, obj.residual, obj.status, obj.outros,
       obj.engenharia, obj.eletricista, obj.instaladorDetalhe, obj.pedreiro, obj.ajudante,
-      // NOVO: MATERIAIS
-      obj.materiaisJson
+      obj.materiaisJson,
+      obj.equipeJson || "{}" // Coluna U
     ];
-
+    
     if (obj.linha && obj.linha !== "") {
       aba.getRange(obj.linha, 1, 1, arrayDados.length).setValues([arrayDados]);
     } else {
@@ -934,14 +935,20 @@ function obterParametrosProjetos() {
       custoDireto: parseFloat(aba.getRange("F17").getValue()) || 0,
       frete: parseFloat(aba.getRange("F19").getValue()) || 0,
       
-      // PARÂMETROS DO SIMULADOR E MAQUININHA (6x, 12x, 18x e 21x)
       margemPadrao: parseFloat(aba.getRange("F21").getValue()) || 0,
       taxaPix: parseFloat(aba.getRange("F23").getValue()) || 0,
       taxaCartao6x: parseFloat(aba.getRange("F25").getValue()) || 0,
       taxaCartao12x: parseFloat(aba.getRange("F27").getValue()) || 0,
       taxaFinanciamento: parseFloat(aba.getRange("F29").getValue()) || 0,
       taxaCartao18x: parseFloat(aba.getRange("F31").getValue()) || 0,
-      taxaCartao21x: parseFloat(aba.getRange("F33").getValue()) || 0
+      taxaCartao21x: parseFloat(aba.getRange("F33").getValue()) || 0,
+
+      // NOVOS PARÂMETROS: VALOR DAS DIÁRIAS E ENGENHARIA (Células F35 a F43)
+      valorEngenharia: parseFloat(aba.getRange("F35").getValue()) || 400,
+      diariaEletricista: parseFloat(aba.getRange("F37").getValue()) || 150,
+      diariaInstalador: parseFloat(aba.getRange("F39").getValue()) || 120,
+      diariaPedreiro: parseFloat(aba.getRange("F41").getValue()) || 150,
+      diariaAjudante: parseFloat(aba.getRange("F43").getValue()) || 80
     };
   } catch (e) {
     return { sucesso: false, mensagem: e.message };
@@ -954,14 +961,13 @@ function salvarParametrosNoServidor(obj) {
     const aba = ss.getSheetByName("ControleVersao");
 
     aba.getRange("F7").setValue(obj.comissao / 100);
-    aba.getRange("F9").setValue(obj.taxaCartao12x / 100); // Mantém F9 sincronizado por compatibilidade
+    aba.getRange("F9").setValue(obj.taxaCartao12x / 100);
     aba.getRange("F11").setValue(obj.imposto / 100);
     aba.getRange("F17").setValue(obj.custoDireto / 100);
     aba.getRange("F13").setValue(obj.custoAcima20k);
     aba.getRange("F15").setValue(obj.custoAbaixo20k);
     aba.getRange("F19").setValue(obj.frete);
 
-    // SALVANDO AS TAXAS DO SIMULADOR E MAQUININHA (6x, 12x, 18x e 21x)
     aba.getRange("F21").setValue(obj.margemPadrao / 100);
     aba.getRange("F23").setValue(obj.taxaPix / 100);
     aba.getRange("F25").setValue(obj.taxaCartao6x / 100);
@@ -969,6 +975,13 @@ function salvarParametrosNoServidor(obj) {
     aba.getRange("F29").setValue(obj.taxaFinanciamento / 100);
     aba.getRange("F31").setValue(obj.taxaCartao18x / 100);
     aba.getRange("F33").setValue(obj.taxaCartao21x / 100);
+
+    // SALVANDO OS VALORES DAS DIÁRIAS E ENGENHARIA
+    if (obj.valorEngenharia !== undefined) aba.getRange("F35").setValue(obj.valorEngenharia);
+    if (obj.diariaEletricista !== undefined) aba.getRange("F37").setValue(obj.diariaEletricista);
+    if (obj.diariaInstalador !== undefined) aba.getRange("F39").setValue(obj.diariaInstalador);
+    if (obj.diariaPedreiro !== undefined) aba.getRange("F41").setValue(obj.diariaPedreiro);
+    if (obj.diariaAjudante !== undefined) aba.getRange("F43").setValue(obj.diariaAjudante);
 
     return { sucesso: true };
   } catch (e) {

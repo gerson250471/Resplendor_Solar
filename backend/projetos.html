@@ -154,78 +154,173 @@
 
       <!-- ABA 2: CUSTOS DE EXECUÇÃO -->
       <div id="aba-custos" class="space-y-6 hidden">
-        <!-- 1. MÃO DE OBRA -->
+        <!-- 1. MÃO DE OBRA POR DIÁRIA E QUANTIDADE -->
         <div>
-          <h4 class="text-sm font-bold text-slate-700 border-b pb-2 mb-3">
-            Custos de Engenharia & Mão de Obra
-          </h4>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div class="flex justify-between items-center border-b pb-2 mb-3">
+            <h4 class="text-sm font-bold text-slate-700">
+              Dimensionamento de Equipe & Mão de Obra
+            </h4>
+            <span
+              class="text-xs font-semibold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full"
+            >
+              Cálculo por Diária
+            </span>
+          </div>
+
+          <!-- Linha 1: Engenharia e Duração da Obra -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
               <label
                 class="block text-xs font-bold text-slate-500 uppercase mb-1"
-                >Projeto / Homologação</label
               >
+                Projeto / Homologação (R$)
+              </label>
               <input
                 type="number"
                 id="proj-engenharia"
-                class="input-field border-blue-200 bg-blue-50/30"
+                class="input-field border-blue-200 bg-blue-50/30 font-bold text-slate-700"
                 oninput="calcularRentabilidade()"
                 value="400"
               />
             </div>
             <div>
               <label
-                class="block text-xs font-bold text-slate-500 uppercase mb-1"
-                >Eletricista</label
+                class="block text-xs font-bold text-amber-600 uppercase mb-1"
               >
+                ⏱️ Dias Necessários de Obra
+              </label>
               <input
                 type="number"
-                id="proj-mo-eletricista"
-                class="input-field"
+                id="proj-dias-obra"
+                class="input-field border-amber-300 bg-amber-50/40 font-bold text-amber-900 text-center"
                 oninput="calcularRentabilidade()"
-                placeholder="R$ 0,00"
-              />
-            </div>
-            <div>
-              <label
-                class="block text-xs font-bold text-slate-500 uppercase mb-1"
-                >Instalador</label
-              >
-              <input
-                type="number"
-                id="proj-mo-instalador"
-                class="input-field"
-                oninput="calcularRentabilidade()"
-                placeholder="R$ 0,00"
+                value="1"
+                min="0.5"
+                step="0.5"
               />
             </div>
           </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
+
+          <!-- Linha 2: Quantidade de Profissionais -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+            <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
               <label
-                class="block text-xs font-bold text-slate-500 uppercase mb-1"
-                >Pedreiro</label
+                class="block text-[10px] font-bold text-slate-500 uppercase"
+                >Qtd. Eletricista</label
+              >
+              <span
+                id="label-diaria-ele"
+                class="block text-[10px] text-slate-400 mb-1"
+                >Diária: R$ 0,00</span
               >
               <input
                 type="number"
-                id="proj-mo-pedreiro"
-                class="input-field"
+                id="proj-qtd-eletricista"
+                class="input-field text-center font-bold bg-white py-1.5"
                 oninput="calcularRentabilidade()"
-                placeholder="R$ 0,00"
+                value="0"
+                min="0"
               />
+              <span
+                id="sub-mo-ele"
+                class="block text-[11px] font-bold text-blue-600 text-right mt-1"
+                >Total: R$ 0,00</span
+              >
             </div>
-            <div>
+
+            <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
               <label
-                class="block text-xs font-bold text-slate-500 uppercase mb-1"
-                >Ajudante de Pedreiro</label
+                class="block text-[10px] font-bold text-slate-500 uppercase"
+                >Qtd. Instalador</label
+              >
+              <span
+                id="label-diaria-ins"
+                class="block text-[10px] text-slate-400 mb-1"
+                >Diária: R$ 0,00</span
               >
               <input
                 type="number"
-                id="proj-mo-ajudante"
-                class="input-field"
+                id="proj-qtd-instalador"
+                class="input-field text-center font-bold bg-white py-1.5"
                 oninput="calcularRentabilidade()"
-                placeholder="R$ 0,00"
+                value="0"
+                min="0"
               />
+              <span
+                id="sub-mo-ins"
+                class="block text-[11px] font-bold text-blue-600 text-right mt-1"
+                >Total: R$ 0,00</span
+              >
+            </div>
+
+            <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+              <label
+                class="block text-[10px] font-bold text-slate-500 uppercase"
+                >Qtd. Pedreiro</label
+              >
+              <span
+                id="label-diaria-ped"
+                class="block text-[10px] text-slate-400 mb-1"
+                >Diária: R$ 0,00</span
+              >
+              <input
+                type="number"
+                id="proj-qtd-pedreiro"
+                class="input-field text-center font-bold bg-white py-1.5"
+                oninput="calcularRentabilidade()"
+                value="0"
+                min="0"
+              />
+              <span
+                id="sub-mo-ped"
+                class="block text-[11px] font-bold text-blue-600 text-right mt-1"
+                >Total: R$ 0,00</span
+              >
+            </div>
+
+            <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+              <label
+                class="block text-[10px] font-bold text-slate-500 uppercase"
+                >Qtd. Ajudante</label
+              >
+              <span
+                id="label-diaria-aju"
+                class="block text-[10px] text-slate-400 mb-1"
+                >Diária: R$ 0,00</span
+              >
+              <input
+                type="number"
+                id="proj-qtd-ajudante"
+                class="input-field text-center font-bold bg-white py-1.5"
+                oninput="calcularRentabilidade()"
+                value="0"
+                min="0"
+              />
+              <span
+                id="sub-mo-aju"
+                class="block text-[11px] font-bold text-blue-600 text-right mt-1"
+                >Total: R$ 0,00</span
+              >
+            </div>
+          </div>
+
+          <!-- Resumo da Diária da Equipe x Total -->
+          <div
+            class="flex flex-col sm:flex-row justify-between items-center bg-slate-100 px-4 py-2.5 rounded-lg border border-slate-200 text-xs"
+          >
+            <div class="text-slate-600">
+              Soma da Equipe por Dia:
+              <strong id="mo-custo-dia-display" class="text-slate-800"
+                >R$ 0,00 / dia</strong
+              >
+            </div>
+            <div class="text-slate-700 mt-1 sm:mt-0">
+              Custo Total Mão de Obra:
+              <strong
+                id="mo-custo-total-display"
+                class="text-sm text-emerald-700"
+                >R$ 0,00</strong
+              >
             </div>
           </div>
         </div>
