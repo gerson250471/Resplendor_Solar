@@ -779,23 +779,6 @@ function salvarProjetoNoServidor(obj) {
   }
 }
 
-// NOVO MÓDULO PARA O PROTÓTIPO: Catálogo Fictício (Na Fase 3 leremos da aba Catalogo_Materiais)
-function obterCatalogoMateriais() {
-  return {
-    sucesso: true,
-    dados: [
-      { id: "MAT-001", descricao: "Cabo Solar 6mm Preto (Metro)" },
-      { id: "MAT-002", descricao: "Cabo Solar 6mm Vermelho (Metro)" },
-      { id: "MAT-003", descricao: "Disjuntor CC 32A" },
-      { id: "MAT-004", descricao: "Disjuntor CA 40A" },
-      { id: "MAT-005", descricao: "Quadro de Distribuição 8 Disjuntores" },
-      { id: "MAT-006", descricao: "Conector MC4 (Par)" },
-      { id: "MAT-007", descricao: "Estrutura Telhado Colonial (Kit 4 Módulos)" },
-      { id: "MAT-008", descricao: "Eletroduto Corrugado 3/4 (Metro)" }
-    ]
-  };
-}
-
 // --- NO ARQUIVO MAIN.GS ---
 function obterDadosRelatorioVendasAbertas(inicioISO, fimISO) {
   const ss = SpreadsheetApp.openById(getSpreadsheetId()); 
@@ -1486,6 +1469,130 @@ function obterRelatorioPagamentosCliente(nomeClienteBusca) {
     }
 
     return { sucesso: true, dados: relatorio };
+  } catch (e) {
+    return { sucesso: false, mensagem: e.message };
+  }
+}
+
+/**
+ * ============================================================================
+ * MÓDULO DE ESTOQUE E CATÁLOGO DE MATERIAIS (ALMOXARIFADO)
+ * ============================================================================
+ */
+
+function inicializarAbaEstoque(ss) {
+  let aba = ss.getSheetByName("Estoque");
+  if (!aba) {
+    aba = ss.insertSheet("Estoque");
+    // Estrutura: A: ID | B: Descrição | C: Unidade | D: Custo Unitário (R$) | E: Qtd em Estoque | F: Estoque Mínimo
+    aba.appendRow(["ID", "Descrição do Material", "Unidade", "Custo Unitário", "Estoque Atual", "Estoque Mínimo"]);
+    
+    // Itens iniciais padrão (incluindo o Cabo 4mm pedido pelo Renan)
+    const iniciais = [
+      ["MAT-001", "CABO SOLAR 6MM PRETO (METRO)", "METRO", 5.50, 500, 100],
+      ["MAT-002", "CABO SOLAR 6MM VERMELHO (METRO)", "METRO", 5.50, 500, 100],
+      ["MAT-003", "CABO SOLAR 4MM PRETO (METRO)", "METRO", 4.20, 500, 100],
+      ["MAT-004", "CABO SOLAR 4MM VERMELHO (METRO)", "METRO", 4.20, 500, 100],
+      ["MAT-005", "DISJUNTOR CC 32A", "UNID", 85.00, 20, 5],
+      ["MAT-006", "DISJUNTOR CA 40A", "UNID", 45.00, 20, 5],
+      ["MAT-007", "QUADRO DE DISTRIBUIÇÃO 8 DISJUNTORES", "UNID", 65.00, 15, 3],
+      ["MAT-008", "CONECTOR MC4 (PAR)", "PAR", 12.00, 100, 20],
+      ["MAT-009", "ESTRUTURA TELHADO COLONIAL (KIT 4 MÓDULOS)", "KIT", 380.00, 10, 2],
+      ["MAT-010", "ELETRODUTO CORRUGADO 3/4 (METRO)", "METRO", 3.50, 200, 50],
+      ["MAT-011", "PRESILHA / ABRAÇADEIRA NYLON", "UNID", 0.50, 1000, 200]
+    ];
+    aba.getRange(2, 1, iniciais.length, 6).setValues(iniciais);
+  }
+  return aba;
+}
+
+function obterCatalogoMateriais() {
+  try {
+    const ss = SpreadsheetApp.openById(getSpreadsheetId());
+    const aba = inicializarAbaEstoque(ss);
+    const dados = aba.getDataRange().getValues();
+    dados.shift(); // Remove cabeçalho
+
+    const lista = dados.map((r, i) => ({
+      linha: i + 2,
+      id: String(r[0] || ""),
+      descricao: String(r[1] || "").toUpperCase().trim(),
+      unidade: String(r[2] || "UNID").toUpperCase().trim(),
+      valorUnitario: parseFloat(r[3]) || 0,
+      estoqueAtual: parseFloat(r[4]) || 0,
+      estoqueMinimo: parseFloat(r[5]) || 0
+    }));
+
+    return { sucesso: true, dados: lista };
+  } catch (e) {
+    return { sucesso: false, mensagem: e.message };
+  }
+}
+
+function salvarMaterialEstoque(obj) {
+  try {
+    const ss = SpreadsheetApp.openById(getSpreadsheetId());
+    const aba = inicializarAbaEstoque(ss);
+    const dados = aba.getDataRange().getValues();
+
+    let linhaDestino = -1;
+    let idFinal = obj.id;
+
+    if (idFinal && idFinal.trim() !== "") {
+      for (let i = 1; i < dados.length; i++) {
+        if (String(dados[i][0]).trim() === String(idFinal).trim()) {
+          linhaDestino = i + 1;
+          break;
+        }
+      }
+    } else {
+      // Gera próximo ID automático (MAT-012, etc.)
+      let maiorNum = 0;
+      for (let i = 1; i < dados.length; i++) {
+        let num = parseInt(String(dados[i][0]).replace(/\D/g, ""), 10);
+        if (!isNaN(num) && num > maiorNum) maiorNum = num;
+      }
+      idFinal = "MAT-" + String(maiorNum + 1).padStart(3, "0");
+    }
+
+    const descUpper = String(obj.descricao || "").toUpperCase().trim();
+    const unidUpper = String(obj.unidade || "UNID").toUpperCase().trim();
+    const valorUnit = parseFloat(obj.valorUnitario) || 0;
+    const qtdInput = parseFloat(obj.quantidade) || 0;
+    const estMin = parseFloat(obj.estoqueMinimo) || 0;
+
+    if (linhaDestino !== -1) {
+      let estoqueAntigo = parseFloat(dados[linhaDestino - 1][4]) || 0;
+      // Se marcou "Somar Entrada de Compra", soma ao saldo existente; senão, ajusta o saldo total
+      let novoEstoque = obj.somarEntrada ? (estoqueAntigo + qtdInput) : qtdInput;
+
+      aba.getRange(linhaDestino, 1, 1, 6).setValues([[
+        idFinal, descUpper, unidUpper, valorUnit, novoEstoque, estMin
+      ]]);
+      return { sucesso: true, mensagem: "Material e estoque atualizados!" };
+    } else {
+      aba.appendRow([idFinal, descUpper, unidUpper, valorUnit, qtdInput, estMin]);
+      return { sucesso: true, mensagem: "Novo material cadastrado no estoque!" };
+    }
+  } catch (e) {
+    return { sucesso: false, mensagem: "Erro ao salvar material: " + e.message };
+  }
+}
+
+function excluirMaterialEstoque(idMaterial) {
+  try {
+    const ss = SpreadsheetApp.openById(getSpreadsheetId());
+    const aba = ss.getSheetByName("Estoque");
+    if (!aba) return { sucesso: false, mensagem: "Aba Estoque não encontrada." };
+
+    const dados = aba.getDataRange().getValues();
+    for (let i = 1; i < dados.length; i++) {
+      if (String(dados[i][0]).trim() === String(idMaterial).trim()) {
+        aba.deleteRow(i + 1);
+        return { sucesso: true, mensagem: "Material removido do catálogo!" };
+      }
+    }
+    return { sucesso: false, mensagem: "Material não encontrado." };
   } catch (e) {
     return { sucesso: false, mensagem: e.message };
   }

@@ -1,0 +1,180 @@
+<section id="view-estoque" class="page-view">
+  <div
+    class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+  >
+    <div>
+      <h2 class="text-2xl font-bold text-slate-800">
+        Catálogo & Estoque de Materiais
+      </h2>
+      <p class="text-slate-500 text-sm">
+        Gerencie os preços de custo unitário e as quantidades disponíveis no
+        almoxarifado.
+      </p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Formulário de Cadastro / Entrada de Compra -->
+    <div class="finance-card lg:col-span-1 h-fit">
+      <h3
+        class="text-lg font-bold text-slate-800 mb-4 border-b pb-2 flex items-center gap-2"
+        id="titulo-form-estoque"
+      >
+        <i data-lucide="package-plus" class="w-5 h-5 text-blue-600"></i>
+        Cadastrar / Atualizar Item
+      </h3>
+
+      <input type="hidden" id="est-id" />
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
+            >Descrição do Material</label
+          >
+          <input
+            type="text"
+            id="est-descricao"
+            class="input-field uppercase font-semibold"
+            placeholder="Ex: CABO SOLAR 4MM PRETO (METRO)"
+          />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
+              >Unidade</label
+            >
+            <select id="est-unidade" class="input-field bg-white font-semibold">
+              <option value="METRO">METRO</option>
+              <option value="UNID">UNIDADE</option>
+              <option value="PAR">PAR</option>
+              <option value="KIT">KIT</option>
+              <option value="CAIXA">CAIXA</option>
+              <option value="ROLO">ROLO</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-blue-700 uppercase mb-1"
+              >Custo Unitário (R$)</label
+            >
+            <input
+              type="number"
+              step="0.01"
+              id="est-valor"
+              class="input-field font-bold text-blue-700 border-blue-200 bg-blue-50/30"
+              placeholder="0.00"
+            />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100">
+          <div>
+            <label
+              id="label-est-qtd"
+              class="block text-xs font-bold text-emerald-700 uppercase mb-1"
+            >
+              Saldo em Estoque
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              id="est-qtd"
+              class="input-field font-bold text-center text-emerald-800 bg-emerald-50/40 border-emerald-200"
+              placeholder="0"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
+              >Estoque Mínimo</label
+            >
+            <input
+              type="number"
+              id="est-minimo"
+              class="input-field text-center"
+              placeholder="10"
+              value="5"
+            />
+          </div>
+        </div>
+
+        <div
+          id="box-somar-compra"
+          class="hidden bg-amber-50 p-3 rounded-lg border border-amber-200"
+        >
+          <label
+            class="flex items-center gap-2 text-xs font-bold text-amber-900 cursor-pointer"
+          >
+            <input
+              type="checkbox"
+              id="est-somar-entrada"
+              class="w-4 h-4 text-amber-600 rounded"
+              onchange="alternarLabelSomaEstoque()"
+            />
+            <span>Somar quantidade como nova Compra (Entrada)</span>
+          </label>
+        </div>
+
+        <div class="pt-2 flex flex-col gap-2">
+          <button
+            onclick="salvarItemEstoque()"
+            id="btn-salvar-estoque"
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-md transition-all flex items-center justify-center gap-2"
+          >
+            <i data-lucide="save" class="w-4 h-4"></i> Salvar Material
+          </button>
+          <button
+            onclick="limparFormularioEstoque()"
+            id="btn-cancelar-estoque"
+            class="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2.5 rounded-lg transition-all text-xs hidden"
+          >
+            Cancelar Edição / Novo Item
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabela de Materiais -->
+    <div class="finance-card lg:col-span-2">
+      <div
+        class="flex flex-col sm:flex-row justify-between items-center gap-3 mb-4 pb-3 border-b"
+      >
+        <div class="relative w-full sm:w-72">
+          <i
+            data-lucide="search"
+            class="w-4 h-4 text-slate-400 absolute left-3 top-3"
+          ></i>
+          <input
+            type="text"
+            id="filtro-estoque"
+            onkeyup="renderizarTabelaEstoque()"
+            class="input-field pl-9 py-2 text-sm"
+            placeholder="Buscar material ou código..."
+          />
+        </div>
+        <button
+          onclick="carregarCatalogoMateriais()"
+          class="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1"
+        >
+          <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Atualizar Lista
+        </button>
+      </div>
+
+      <div class="overflow-x-auto max-h-[65vh]">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr
+              class="border-b text-[11px] font-bold text-slate-400 uppercase bg-slate-50"
+            >
+              <th class="p-3">Código</th>
+              <th class="p-3">Material</th>
+              <th class="p-3 text-right">Custo Unit.</th>
+              <th class="p-3 text-center">Saldo Atual</th>
+              <th class="p-3 text-center">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tabela-estoque-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>

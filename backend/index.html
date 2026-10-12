@@ -249,6 +249,14 @@
         </button>
 
         <button
+          id="btn-menu-estoque"
+          onclick="navegarPara('estoque')"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors text-left text-sm font-medium"
+        >
+          <i data-lucide="package" class="w-4 h-4 text-cyan-400"></i> Estoque
+        </button>
+
+        <button
           id="btn-menu-parametros"
           onclick="navegarPara('parametros')"
           class="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors text-left text-sm font-medium"
@@ -320,7 +328,8 @@
       include('financeiro'); ?> <?!= include('pagamentos'); ?><?!=
       include('usuario'); ?><?!= include('projetos'); ?><?!=
       include('relatorios'); ?><?!= include('simulador'); ?><?!=
-      include('parametros'); ?><?!= include('tarefas'); ?>
+      include('parametros'); ?><?!= include('tarefas'); ?><?!=
+      include('estoque'); ?>
 
       <section id="view-troca-senha" class="page-view">
         <div class="finance-card max-w-md mx-auto mt-10">
@@ -637,6 +646,8 @@
           carregarListaClientes(); // <-- ADICIONE ESTA LINHA AQUI
           carregarCatalogoMateriais();
         }
+        // Tela de estoque
+        if (tela === "estoque") carregarCatalogoMateriais();
         // Tela de Parametros
         if (tela === "parametros") carregarTelaParametros();
         // Tela Simulador
@@ -790,7 +801,32 @@
           .getResumoFinanceiro();
       }
 
-      // Novas Linha de Materiais
+      // Calcula o preço automático quando escolhe o material ou muda a quantidade na Venda!
+      window.aoMudarMaterialOuQtd = function (inputEl) {
+        const linha = inputEl.closest(".linha-material");
+        if (!linha) return;
+
+        const descDigitada = linha
+          .querySelector(".mat-desc")
+          .value.trim()
+          .toUpperCase();
+        const qtd = parseFloat(linha.querySelector(".mat-qtd").value) || 0;
+        const campoValor = linha.querySelector(".mat-valor");
+
+        // Procura o material no catálogo carregado do Estoque
+        const itemCatalogo = catalogoMateriaisGlobais.find(
+          (m) => m.descricao.toUpperCase() === descDigitada,
+        );
+
+        // Se achou no catálogo e tem preço cadastrado, multiplica (Qtd * Preço Unitário) automaticamente!
+        if (itemCatalogo && itemCatalogo.valorUnitario > 0) {
+          campoValor.value = (qtd * itemCatalogo.valorUnitario).toFixed(2);
+        }
+
+        calcularTotalMateriais();
+      };
+
+      // Novas Linhas de Materiais com Preenchimento Automático de Preço
       window.adicionarLinhaMaterial = function (
         descricao = "",
         qtd = 1,
@@ -801,21 +837,21 @@
         div.className = "linha-material grid grid-cols-12 gap-2 items-center";
 
         div.innerHTML = `
-                <div class="col-span-6">
-                  <input type="text" class="mat-desc input-field text-xs py-1.5 font-bold uppercase text-slate-700" list="materiais-list" autocomplete="off" placeholder="Buscar material..." value="${descricao}" />
-                </div>
-                <div class="col-span-2">
-                  <input type="number" class="mat-qtd input-field text-xs py-1.5 text-center font-bold" value="${qtd}" min="1" />
-                </div>
-                <div class="col-span-3">
-                  <input type="number" class="mat-valor input-field text-xs py-1.5 text-right font-bold text-blue-700" placeholder="0.00" value="${valor}" oninput="calcularTotalMateriais()" />
-                </div>
-                <div class="col-span-1 text-center">
-                  <button type="button" onclick="removerLinhaMaterial(this)" class="text-slate-300 hover:text-red-500 transition-colors">
-                    <i data-lucide="trash-2" class="w-4 h-4"></i>
-                  </button>
-                </div>
-              `;
+          <div class="col-span-6">
+            <input type="text" class="mat-desc input-field text-xs py-1.5 font-bold uppercase text-slate-700" list="materiais-list" autocomplete="off" placeholder="Buscar material..." value="${descricao}" oninput="aoMudarMaterialOuQtd(this)" />
+          </div>
+          <div class="col-span-2">
+            <input type="number" class="mat-qtd input-field text-xs py-1.5 text-center font-bold" value="${qtd}" min="1" oninput="aoMudarMaterialOuQtd(this)" />
+          </div>
+          <div class="col-span-3">
+            <input type="number" step="0.01" class="mat-valor input-field text-xs py-1.5 text-right font-bold text-blue-700" placeholder="0.00" value="${valor}" oninput="calcularTotalMateriais()" />
+          </div>
+          <div class="col-span-1 text-center">
+            <button type="button" onclick="removerLinhaMaterial(this)" class="text-slate-300 hover:text-red-500 transition-colors">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          </div>
+        `;
         container.appendChild(div);
         lucide.createIcons();
       };
@@ -873,10 +909,152 @@
                   dataList.innerHTML += `<option value="${m.descricao}">`;
                 });
               }
+              renderizarTabelaEstoque();
             }
           })
           .obterCatalogoMateriais();
       }
+
+      function renderizarTabelaEstoque() {
+        const tbody = document.getElementById("tabela-estoque-body");
+        if (!tbody) return;
+
+        const filtro = (
+          document.getElementById("filtro-estoque")?.value || ""
+        ).toUpperCase();
+        tbody.innerHTML = "";
+
+        const filtrados = catalogoMateriaisGlobais.filter((m) => {
+          return (
+            m.descricao.includes(filtro) || m.id.toUpperCase().includes(filtro)
+          );
+        });
+
+        filtrados.forEach((m) => {
+          const alertaBaixo = m.estoqueAtual <= m.estoqueMinimo;
+          const corSaldo = alertaBaixo
+            ? "bg-red-100 text-red-700 border border-red-200"
+            : "bg-emerald-50 text-emerald-700 border border-emerald-200";
+
+          tbody.innerHTML += `
+            <tr class="border-b hover:bg-slate-50 transition-colors">
+              <td class="p-3 text-xs font-mono font-bold text-slate-500">${m.id}</td>
+              <td class="p-3 text-xs font-bold text-slate-800 uppercase">${m.descricao}</td>
+              <td class="p-3 text-xs font-bold text-blue-700 text-right">R$ ${m.valorUnitario.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} <span class="text-[10px] text-slate-400 font-normal">/ ${m.unidade}</span></td>
+              <td class="p-3 text-center">
+                <span class="px-2.5 py-1 rounded-full text-xs font-extrabold ${corSaldo}">
+                  ${m.estoqueAtual} ${m.unidade}
+                </span>
+              </td>
+              <td class="p-3 text-center flex justify-center gap-2">
+                <button onclick="prepararEdicaoEstoque('${m.id}')" class="text-blue-600 hover:bg-blue-50 p-1.5 rounded" title="Editar ou Lançar Compra">
+                  <i data-lucide="edit-3" class="w-4 h-4"></i>
+                </button>
+                <button onclick="removerItemEstoque('${m.id}')" class="text-red-500 hover:bg-red-50 p-1.5 rounded" title="Excluir">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+              </td>
+            </tr>
+          `;
+        });
+        lucide.createIcons();
+      }
+
+      window.alternarLabelSomaEstoque = function () {
+        const somar = document.getElementById("est-somar-entrada").checked;
+        const label = document.getElementById("label-est-qtd");
+        const inputQtd = document.getElementById("est-qtd");
+        if (somar) {
+          label.innerText = "Qtd. Comprada (+ Entrada)";
+          inputQtd.value = "";
+          inputQtd.placeholder = "Ex: 50";
+        } else {
+          label.innerText = "Saldo em Estoque";
+        }
+      };
+
+      window.prepararEdicaoEstoque = function (id) {
+        const item = catalogoMateriaisGlobais.find((m) => m.id === id);
+        if (!item) return;
+
+        document.getElementById("est-id").value = item.id;
+        document.getElementById("est-descricao").value = item.descricao;
+        document.getElementById("est-unidade").value = item.unidade;
+        document.getElementById("est-valor").value = item.valorUnitario;
+        document.getElementById("est-qtd").value = item.estoqueAtual;
+        document.getElementById("est-minimo").value = item.estoqueMinimo;
+
+        document.getElementById("est-somar-entrada").checked = false;
+        document.getElementById("label-est-qtd").innerText = "Saldo em Estoque";
+        document.getElementById("box-somar-compra").classList.remove("hidden");
+        document
+          .getElementById("btn-cancelar-estoque")
+          .classList.remove("hidden");
+        document.getElementById("titulo-form-estoque").innerHTML =
+          `<i data-lucide="edit" class="w-5 h-5 text-amber-500"></i> Editando: ${item.id}`;
+        lucide.createIcons();
+      };
+
+      window.limparFormularioEstoque = function () {
+        document.getElementById("est-id").value = "";
+        document.getElementById("est-descricao").value = "";
+        document.getElementById("est-valor").value = "";
+        document.getElementById("est-qtd").value = "";
+        document.getElementById("est-minimo").value = "5";
+        document.getElementById("est-somar-entrada").checked = false;
+        document.getElementById("label-est-qtd").innerText = "Saldo em Estoque";
+        document.getElementById("box-somar-compra").classList.add("hidden");
+        document.getElementById("btn-cancelar-estoque").classList.add("hidden");
+        document.getElementById("titulo-form-estoque").innerHTML =
+          `<i data-lucide="package-plus" class="w-5 h-5 text-blue-600"></i> Cadastrar / Atualizar Item`;
+        lucide.createIcons();
+      };
+
+      window.salvarItemEstoque = function () {
+        const desc = document.getElementById("est-descricao").value.trim();
+        if (!desc) {
+          mostrarToast("Informe a descrição do material.", "erro");
+          return;
+        }
+
+        const obj = {
+          id: document.getElementById("est-id").value,
+          descricao: desc,
+          unidade: document.getElementById("est-unidade").value,
+          valorUnitario: document.getElementById("est-valor").value,
+          quantidade: document.getElementById("est-qtd").value,
+          estoqueMinimo: document.getElementById("est-minimo").value,
+          somarEntrada: document.getElementById("est-somar-entrada").checked,
+        };
+
+        mostrarToast("Gravando no estoque...", "info");
+        google.script.run
+          .withSuccessHandler((res) => {
+            if (res.sucesso) {
+              mostrarToast(res.mensagem);
+              limparFormularioEstoque();
+              carregarCatalogoMateriais();
+            } else {
+              mostrarToast(res.mensagem, "erro");
+            }
+          })
+          .salvarMaterialEstoque(obj);
+      };
+
+      window.removerItemEstoque = function (id) {
+        if (!confirm(`Deseja remover o item ${id} do catálogo?`)) return;
+        mostrarToast("Removendo item...", "info");
+        google.script.run
+          .withSuccessHandler((res) => {
+            if (res.sucesso) {
+              mostrarToast(res.mensagem);
+              carregarCatalogoMateriais();
+            } else {
+              mostrarToast(res.mensagem, "erro");
+            }
+          })
+          .excluirMaterialEstoque(id);
+      };
 
       function carregarListaClientes() {
         google.script.run
@@ -2821,4 +2999,4 @@
     </script>
   </body>
 </html>
-<!-- 26.10.12 1511 -->
+<!-- 26.10.12 1822 -->
