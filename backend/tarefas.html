@@ -1,168 +1,182 @@
-<section id="view-tarefas" class="page-view hidden h-full flex flex-col">
-  <div class="flex justify-between items-center mb-6 shrink-0">
-    <div>
-      <h2 class="text-2xl font-bold text-slate-800">Quadro de Processos</h2>
-      <p class="text-slate-500 text-sm">
-        Arraste os cartões para avançar as etapas e arquive documentos.
-      </p>
-    </div>
-    <div class="flex gap-2">
-      <button
-        onclick="abrirModalStatus()"
-        class="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-bold hover:bg-slate-300 shadow-sm flex items-center gap-2"
-      >
-        <i data-lucide="settings-2" class="w-4 h-4"></i> Status
-      </button>
+<section id="view-tarefas" class="page-view flex flex-col h-full">
+  <!-- Cabeçalho e Seletores de Quadro -->
+  <div class="mb-6">
+    <div
+      class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4"
+    >
+      <div>
+        <h2 class="text-2xl font-bold text-slate-800">
+          Quadros de Produção (Kanban)
+        </h2>
+        <p class="text-slate-500 text-sm">
+          Gerencie etapas de obras, pendências e pós-venda.
+        </p>
+      </div>
       <button
         onclick="abrirModalTarefa()"
-        class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-blue-700 shadow-md flex items-center gap-2"
+        class="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-md transition-all flex items-center gap-2"
       >
-        <i data-lucide="plus" class="w-4 h-4"></i> Novo Cartão
+        <i data-lucide="plus" class="w-5 h-5"></i> Novo Cartão
+      </button>
+    </div>
+
+    <!-- Navegação em Abas (Quadros) -->
+    <div
+      class="flex gap-2 border-b border-slate-200 overflow-x-auto pb-px"
+      id="abas-quadros"
+    >
+      <button
+        onclick="mudarQuadroKanban('PROJETOS')"
+        id="btn-quadro-PROJETOS"
+        class="px-4 py-2 font-bold text-sm border-b-2 border-purple-600 text-purple-600 whitespace-nowrap"
+      >
+        <i data-lucide="sun" class="w-4 h-4 inline-block mr-1 mb-0.5"></i> Obras
+        & Projetos
+      </button>
+      <button
+        onclick="mudarQuadroKanban('AGENDA')"
+        id="btn-quadro-AGENDA"
+        class="px-4 py-2 font-bold text-sm border-b-2 border-transparent text-slate-500 hover:text-purple-600 whitespace-nowrap transition-colors"
+      >
+        <i data-lucide="calendar" class="w-4 h-4 inline-block mr-1 mb-0.5"></i>
+        Agenda
+      </button>
+      <button
+        onclick="mudarQuadroKanban('POS-VENDA')"
+        id="btn-quadro-POS-VENDA"
+        class="px-4 py-2 font-bold text-sm border-b-2 border-transparent text-slate-500 hover:text-purple-600 whitespace-nowrap transition-colors"
+      >
+        <i
+          data-lucide="headphones"
+          class="w-4 h-4 inline-block mr-1 mb-0.5"
+        ></i>
+        Pós-Venda
+      </button>
+      <button
+        onclick="mudarQuadroKanban('GERAL')"
+        id="btn-quadro-GERAL"
+        class="px-4 py-2 font-bold text-sm border-b-2 border-transparent text-slate-500 hover:text-purple-600 whitespace-nowrap transition-colors"
+      >
+        <i data-lucide="layout" class="w-4 h-4 inline-block mr-1 mb-0.5"></i>
+        Geral
       </button>
     </div>
   </div>
 
-  <div
-    id="kanban-colunas"
-    class="flex gap-6 overflow-x-auto pb-4 flex-1 items-start"
-  ></div>
+  <!-- Área do Kanban -->
+  <div class="flex-1 overflow-x-auto pb-4">
+    <div id="kanban-board" class="flex gap-4 min-h-[60vh] h-full items-start">
+      <!-- Colunas geradas dinamicamente -->
+      <div
+        class="w-80 shrink-0 bg-slate-100 rounded-xl p-4 flex flex-col h-full animate-pulse"
+      >
+        <div class="h-4 bg-slate-200 rounded w-1/2 mb-4"></div>
+        <div class="h-24 bg-slate-200 rounded mb-3"></div>
+        <div class="h-24 bg-slate-200 rounded"></div>
+      </div>
+    </div>
+  </div>
 </section>
 
-<!-- MODAL DE GERENCIAR COLUNAS -->
-<div
-  id="modal-status"
-  class="fixed inset-0 bg-slate-900/80 hidden z-[10005] flex items-center justify-center backdrop-blur-sm p-4"
->
-  <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-md relative">
-    <h3 class="text-xl font-bold text-slate-800 mb-1">Gerenciar Colunas</h3>
-    <p class="text-xs text-slate-500 mb-4">
-      Adicione, altere ou remova as colunas do seu quadro. A ordem salva será a
-      ordem da tela.
-    </p>
-
-    <div
-      id="lista-inputs-status"
-      class="space-y-2 max-h-[40vh] overflow-y-auto mb-4 p-3 border border-slate-100 rounded-lg bg-slate-50"
-    ></div>
-
-    <button
-      onclick="adicionarInputStatus()"
-      class="text-sm font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 mb-6"
-    >
-      <i data-lucide="plus-circle" class="w-4 h-4"></i> Adicionar nova etapa
-    </button>
-
-    <div class="flex justify-end gap-2 pt-4 border-t border-slate-100">
-      <button
-        onclick="fecharModalStatus()"
-        class="bg-slate-100 px-4 py-2 rounded-lg font-bold text-slate-600 hover:bg-slate-200"
-      >
-        Cancelar
-      </button>
-      <button
-        onclick="salvarNovosStatus()"
-        class="bg-blue-600 px-4 py-2 rounded-lg font-bold text-white shadow-md hover:bg-blue-700"
-      >
-        Salvar Ordem
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL DO CARTÃO (COM UPLOAD DE DOCUMENTOS) -->
+<!-- Modal de Nova Tarefa / Edição -->
 <div
   id="modal-tarefa"
-  class="fixed inset-0 bg-slate-900/80 hidden z-[10005] flex items-center justify-center backdrop-blur-sm p-4"
+  class="fixed inset-0 bg-slate-900/80 hidden z-[10002] flex items-center justify-center backdrop-blur-sm p-4"
 >
   <div
-    class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-lg relative max-h-[90vh] flex flex-col"
+    class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]"
   >
-    <h3
-      id="titulo-modal-tarefa"
-      class="text-xl font-bold text-slate-800 mb-4 shrink-0"
-    >
-      Novo Cartão
-    </h3>
+    <div class="flex justify-between items-center mb-4 border-b pb-3 shrink-0">
+      <h3
+        class="text-xl font-bold text-slate-800 flex items-center gap-2"
+        id="titulo-modal-tarefa"
+      >
+        <i data-lucide="file-text" class="w-5 h-5 text-purple-600"></i> Criar
+        Cartão
+      </h3>
+      <button
+        onclick="fecharModalTarefa()"
+        class="text-slate-400 hover:text-red-500 transition-colors"
+      >
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+
     <input type="hidden" id="tar-linha" />
 
-    <div class="space-y-4 overflow-y-auto pr-1 flex-1">
+    <div class="overflow-y-auto flex-1 pr-2 space-y-4">
       <div>
         <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
-          >Título / Processo</label
+          >Quadro de Destino</label
+        >
+        <select
+          id="tar-quadro"
+          class="input-field bg-slate-50 font-bold text-purple-700"
+        >
+          <option value="PROJETOS">Obras & Projetos</option>
+          <option value="AGENDA">Agenda</option>
+          <option value="POS-VENDA">Pós-Venda</option>
+          <option value="GERAL">Geral</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
+          >Título do Cartão</label
         >
         <input
           type="text"
           id="tar-titulo"
-          class="input-field font-bold text-slate-800"
-          placeholder="Ex: Solicitar inversor para o cliente X"
+          class="input-field font-bold"
+          placeholder="Ex: Instalação Cliente X"
         />
       </div>
+
       <div>
         <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
-          >Descrição Detalhada</label
+          >Descrição / Detalhes</label
         >
         <textarea
           id="tar-descricao"
           rows="3"
-          class="input-field resize-none text-sm"
-          placeholder="Anotações, links, ou detalhes do processo..."
+          class="input-field resize-none"
+          placeholder="Observações e pendências..."
         ></textarea>
       </div>
 
-      <!-- LISTA DE DOCUMENTOS JÁ ARQUIVADOS -->
-      <div id="box-anexos-existentes" class="hidden">
-        <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
-          >Documentos Arquivados</label
-        >
-        <div
-          id="lista-anexos-tarefa"
-          class="space-y-2 bg-slate-50 p-3 rounded-lg border border-slate-200"
-        ></div>
-      </div>
-
-      <!-- CAMPO PARA ANEXAR NOVO DOCUMENTO -->
-      <div>
-        <label class="block text-xs font-bold text-slate-500 uppercase mb-1"
-          >Arquivar Novo Documento (Opcional)</label
-        >
+      <div class="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+        <label class="block text-xs font-bold text-blue-700 uppercase mb-2">
+          <i
+            data-lucide="paperclip"
+            class="w-3.5 h-3.5 inline-block mb-0.5"
+          ></i>
+          Anexar Documento ou Imagem
+        </label>
         <input
           type="file"
           id="tar-arquivo"
-          class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-slate-200 rounded-lg p-1.5 cursor-pointer"
+          class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 transition-colors"
         />
-        <p class="text-[11px] text-slate-400 mt-1">
-          O documento será salvo no Google Drive e vinculado a este cartão.
+        <p class="text-[10px] text-slate-400 mt-1 pl-1">
+          * Será guardado automaticamente no Google Drive
         </p>
       </div>
     </div>
 
-    <div
-      class="flex justify-between items-center mt-6 pt-4 border-t border-slate-100 shrink-0"
-    >
+    <div class="flex gap-3 pt-4 border-t border-slate-100 shrink-0 mt-4">
       <button
-        id="btn-excluir-tarefa"
-        onclick="excluirTarefa()"
-        class="text-red-500 hover:bg-red-50 p-2 rounded transition-colors hidden"
-        title="Excluir Cartão"
+        onclick="fecharModalTarefa()"
+        class="flex-1 bg-slate-100 py-3 rounded-xl font-bold text-slate-600 hover:bg-slate-200 transition-colors"
       >
-        <i data-lucide="trash-2" class="w-5 h-5"></i>
+        Cancelar
       </button>
-
-      <div class="flex gap-2 ml-auto">
-        <button
-          onclick="fecharModalTarefa()"
-          class="bg-slate-100 px-4 py-2 rounded-lg font-bold text-slate-600 hover:bg-slate-200"
-        >
-          Cancelar
-        </button>
-        <button
-          id="btn-salvar-tarefa"
-          onclick="salvarTarefa()"
-          class="bg-blue-600 px-4 py-2 rounded-lg font-bold text-white shadow-md hover:bg-blue-700"
-        >
-          Salvar Cartão
-        </button>
-      </div>
+      <button
+        onclick="salvarCartaoTarefa()"
+        id="btn-salvar-tarefa"
+        class="flex-1 bg-purple-600 py-3 rounded-xl font-bold text-white shadow-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"
+      >
+        <i data-lucide="save" class="w-5 h-5"></i> Salvar Cartão
+      </button>
     </div>
   </div>
 </div>
@@ -170,337 +184,232 @@
 <script>
   let tarefasGlobais = [];
   let colunasGlobais = [];
+  let quadroAtivo = "PROJETOS"; // Quadro padrão inicial
 
   function carregarQuadroKanban() {
-    mostrarToast("Carregando quadro...", "info");
-    google.script.run
-      .withSuccessHandler((res) => {
-        if (res && res.sucesso) {
-          tarefasGlobais = res.dados;
-          colunasGlobais = res.colunas;
-          renderizarQuadro();
-        } else {
-          mostrarToast(
-            "Erro ao carregar: " + (res ? res.mensagem : "Falha na conexão"),
-            "erro",
-          );
-        }
-      })
-      .withFailureHandler((err) => {
-        mostrarToast("Erro crítico de comunicação: " + err.message, "erro");
-      })
-      .obterTarefas();
-  }
-
-  function renderizarQuadro() {
-    const container = document.getElementById("kanban-colunas");
-    container.innerHTML = "";
-
-    // 1. GERA AS COLUNAS DINAMICAMENTE
-    colunasGlobais.forEach((colNome, index) => {
-      const qtd = tarefasGlobais.filter((t) => t.status === colNome).length;
-
-      let corBg = "bg-blue-50 border-blue-100";
-      let corHeader = "bg-blue-100/50 border-blue-100 text-blue-800";
-      let corBadge = "bg-blue-200 text-blue-800";
-
-      if (index === 0) {
-        corBg = "bg-slate-100 border-slate-200";
-        corHeader = "bg-slate-200/50 border-slate-200 text-slate-700";
-        corBadge = "bg-slate-300 text-slate-700";
-      } else if (index === colunasGlobais.length - 1) {
-        corBg = "bg-emerald-50 border-emerald-100";
-        corHeader = "bg-emerald-100/50 border-emerald-100 text-emerald-800";
-        corBadge = "bg-emerald-200 text-emerald-800";
-      }
-
-      const colDiv = document.createElement("div");
-      colDiv.className = `${corBg} rounded-xl w-80 shrink-0 flex flex-col max-h-full border`;
-      colDiv.innerHTML = `
-        <div class="p-3 border-b flex justify-between items-center rounded-t-xl ${corHeader}">
-          <h3 class="font-bold">${colNome}</h3>
-          <span class="${corBadge} text-xs px-2 py-1 rounded-full font-bold">${qtd}</span>
-        </div>
-        <div id="col-${colNome}" class="p-3 flex-1 overflow-y-auto space-y-3 min-h-[200px]" ondragover="allowDrop(event)" ondrop="dropTarefa(event, '${colNome}')">
-        </div>
-      `;
-      container.appendChild(colDiv);
-    });
-
-    // 2. GERA OS CARTÕES E EXIBE INDICADOR DE DOCUMENTOS ANEXADOS
-    tarefasGlobais.forEach((t) => {
-      const card = document.createElement("div");
-      card.className =
-        "bg-white p-3 rounded-lg shadow-sm border border-slate-200 cursor-grab hover:shadow-md transition-shadow relative group active:cursor-grabbing";
-      card.draggable = true;
-      card.id = "card-" + t.linha;
-      card.ondragstart = (e) => dragStart(e, t.linha);
-
-      const qtdAnexos = t.anexos ? t.anexos.length : 0;
-      const badgeAnexos =
-        qtdAnexos > 0
-          ? `<span onclick="editarTarefa(${t.linha})" class="bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 cursor-pointer hover:bg-blue-100" title="Ver documentos arquivados">
-             <i data-lucide="paperclip" class="w-3 h-3"></i> ${qtdAnexos} doc(s)
-           </span>`
-          : "";
-
-      card.innerHTML = `
-        <div class="flex justify-between items-start mb-2">
-          <span class="text-[10px] font-mono text-slate-400 font-bold">${t.id}</span>
-          <button onclick="editarTarefa(${t.linha})" class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-blue-600 transition-opacity" title="Abrir / Anexar">
-            <i data-lucide="edit-2" class="w-4 h-4"></i>
-          </button>
-        </div>
-        <h4 class="text-sm font-bold text-slate-800 mb-1 leading-tight">${t.titulo}</h4>
-        ${t.descricao ? `<p class="text-xs text-slate-500 line-clamp-2">${t.descricao}</p>` : ""}
-        <div class="mt-3 pt-2 border-t border-slate-50 flex items-center justify-between text-[10px] text-slate-400 font-medium">
-          <span class="flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i> ${t.data}</span>
-          ${badgeAnexos}
-        </div>
-      `;
-
-      const colunaDestino = document.getElementById("col-" + t.status);
-      if (colunaDestino) colunaDestino.appendChild(card);
-    });
-
-    lucide.createIcons();
-  }
-
-  // --- FUNÇÕES DE STATUS ---
-  function abrirModalStatus() {
-    const container = document.getElementById("lista-inputs-status");
-    container.innerHTML = "";
-    colunasGlobais.forEach((col) => adicionarInputStatus(col));
-    document.getElementById("modal-status").classList.remove("hidden");
-    lucide.createIcons();
-  }
-
-  function fecharModalStatus() {
-    document.getElementById("modal-status").classList.add("hidden");
-  }
-
-  function adicionarInputStatus(valor = "") {
-    const container = document.getElementById("lista-inputs-status");
-    const div = document.createElement("div");
-    div.className = "flex gap-2 items-center group";
-    div.innerHTML = `
-      <i data-lucide="grip-vertical" class="w-4 h-4 text-slate-300"></i>
-      <input type="text" class="input-status flex-1 p-2 border border-slate-300 rounded outline-none uppercase font-bold text-sm text-slate-700 bg-white" value="${valor}" placeholder="NOME DO STATUS" />
-      <button onclick="this.parentElement.remove()" class="text-red-300 hover:text-red-600 p-1 transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
+    document.getElementById("kanban-board").innerHTML = `
+      <div class="w-80 shrink-0 bg-slate-100 rounded-xl p-4 flex flex-col h-full animate-pulse">
+        <div class="h-4 bg-slate-200 rounded w-1/2 mb-4"></div>
+        <div class="h-24 bg-slate-200 rounded mb-3"></div>
+      </div>
     `;
-    container.appendChild(div);
-    lucide.createIcons();
-  }
-
-  function salvarNovosStatus() {
-    const inputs = document.querySelectorAll(".input-status");
-    const novosStatus = [];
-
-    inputs.forEach((inp) => {
-      if (inp.value.trim() !== "")
-        novosStatus.push(inp.value.trim().toUpperCase());
-    });
-
-    if (novosStatus.length === 0) {
-      mostrarToast("Você precisa ter pelo menos 1 coluna de status!", "erro");
-      return;
-    }
-
-    fecharModalStatus();
-    mostrarToast("Salvando colunas...", "info");
 
     google.script.run
       .withSuccessHandler((res) => {
         if (res.sucesso) {
-          carregarQuadroKanban();
-          mostrarToast("Colunas atualizadas!", "sucesso");
+          tarefasGlobais = res.dados;
+          colunasGlobais = res.colunas;
+          renderizarKanban();
         } else {
-          mostrarToast("Erro: " + res.mensagem, "erro");
+          mostrarToast("Erro ao carregar Kanban: " + res.mensagem, "erro");
         }
       })
-      .salvarStatusTarefas(novosStatus);
+      .obterTarefas();
   }
 
-  // --- FUNÇÕES DE DRAG AND DROP ---
-  function dragStart(event, linha) {
-    event.dataTransfer.setData("linha", linha);
-    event.target.classList.add("opacity-50");
+  window.mudarQuadroKanban = function (nomeQuadro) {
+    quadroAtivo = nomeQuadro;
+
+    // Atualiza a interface visual das abas
+    const abas = ["PROJETOS", "AGENDA", "POS-VENDA", "GERAL"];
+    abas.forEach((aba) => {
+      const btn = document.getElementById("btn-quadro-" + aba);
+      if (btn) {
+        if (aba === quadroAtivo) {
+          btn.className =
+            "px-4 py-2 font-bold text-sm border-b-2 border-purple-600 text-purple-600 whitespace-nowrap";
+        } else {
+          btn.className =
+            "px-4 py-2 font-bold text-sm border-b-2 border-transparent text-slate-500 hover:text-purple-600 whitespace-nowrap transition-colors";
+        }
+      }
+    });
+
+    // Se o modal estiver aberto (ou quando for abrir), muda o select padrão
+    const selectQuadro = document.getElementById("tar-quadro");
+    if (selectQuadro) selectQuadro.value = quadroAtivo;
+
+    renderizarKanban();
+  };
+
+  function renderizarKanban() {
+    const board = document.getElementById("kanban-board");
+    board.innerHTML = "";
+
+    // Filtra tarefas apenas do quadro ativo
+    const tarefasDoQuadro = tarefasGlobais.filter(
+      (t) => t.quadro === quadroAtivo,
+    );
+
+    colunasGlobais.forEach((colunaNome) => {
+      const colDiv = document.createElement("div");
+      colDiv.className =
+        "w-80 shrink-0 bg-slate-100 rounded-xl flex flex-col max-h-full border border-slate-200/60 shadow-sm";
+
+      let headerColor = "border-slate-300 text-slate-700";
+      if (colunaNome === "A FAZER")
+        headerColor = "border-amber-400 text-amber-700";
+      if (colunaNome === "EM ANDAMENTO")
+        headerColor = "border-blue-400 text-blue-700";
+      if (colunaNome === "CONCLUÍDO")
+        headerColor = "border-emerald-400 text-emerald-700";
+
+      colDiv.innerHTML = `
+        <div class="p-3 border-b-2 ${headerColor} flex justify-between items-center bg-white/50 rounded-t-xl shrink-0">
+          <h4 class="font-bold text-sm uppercase tracking-wider">${colunaNome}</h4>
+          <span class="bg-white px-2 py-0.5 rounded-full text-xs font-bold text-slate-400 shadow-sm border border-slate-100">
+            ${tarefasDoQuadro.filter((t) => t.status === colunaNome).length}
+          </span>
+        </div>
+        <div class="p-3 flex-1 overflow-y-auto space-y-3 dropzone" data-status="${colunaNome}"></div>
+      `;
+
+      const zonaCartoes = colDiv.querySelector(".dropzone");
+
+      tarefasDoQuadro.forEach((tar) => {
+        if (tar.status === colunaNome) {
+          const card = document.createElement("div");
+          card.className =
+            "bg-white p-3.5 rounded-lg shadow-sm border border-slate-200 hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing group";
+
+          let htmlAnexos = "";
+          if (tar.anexos && tar.anexos.length > 0) {
+            htmlAnexos = `<div class="mt-2 pt-2 border-t border-slate-100 flex gap-2">
+              <a href="${tar.anexos[0].url}" target="_blank" class="text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded font-bold hover:bg-blue-100 flex items-center gap-1">
+                <i data-lucide="paperclip" class="w-3 h-3"></i> 1 Anexo
+              </a>
+            </div>`;
+          }
+
+          card.innerHTML = `
+            <div class="flex justify-between items-start mb-1">
+              <span class="text-[10px] font-bold text-slate-400">#${tar.linha}</span>
+              <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button onclick="prepararEdicaoTarefa(${tar.linha})" class="text-blue-500 hover:bg-blue-50 p-1 rounded"><i data-lucide="edit-2" class="w-3 h-3"></i></button>
+                <button onclick="moverCartaoKanban(${tar.linha}, '${colunaNome}')" class="text-emerald-500 hover:bg-emerald-50 p-1 rounded"><i data-lucide="arrow-right" class="w-3 h-3"></i></button>
+                <button onclick="deletarTarefa(${tar.linha})" class="text-red-400 hover:bg-red-50 p-1 rounded"><i data-lucide="trash" class="w-3 h-3"></i></button>
+              </div>
+            </div>
+            <h5 class="font-bold text-slate-800 text-sm mb-1 leading-tight">${tar.titulo}</h5>
+            ${tar.descricao ? `<p class="text-xs text-slate-500 line-clamp-2">${tar.descricao}</p>` : ""}
+            ${htmlAnexos}
+          `;
+          zonaCartoes.appendChild(card);
+        }
+      });
+
+      board.appendChild(colDiv);
+    });
+    lucide.createIcons();
   }
 
-  function allowDrop(event) {
-    event.preventDefault();
-  }
-
-  function dropTarefa(event, novoStatus) {
-    event.preventDefault();
-    const linha = event.dataTransfer.getData("linha");
-    const cardElement = document.getElementById("card-" + linha);
-
-    if (cardElement) {
-      cardElement.classList.remove("opacity-50");
-      document.getElementById("col-" + novoStatus).appendChild(cardElement);
-
-      const t = tarefasGlobais.find(
-        (x) => x.linha.toString() === linha.toString(),
-      );
-      if (t) t.status = novoStatus;
-
-      renderizarQuadro();
-      google.script.run.atualizarStatusTarefa(linha, novoStatus);
+  // Avança o status do cartão para a próxima coluna
+  window.moverCartaoKanban = function (linha, statusAtual) {
+    const currentIndex = colunasGlobais.indexOf(statusAtual);
+    if (currentIndex < colunasGlobais.length - 1) {
+      const novoStatus = colunasGlobais[currentIndex + 1];
+      mostrarToast("A mover cartão...", "info");
+      google.script.run
+        .withSuccessHandler((res) => {
+          if (res.sucesso) carregarQuadroKanban();
+        })
+        .atualizarStatusTarefa(linha, novoStatus);
+    } else {
+      mostrarToast("O cartão já está na última fase.", "info");
     }
-  }
+  };
 
-  // --- FUNÇÕES DE TAREFAS E DOCUMENTOS ---
-  function abrirModalTarefa() {
+  window.abrirModalTarefa = function () {
     document.getElementById("tar-linha").value = "";
     document.getElementById("tar-titulo").value = "";
     document.getElementById("tar-descricao").value = "";
     document.getElementById("tar-arquivo").value = "";
-    document.getElementById("box-anexos-existentes").classList.add("hidden");
-    document.getElementById("titulo-modal-tarefa").innerText = "Novo Cartão";
-    document.getElementById("btn-excluir-tarefa").classList.add("hidden");
-    document.getElementById("modal-tarefa").classList.remove("hidden");
-  }
+    document.getElementById("tar-quadro").value = quadroAtivo; // Associa ao quadro atual
 
-  function editarTarefa(linha) {
+    document.getElementById("titulo-modal-tarefa").innerHTML =
+      `<i data-lucide="file-text" class="w-5 h-5 text-purple-600"></i> Criar Cartão`;
+    document.getElementById("modal-tarefa").classList.remove("hidden");
+    lucide.createIcons();
+  };
+
+  window.fecharModalTarefa = function () {
+    document.getElementById("modal-tarefa").classList.add("hidden");
+  };
+
+  window.prepararEdicaoTarefa = function (linha) {
     const t = tarefasGlobais.find((x) => x.linha === linha);
     if (!t) return;
 
     document.getElementById("tar-linha").value = t.linha;
     document.getElementById("tar-titulo").value = t.titulo;
     document.getElementById("tar-descricao").value = t.descricao;
+    document.getElementById("tar-quadro").value = t.quadro || "GERAL";
     document.getElementById("tar-arquivo").value = "";
-    document.getElementById("titulo-modal-tarefa").innerText = "Editar Cartão";
-    document.getElementById("btn-excluir-tarefa").classList.remove("hidden");
 
-    renderizarAnexosModal(t.linha, t.anexos || []);
-
+    document.getElementById("titulo-modal-tarefa").innerHTML =
+      `<i data-lucide="edit-3" class="w-5 h-5 text-amber-500"></i> Editar Cartão`;
     document.getElementById("modal-tarefa").classList.remove("hidden");
-  }
-
-  function renderizarAnexosModal(linha, anexos) {
-    const box = document.getElementById("box-anexos-existentes");
-    const lista = document.getElementById("lista-anexos-tarefa");
-    lista.innerHTML = "";
-
-    if (!anexos || anexos.length === 0) {
-      box.classList.add("hidden");
-      return;
-    }
-
-    box.classList.remove("hidden");
-    anexos.forEach((arq, idx) => {
-      const item = document.createElement("div");
-      item.className =
-        "flex items-center justify-between bg-white p-2 rounded border border-slate-200 text-xs";
-      item.innerHTML = `
-        <a href="${arq.url}" target="_blank" class="flex items-center gap-2 text-blue-600 hover:underline font-bold truncate max-w-[80%]">
-          <i data-lucide="file-text" class="w-4 h-4 shrink-0"></i>
-          <span class="truncate">${arq.nome}</span>
-        </a>
-        <button onclick="removerAnexo(${linha}, ${idx})" class="text-slate-400 hover:text-red-600 p-1" title="Remover documento">
-          <i data-lucide="trash" class="w-3.5 h-3.5"></i>
-        </button>
-      `;
-      lista.appendChild(item);
-    });
     lucide.createIcons();
-  }
+  };
 
-  function removerAnexo(linha, idx) {
-    if (!confirm("Remover este documento do cartão?")) return;
-    mostrarToast("Removendo documento...", "info");
-    google.script.run
-      .withSuccessHandler((res) => {
-        if (res.sucesso) {
-          const t = tarefasGlobais.find((x) => x.linha === linha);
-          if (t) t.anexos = res.anexos;
-          renderizarAnexosModal(linha, res.anexos);
-          renderizarQuadro();
-          mostrarToast("Documento removido!", "sucesso");
-        } else {
-          mostrarToast("Erro: " + res.mensagem, "erro");
-        }
-      })
-      .removerAnexoTarefaBackend(linha, idx);
-  }
-
-  function fecharModalTarefa() {
-    document.getElementById("modal-tarefa").classList.add("hidden");
-  }
-
-  function salvarTarefa() {
+  window.salvarCartaoTarefa = function () {
     const titulo = document.getElementById("tar-titulo").value.trim();
-    if (!titulo) {
-      mostrarToast("O título do cartão é obrigatório.", "erro");
-      return;
-    }
+    if (!titulo) return mostrarToast("O título é obrigatório.", "erro");
 
-    const inputArquivo = document.getElementById("tar-arquivo");
-    const file = inputArquivo.files[0];
-
+    const fileInput = document.getElementById("tar-arquivo");
     const obj = {
       linha: document.getElementById("tar-linha").value,
       titulo: titulo,
       descricao: document.getElementById("tar-descricao").value.trim(),
-      arquivo: null,
+      quadro: document.getElementById("tar-quadro").value, // Grava o quadro escolhido
     };
 
     const btn = document.getElementById("btn-salvar-tarefa");
+    btn.innerHTML = "A processar...";
     btn.disabled = true;
-    btn.innerText = "Processando...";
 
-    // Se houver arquivo selecionado, converte para Base64 antes de enviar
-    if (file) {
-      mostrarToast("Enviando documento para o Google Drive...", "info");
+    if (fileInput.files.length > 0) {
+      const f = fileInput.files[0];
       const reader = new FileReader();
       reader.onload = function (e) {
-        const base64String = e.target.result.split(",")[1];
-        obj.arquivo = {
-          nome: file.name,
-          mimeType: file.type || "application/octet-stream",
-          base64: base64String,
-        };
-        dispararSalvamentoTarefa(obj, btn);
+        const d = e.target.result;
+        const b64 = d.split(",")[1];
+        obj.arquivo = { nome: f.name, mimeType: f.type, base64: b64 };
+        enviarTarefaParaServidor(obj, btn);
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(f);
     } else {
-      mostrarToast("Salvando cartão...", "info");
-      dispararSalvamentoTarefa(obj, btn);
+      enviarTarefaParaServidor(obj, btn);
     }
-  }
+  };
 
-  function dispararSalvamentoTarefa(obj, btn) {
+  function enviarTarefaParaServidor(obj, btn) {
     google.script.run
       .withSuccessHandler((res) => {
+        btn.innerHTML = `<i data-lucide="save" class="w-5 h-5"></i> Salvar Cartão`;
         btn.disabled = false;
-        btn.innerText = "Salvar Cartão";
-        fecharModalTarefa();
         if (res.sucesso) {
-          carregarQuadroKanban();
-          mostrarToast("Cartão salvo com sucesso!", "sucesso");
+          mostrarToast("Cartão guardado!");
+          fecharModalTarefa();
+
+          // Se o utilizador criou para um quadro diferente do que está a ver, muda para ele automaticamente
+          if (obj.quadro !== quadroAtivo) mudarQuadroKanban(obj.quadro);
+          else carregarQuadroKanban();
         } else {
-          mostrarToast("Erro: " + res.mensagem, "erro");
+          mostrarToast(res.mensagem, "erro");
         }
-      })
-      .withFailureHandler((err) => {
-        btn.disabled = false;
-        btn.innerText = "Salvar Cartão";
-        mostrarToast("Erro no upload: " + err.message, "erro");
       })
       .salvarTarefaNoServidor(obj);
   }
 
-  function excluirTarefa() {
-    const linha = document.getElementById("tar-linha").value;
-    if (confirm("Deseja apagar este cartão definitivamente?")) {
-      fecharModalTarefa();
-      mostrarToast("Apagando cartão...", "info");
-      google.script.run
-        .withSuccessHandler((res) => {
-          if (res.sucesso) carregarQuadroKanban();
-        })
-        .excluirTarefaBackend(linha);
-    }
-  }
+  window.deletarTarefa = function (linha) {
+    if (!confirm("Excluir este cartão definitivamente?")) return;
+    mostrarToast("Excluindo...", "info");
+    google.script.run
+      .withSuccessHandler((res) => {
+        if (res.sucesso) carregarQuadroKanban();
+      })
+      .excluirTarefaBackend(linha);
+  };
 </script>
+<!-- 26-10-14 1040 Múltiplos Quadros -->

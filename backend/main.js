@@ -1127,7 +1127,6 @@ function obterTarefas() {
       }
     }
 
-    // 2. BUSCA AS TAREFAS E OS ANEXOS (Coluna F / Índice 5)
     const abaTarefas = ss.getSheetByName("Tarefas");
     if (!abaTarefas) return { sucesso: false, mensagem: "Aba 'Tarefas' não encontrada." };
 
@@ -1147,14 +1146,9 @@ function obterTarefas() {
       let statusAtual = String(r[3] || colunasKanban[0]).toUpperCase().trim();
       if (!colunasKanban.includes(statusAtual)) statusAtual = colunasKanban[0];
 
-      // Lê a lista de documentos salvos na Coluna F (em formato JSON)
       let listaAnexos = [];
       if (r[5]) {
-        try {
-          listaAnexos = JSON.parse(r[5]);
-        } catch (err) {
-          listaAnexos = [];
-        }
+        try { listaAnexos = JSON.parse(r[5]); } catch (err) { listaAnexos = []; }
       }
 
       return {
@@ -1164,7 +1158,9 @@ function obterTarefas() {
         descricao: r[2],
         status: statusAtual,
         data: dataSegura,
-        anexos: listaAnexos
+        anexos: listaAnexos,
+        // NOVO: Lê a qual Quadro a tarefa pertence (Coluna G / Índice 6)
+        quadro: String(r[6] || "GERAL").toUpperCase().trim()
       };
     });
 
@@ -1180,30 +1176,25 @@ function salvarTarefaNoServidor(obj) {
     const aba = ss.getSheetByName("Tarefas");
     const dataHoje = new Date().toLocaleDateString('pt-BR');
     const idUnico = "TK-" + new Date().getTime().toString().slice(-6);
+    
+    // O quadro escolhido (se vier vazio, vai para GERAL)
+    const quadroDestino = String(obj.quadro || "GERAL").toUpperCase().trim();
 
-    // Se o usuário enviou um arquivo novo, faz o upload para o Google Drive
     let novoAnexo = null;
     if (obj.arquivo && obj.arquivo.base64) {
       const pasta = obterPastaAnexosKanban();
       const bytes = Utilities.base64Decode(obj.arquivo.base64);
       const blob = Utilities.newBlob(bytes, obj.arquivo.mimeType, obj.arquivo.nome);
       const file = pasta.createFile(blob);
-      
-      // Libera a visualização direta do documento sem exigir login
       file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-      
-      novoAnexo = {
-        id: file.getId(),
-        nome: obj.arquivo.nome,
-        url: file.getUrl(),
-        data: dataHoje
-      };
+      novoAnexo = { id: file.getId(), nome: obj.arquivo.nome, url: file.getUrl(), data: dataHoje };
     }
 
     if (obj.linha) {
-      // Editando cartão existente
       aba.getRange(obj.linha, 2).setValue(obj.titulo);
       aba.getRange(obj.linha, 3).setValue(obj.descricao);
+      // NOVO: Salva a atualização do Quadro na Coluna G
+      aba.getRange(obj.linha, 7).setValue(quadroDestino);
 
       if (novoAnexo) {
         let anexosAtuais = [];
@@ -1215,14 +1206,15 @@ function salvarTarefaNoServidor(obj) {
         aba.getRange(obj.linha, 6).setValue(JSON.stringify(anexosAtuais));
       }
     } else {
-      // Criando novo cartão
       let primeiroStatus = "A FAZER";
       const abaStatus = ss.getSheetByName("StatusTarefas");
       if (abaStatus && abaStatus.getLastRow() > 1) {
         primeiroStatus = String(abaStatus.getRange("A2").getValue()).toUpperCase().trim();
       }
       const anexosIniciais = novoAnexo ? JSON.stringify([novoAnexo]) : "";
-      aba.appendRow([idUnico, obj.titulo, obj.descricao, primeiroStatus, dataHoje, anexosIniciais]);
+      
+      // NOVO: Adicionado o quadroDestino na 7ª posição do Array
+      aba.appendRow([idUnico, obj.titulo, obj.descricao, primeiroStatus, dataHoje, anexosIniciais, quadroDestino]);
     }
     return { sucesso: true };
   } catch (e) {
@@ -1713,3 +1705,4 @@ function obterHistoricoCompras() {
     return { sucesso: false, mensagem: e.message };
   }
 }
+// 26-10-14 1037
