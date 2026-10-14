@@ -755,9 +755,9 @@ function obterListaProjetos() {
 function salvarProjetoNoServidor(obj) {
   try {
     const ss = SpreadsheetApp.openById(getSpreadsheetId());
-    const aba = ss.getSheetByName("Projetos");
+    const abaProjetos = ss.getSheetByName("Projetos");
+    const abaEstoque = ss.getSheetByName("Estoque"); // Precisamos referenciar o Estoque
 
-    // Em salvarProjetoNoServidor(obj):
     const arrayDados = [
       obj.data, obj.cliente, obj.total, obj.kit, obj.servico,
       obj.impostos, obj.maoDeObra, obj.comissao, obj.maquininha,
@@ -768,9 +768,43 @@ function salvarProjetoNoServidor(obj) {
     ];
     
     if (obj.linha && obj.linha !== "") {
-      aba.getRange(obj.linha, 1, 1, arrayDados.length).setValues([arrayDados]);
+      // Se for uma edição de projeto existente, apenas atualiza
+      abaProjetos.getRange(obj.linha, 1, 1, arrayDados.length).setValues([arrayDados]);
     } else {
-      aba.appendRow(arrayDados);
+      // 1. Grava a nova Venda
+      abaProjetos.appendRow(arrayDados);
+
+      // 2. BAIXA AUTOMÁTICA DE ESTOQUE (A MÁGICA!)
+      if (abaEstoque && obj.materiaisJson && obj.materiaisJson !== "[]") {
+        try {
+          const materiaisUsados = JSON.parse(obj.materiaisJson);
+          const dadosEstoque = abaEstoque.getDataRange().getValues();
+          
+          materiaisUsados.forEach(matUsado => {
+            const descUsada = String(matUsado.descricao).toUpperCase().trim();
+            const qtdUsada = parseFloat(matUsado.quantidade) || 0;
+            
+            if (qtdUsada > 0) {
+              // Procura o material no estoque para abater
+              for (let i = 1; i < dadosEstoque.length; i++) {
+                const descEstoque = String(dadosEstoque[i][1] || "").toUpperCase().trim();
+                if (descEstoque === descUsada) {
+                  let saldoAtual = parseFloat(dadosEstoque[i][4]) || 0;
+                  let novoSaldo = saldoAtual - qtdUsada;
+                  
+                  // Atualiza o valor na planilha (Coluna E / Índice 5)
+                  abaEstoque.getRange(i + 1, 5).setValue(novoSaldo); 
+                  // Atualiza em memória para abater corretamente se o mesmo item se repetir
+                  dadosEstoque[i][4] = novoSaldo; 
+                  break;
+                }
+              }
+            }
+          });
+        } catch (err) {
+          console.error("Erro na baixa de estoque: " + err.message);
+        }
+      }
     }
 
     return { sucesso: true };
@@ -1705,4 +1739,4 @@ function obterHistoricoCompras() {
     return { sucesso: false, mensagem: e.message };
   }
 }
-// 26-10-14 1037
+// 26-10-14 1107 Baixa no Estoque
