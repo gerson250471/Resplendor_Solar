@@ -1,65 +1,70 @@
-<section id="view-tarefas" class="page-view flex flex-col h-full">
-  <!-- Cabeçalho e Seletores de Quadro -->
-  <div class="mb-6">
-    <div
-      class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4"
-    >
-      <div>
-        <h2 class="text-2xl font-bold text-slate-800">
-          Quadros de Produção (Kanban)
-        </h2>
-        <p class="text-slate-500 text-sm">
-          Gerencie etapas de obras, pendências e pós-venda.
-        </p>
+<section id="view-tarefas" class="page-view">
+  <div class="flex flex-col h-full">
+    <!-- Cabeçalho e Seletores de Quadro -->
+    <div class="mb-6">
+      <div
+        class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4"
+      >
+        <div>
+          <h2 class="text-2xl font-bold text-slate-800">
+            Quadros de Produção (Kanban)
+          </h2>
+          <p class="text-slate-500 text-sm">
+            Gerencie etapas de obras, pendências e pós-venda.
+          </p>
+        </div>
+        <button
+          onclick="abrirModalTarefa()"
+          class="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-md transition-all flex items-center gap-2"
+        >
+          <i data-lucide="plus" class="w-5 h-5"></i> Novo Cartão
+        </button>
       </div>
-      <button
-        onclick="abrirModalTarefa()"
-        class="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-md transition-all flex items-center gap-2"
-      >
-        <i data-lucide="plus" class="w-5 h-5"></i> Novo Cartão
-      </button>
-    </div>
 
-    <!-- Navegação em Abas (Quadros) -->
-    <div
-      class="flex gap-2 border-b border-slate-200 overflow-x-auto pb-px"
-      id="abas-quadros"
-    >
-      <button
-        onclick="mudarQuadroKanban('PROJETOS')"
-        id="btn-quadro-PROJETOS"
-        class="px-4 py-2 font-bold text-sm border-b-2 border-purple-600 text-purple-600 whitespace-nowrap"
+      <!-- Navegação em Abas (Quadros) -->
+      <div
+        class="flex gap-2 border-b border-slate-200 overflow-x-auto pb-px"
+        id="abas-quadros"
       >
-        <i data-lucide="sun" class="w-4 h-4 inline-block mr-1 mb-0.5"></i> Obras
-        & Projetos
-      </button>
-      <button
-        onclick="mudarQuadroKanban('AGENDA')"
-        id="btn-quadro-AGENDA"
-        class="px-4 py-2 font-bold text-sm border-b-2 border-transparent text-slate-500 hover:text-purple-600 whitespace-nowrap transition-colors"
-      >
-        <i data-lucide="calendar" class="w-4 h-4 inline-block mr-1 mb-0.5"></i>
-        Agenda
-      </button>
-      <button
-        onclick="mudarQuadroKanban('POS-VENDA')"
-        id="btn-quadro-POS-VENDA"
-        class="px-4 py-2 font-bold text-sm border-b-2 border-transparent text-slate-500 hover:text-purple-600 whitespace-nowrap transition-colors"
-      >
-        <i
-          data-lucide="headphones"
-          class="w-4 h-4 inline-block mr-1 mb-0.5"
-        ></i>
-        Pós-Venda
-      </button>
-      <button
-        onclick="mudarQuadroKanban('GERAL')"
-        id="btn-quadro-GERAL"
-        class="px-4 py-2 font-bold text-sm border-b-2 border-transparent text-slate-500 hover:text-purple-600 whitespace-nowrap transition-colors"
-      >
-        <i data-lucide="layout" class="w-4 h-4 inline-block mr-1 mb-0.5"></i>
-        Geral
-      </button>
+        <button
+          onclick="mudarQuadroKanban('PROJETOS')"
+          id="btn-quadro-PROJETOS"
+          class="px-4 py-2 font-bold text-sm border-b-2 border-purple-600 text-purple-600 whitespace-nowrap"
+        >
+          <i data-lucide="sun" class="w-4 h-4 inline-block mr-1 mb-0.5"></i>
+          Obras & Projetos
+        </button>
+        <button
+          onclick="mudarQuadroKanban('AGENDA')"
+          id="btn-quadro-AGENDA"
+          class="px-4 py-2 font-bold text-sm border-b-2 border-transparent text-slate-500 hover:text-purple-600 whitespace-nowrap transition-colors"
+        >
+          <i
+            data-lucide="calendar"
+            class="w-4 h-4 inline-block mr-1 mb-0.5"
+          ></i>
+          Agenda
+        </button>
+        <button
+          onclick="mudarQuadroKanban('POS-VENDA')"
+          id="btn-quadro-POS-VENDA"
+          class="px-4 py-2 font-bold text-sm border-b-2 border-transparent text-slate-500 hover:text-purple-600 whitespace-nowrap transition-colors"
+        >
+          <i
+            data-lucide="headphones"
+            class="w-4 h-4 inline-block mr-1 mb-0.5"
+          ></i>
+          Pós-Venda
+        </button>
+        <button
+          onclick="mudarQuadroKanban('GERAL')"
+          id="btn-quadro-GERAL"
+          class="px-4 py-2 font-bold text-sm border-b-2 border-transparent text-slate-500 hover:text-purple-600 whitespace-nowrap transition-colors"
+        >
+          <i data-lucide="layout" class="w-4 h-4 inline-block mr-1 mb-0.5"></i>
+          Geral
+        </button>
+      </div>
     </div>
   </div>
 
@@ -412,4 +417,4 @@
       .excluirTarefaBackend(linha);
   };
 </script>
-<!-- 26-10-14 1040 Múltiplos Quadros -->
+<!-- 26-10-14 1054 Múltiplos Quadros -->
