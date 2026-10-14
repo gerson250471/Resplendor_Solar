@@ -7,14 +7,21 @@
         Catálogo & Estoque de Materiais
       </h2>
       <p class="text-slate-500 text-sm">
-        Gerencie os preços de custo unitário e as quantidades disponíveis no
-        almoxarifado.
+        Gerencie os preços de custo unitário, saldos e lance as compras de
+        materiais.
       </p>
     </div>
+    <button
+      onclick="abrirModalCompraEstoque()"
+      class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-md transition-all flex items-center gap-2 shrink-0"
+    >
+      <i data-lucide="shopping-cart" class="w-5 h-5"></i> Lançar Compra
+      (Entrada)
+    </button>
   </div>
 
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <!-- Formulário de Cadastro / Entrada de Compra -->
+    <!-- Formulário de Cadastro / Atualização de Item -->
     <div class="finance-card lg:col-span-1 h-fit">
       <h3
         class="text-lg font-bold text-slate-800 mb-4 border-b pb-2 flex items-center gap-2"
@@ -159,7 +166,7 @@
         </button>
       </div>
 
-      <div class="overflow-x-auto max-h-[65vh]">
+      <div class="overflow-x-auto max-h-[55vh]">
         <table class="w-full text-left border-collapse">
           <thead>
             <tr
@@ -177,4 +184,165 @@
       </div>
     </div>
   </div>
+
+  <!-- Histórico de Compras Realizadas -->
+  <div class="finance-card mt-6">
+    <div class="flex justify-between items-center mb-4 border-b pb-2">
+      <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+        <i data-lucide="history" class="w-5 h-5 text-emerald-600"></i>
+        Histórico Recente de Compras (Entradas de Material)
+      </h3>
+    </div>
+    <div class="overflow-x-auto max-h-60">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr
+            class="border-b text-[10px] font-bold text-slate-400 uppercase bg-slate-50"
+          >
+            <th class="p-2.5">Data</th>
+            <th class="p-2.5">Cód. Compra</th>
+            <th class="p-2.5">Fornecedor / NF</th>
+            <th class="p-2.5">Material Comprado</th>
+            <th class="p-2.5 text-center">Qtd. Entrada</th>
+            <th class="p-2.5 text-right">Custo Unit.</th>
+            <th class="p-2.5 text-right">Total Pago</th>
+          </tr>
+        </thead>
+        <tbody id="tabela-historico-compras-body">
+          <tr>
+            <td colspan="7" class="p-4 text-center text-xs text-slate-400">
+              Nenhuma compra registada ainda.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </section>
+
+<!-- MODAL DE LANÇAMENTO DE COMPRA (ENTRADA DE ESTOQUE) -->
+<div
+  id="modal-compra-estoque"
+  class="fixed inset-0 bg-slate-900/80 hidden z-[10002] flex items-center justify-center backdrop-blur-sm p-4"
+>
+  <div
+    class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]"
+  >
+    <div class="flex justify-between items-center mb-4 border-b pb-3 shrink-0">
+      <div class="flex items-center gap-2.5">
+        <div
+          class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center"
+        >
+          <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h3 class="text-lg font-bold text-slate-800">
+            Lançar Compra de Materiais (Entrada)
+          </h3>
+          <p class="text-xs text-slate-500">
+            Os itens abaixo terão o saldo somado automaticamente ao estoque e o
+            custo unitário atualizado.
+          </p>
+        </div>
+      </div>
+      <button
+        onclick="fecharModalCompraEstoque()"
+        class="text-slate-400 hover:text-red-500 transition-colors"
+      >
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+
+    <div class="overflow-y-auto flex-1 pr-1 space-y-4">
+      <div
+        class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200"
+      >
+        <div>
+          <label class="block text-xs font-bold text-slate-600 uppercase mb-1">
+            Data da Compra
+          </label>
+          <input
+            type="date"
+            id="cmp-data"
+            class="input-field bg-white font-semibold"
+          />
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-xs font-bold text-slate-600 uppercase mb-1">
+            Fornecedor / Nº da Nota ou Observação
+          </label>
+          <input
+            type="text"
+            id="cmp-fornecedor"
+            class="input-field bg-white uppercase font-semibold"
+            placeholder="Ex: DISTRIBUIDORA SOLAR / NF 4580"
+          />
+        </div>
+      </div>
+
+      <div>
+        <div class="flex justify-between items-center mb-2">
+          <h4 class="text-xs font-bold text-slate-600 uppercase">
+            Itens Comprados na Nota
+          </h4>
+          <button
+            type="button"
+            onclick="adicionarLinhaCompra()"
+            class="text-xs font-bold text-emerald-700 hover:text-emerald-900 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors"
+          >
+            <i data-lucide="plus-circle" class="w-4 h-4"></i> Adicionar Item
+          </button>
+        </div>
+
+        <div
+          class="grid grid-cols-12 gap-2 mb-1 px-1 text-[10px] font-bold text-slate-500 uppercase"
+        >
+          <div class="col-span-5">Material (Selecione ou Digite Novo)</div>
+          <div class="col-span-2 text-center">Qtd. Comprada</div>
+          <div class="col-span-2 text-right">Custo Unit. (R$)</div>
+          <div class="col-span-2 text-right">Subtotal (R$)</div>
+          <div class="col-span-1"></div>
+        </div>
+
+        <div
+          id="lista-itens-compra"
+          class="space-y-2 max-h-52 overflow-y-auto pr-1"
+        >
+          <!-- Linhas geradas via JS -->
+        </div>
+
+        <div
+          class="flex justify-end items-center mt-4 pt-3 border-t border-slate-200"
+        >
+          <span class="text-xs font-bold text-slate-500 uppercase mr-3">
+            Valor Total da Compra:
+          </span>
+          <span
+            id="cmp-total-display"
+            class="text-xl font-black text-emerald-700"
+          >
+            R$ 0,00
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex gap-3 pt-4 border-t border-slate-100 shrink-0 mt-4">
+      <button
+        onclick="fecharModalCompraEstoque()"
+        class="flex-1 bg-slate-100 py-3 rounded-xl font-bold text-slate-600 hover:bg-slate-200 transition-colors text-sm"
+      >
+        Cancelar
+      </button>
+      <button
+        onclick="confirmarLancamentoCompra()"
+        id="btn-confirmar-compra"
+        class="flex-1 bg-emerald-600 py-3 rounded-xl font-bold text-white shadow-lg hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 text-sm"
+      >
+        <i data-lucide="check-circle" class="w-5 h-5"></i> Confirmar Entrada no
+        Estoque
+      </button>
+    </div>
+  </div>
+</div>
+<!-- 26-10-14 0953 -->

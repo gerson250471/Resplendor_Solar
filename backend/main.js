@@ -1597,3 +1597,119 @@ function excluirMaterialEstoque(idMaterial) {
     return { sucesso: false, mensagem: e.message };
   }
 }
+
+function registrarCompraEstoque(compraObj) {
+  try {
+    const ss = SpreadsheetApp.openById(getSpreadsheetId());
+    const abaEstoque = inicializarAbaEstoque(ss);
+    
+    // Cria a aba de Histórico de Compras se ainda não existir
+    let abaCompras = ss.getSheetByName("Compras_Estoque");
+    if (!abaCompras) {
+      abaCompras = ss.insertSheet("Compras_Estoque");
+      abaCompras.appendRow(["ID Compra", "Data", "Fornecedor / NF", "Material", "Qtd Comprada", "Custo Unitário (R$)", "Total Item (R$)"]);
+    }
+
+    const dadosEstoque = abaEstoque.getDataRange().getValues();
+    const idCompra = "CMP-" + new Date().getTime().toString().slice(-6);
+    
+    let dataFormatada = compraObj.data;
+    if (compraObj.data && compraObj.data.includes("-")) {
+      dataFormatada = compraObj.data.split("-").reverse().join("/");
+    }
+
+    const itens = compraObj.itens || [];
+    let itensAtualizados = 0;
+
+    itens.forEach(item => {
+      const descProcurada = String(item.descricao || "").toUpperCase().trim();
+      const qtdComprada = parseFloat(item.quantidade) || 0;
+      const custoUnit = parseFloat(item.valorUnitario) || 0;
+      const totalItem = parseFloat(item.valorTotal) || (qtdComprada * custoUnit);
+
+      if (descProcurada !== "" && qtdComprada > 0) {
+        // 1. Regista no Histórico de Compras (Compras_Estoque)
+        abaCompras.appendRow([
+          idCompra,
+          dataFormatada,
+          String(compraObj.fornecedor || "COMPRA AVULSA").toUpperCase().trim(),
+          descProcurada,
+          qtdComprada,
+          custoUnit,
+          totalItem
+        ]);
+
+        // 2. Procura no Catálogo (Estoque) para somar o saldo e atualizar o preço unitário
+        let achouNoEstoque = false;
+        for (let i = 1; i < dadosEstoque.length; i++) {
+          let descNaPlanilha = String(dadosEstoque[i][1] || "").toUpperCase().trim();
+          if (descNaPlanilha === descProcurada) {
+            let saldoAtual = parseFloat(dadosEstoque[i][4]) || 0;
+            let novoSaldo = saldoAtual + qtdComprada;
+
+            // Atualiza a memória local caso a mesma nota tenha o mesmo item duas vezes
+            dadosEstoque[i][4] = novoSaldo;
+            abaEstoque.getRange(i + 1, 5).setValue(novoSaldo); // Coluna E: Novo Saldo
+
+            // Se informou custo unitário novo, atualiza o preço no catálogo
+            if (custoUnit > 0) {
+              dadosEstoque[i][3] = custoUnit;
+              abaEstoque.getRange(i + 1, 4).setValue(custoUnit); // Coluna D: Custo Unitário
+            }
+            achouNoEstoque = true;
+            itensAtualizados++;
+            break;
+          }
+        }
+
+        // 3. Se digitou um material novo que ainda não existia no catálogo, cria automaticamente!
+        if (!achouNoEstoque) {
+          let novoNum = dadosEstoque.length;
+          let novoId = "MAT-" + String(novoNum).padStart(3, "0");
+          const novaLinha = [novoId, descProcurada, "UNID", custoUnit, qtdComprada, 5];
+          abaEstoque.appendRow(novaLinha);
+          dadosEstoque.push(novaLinha);
+          itensAtualizados++;
+        }
+      }
+    });
+
+    return {
+      sucesso: true,
+      mensagem: `Compra registada! ${itensAtualizados} material(is) somado(s) ao estoque.`
+    };
+  } catch (e) {
+    return { sucesso: false, mensagem: "Erro ao lançar compra: " + e.message };
+  }
+}
+
+function obterHistoricoCompras() {
+  try {
+    const ss = SpreadsheetApp.openById(getSpreadsheetId());
+    const aba = ss.getSheetByName("Compras_Estoque");
+    if (!aba) return { sucesso: true, dados: [] };
+
+    const dados = aba.getDataRange().getValues();
+    dados.shift(); // Remove cabeçalho
+
+    const lista = dados.map(r => {
+      let dataStr = r[1];
+      if (dataStr instanceof Date) {
+        dataStr = Utilities.formatDate(dataStr, "America/Sao_Paulo", "dd/MM/yyyy");
+      }
+      return {
+        idCompra: String(r[0] || ""),
+        data: String(dataStr || ""),
+        fornecedor: String(r[2] || ""),
+        material: String(r[3] || ""),
+        quantidade: parseFloat(r[4]) || 0,
+        valorUnitario: parseFloat(r[5]) || 0,
+        valorTotal: parseFloat(r[6]) || 0
+      };
+    }).reverse(); // Mostra as compras mais recentes primeiro
+
+    return { sucesso: true, dados: lista };
+  } catch (e) {
+    return { sucesso: false, mensagem: e.message };
+  }
+}

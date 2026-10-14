@@ -910,6 +910,7 @@
                 });
               }
               renderizarTabelaEstoque();
+              carregarHistoricoCompras();
             }
           })
           .obterCatalogoMateriais();
@@ -1055,6 +1056,189 @@
           })
           .excluirMaterialEstoque(id);
       };
+
+      // --- LÓGICA DE LANÇAMENTO DE COMPRAS (ENTRADA DE MERCADORIAS) ---
+
+      window.abrirModalCompraEstoque = function () {
+        const hojeISO = new Date().toISOString().split("T")[0];
+        document.getElementById("cmp-data").value = hojeISO;
+        document.getElementById("cmp-fornecedor").value = "";
+        document.getElementById("lista-itens-compra").innerHTML = "";
+        document.getElementById("cmp-total-display").innerText = "R$ 0,00";
+
+        adicionarLinhaCompra();
+        document
+          .getElementById("modal-compra-estoque")
+          .classList.remove("hidden");
+        lucide.createIcons();
+      };
+
+      window.fecharModalCompraEstoque = function () {
+        document.getElementById("modal-compra-estoque").classList.add("hidden");
+      };
+
+      window.adicionarLinhaCompra = function () {
+        const container = document.getElementById("lista-itens-compra");
+        const div = document.createElement("div");
+        div.className = "linha-compra grid grid-cols-12 gap-2 items-center";
+
+        div.innerHTML = `
+          <div class="col-span-5">
+            <input type="text" class="cmp-desc input-field text-xs py-1.5 font-bold uppercase text-slate-700" list="materiais-list" placeholder="Escolher ou digitar..." oninput="aoSelecionarItemCompra(this)" />
+          </div>
+          <div class="col-span-2">
+            <input type="number" step="0.01" class="cmp-qtd input-field text-xs py-1.5 text-center font-bold" value="1" min="0.01" oninput="calcularLinhaCompra(this, 'unit')" />
+          </div>
+          <div class="col-span-2">
+            <input type="number" step="0.01" class="cmp-unit input-field text-xs py-1.5 text-right font-bold text-blue-700" placeholder="0.00" oninput="calcularLinhaCompra(this, 'unit')" />
+          </div>
+          <div class="col-span-2">
+            <input type="number" step="0.01" class="cmp-subtotal input-field text-xs py-1.5 text-right font-bold text-emerald-700 bg-emerald-50/40" placeholder="0.00" oninput="calcularLinhaCompra(this, 'total')" />
+          </div>
+          <div class="col-span-1 text-center">
+            <button type="button" onclick="this.closest('.linha-compra').remove(); calcularTotalGeralCompra();" class="text-slate-300 hover:text-red-500 transition-colors">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          </div>
+        `;
+        container.appendChild(div);
+        lucide.createIcons();
+      };
+
+      window.aoSelecionarItemCompra = function (inputEl) {
+        const linha = inputEl.closest(".linha-compra");
+        const desc = inputEl.value.trim().toUpperCase();
+        const item = catalogoMateriaisGlobais.find(
+          (m) => m.descricao.toUpperCase() === desc,
+        );
+
+        // Se o item já existe no catálogo, sugere o último custo unitário automaticamente
+        if (item && item.valorUnitario > 0) {
+          const campoUnit = linha.querySelector(".cmp-unit");
+          if (!campoUnit.value) {
+            campoUnit.value = item.valorUnitario.toFixed(2);
+            calcularLinhaCompra(campoUnit, "unit");
+          }
+        }
+      };
+
+      // Permite digitar tanto o Custo Unitário (calcula o Subtotal) quanto o Subtotal da Nota (calcula o Unitário sozinho!)
+      window.calcularLinhaCompra = function (inputEl, origem) {
+        const linha = inputEl.closest(".linha-compra");
+        const qtd = parseFloat(linha.querySelector(".cmp-qtd").value) || 0;
+        const campoUnit = linha.querySelector(".cmp-unit");
+        const campoSub = linha.querySelector(".cmp-subtotal");
+
+        if (origem === "unit") {
+          const unit = parseFloat(campoUnit.value) || 0;
+          campoSub.value = (qtd * unit).toFixed(2);
+        } else if (origem === "total" && qtd > 0) {
+          const sub = parseFloat(campoSub.value) || 0;
+          campoUnit.value = (sub / qtd).toFixed(2);
+        }
+
+        calcularTotalGeralCompra();
+      };
+
+      window.calcularTotalGeralCompra = function () {
+        let total = 0;
+        document.querySelectorAll(".cmp-subtotal").forEach((el) => {
+          total += parseFloat(el.value) || 0;
+        });
+        document.getElementById("cmp-total-display").innerText =
+          "R$ " + total.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+      };
+
+      window.confirmarLancamentoCompra = function () {
+        const data = document.getElementById("cmp-data").value;
+        const fornecedor = document
+          .getElementById("cmp-fornecedor")
+          .value.trim();
+        const linhasDOM = document.querySelectorAll(".linha-compra");
+        const itens = [];
+
+        linhasDOM.forEach((linha) => {
+          const desc = linha.querySelector(".cmp-desc").value.trim();
+          const qtd = parseFloat(linha.querySelector(".cmp-qtd").value) || 0;
+          const unit = parseFloat(linha.querySelector(".cmp-unit").value) || 0;
+          const sub =
+            parseFloat(linha.querySelector(".cmp-subtotal").value) || 0;
+
+          if (desc !== "" && qtd > 0) {
+            itens.push({
+              descricao: desc,
+              quantidade: qtd,
+              valorUnitario: unit,
+              valorTotal: sub,
+            });
+          }
+        });
+
+        if (itens.length === 0) {
+          mostrarToast(
+            "Adicione pelo menos 1 material com quantidade válida.",
+            "erro",
+          );
+          return;
+        }
+
+        const btn = document.getElementById("btn-confirmar-compra");
+        btn.innerHTML = "A processar entrada...";
+        btn.disabled = true;
+
+        google.script.run
+          .withSuccessHandler((res) => {
+            btn.innerHTML =
+              '<i data-lucide="check-circle" class="w-5 h-5"></i> Confirmar Entrada no Estoque';
+            btn.disabled = false;
+            lucide.createIcons();
+
+            if (res.sucesso) {
+              mostrarToast(res.mensagem, "sucesso");
+              fecharModalCompraEstoque();
+              carregarCatalogoMateriais();
+            } else {
+              mostrarToast(res.mensagem, "erro");
+            }
+          })
+          .registrarCompraEstoque({
+            data: data,
+            fornecedor: fornecedor,
+            itens: itens,
+          });
+      };
+
+      function carregarHistoricoCompras() {
+        google.script.run
+          .withSuccessHandler((res) => {
+            const tbody = document.getElementById(
+              "tabela-historico-compras-body",
+            );
+            if (!tbody || !res.sucesso) return;
+
+            if (res.dados.length === 0) {
+              tbody.innerHTML =
+                '<tr><td colspan="7" class="p-4 text-center text-xs text-slate-400">Nenhuma compra registada ainda.</td></tr>';
+              return;
+            }
+
+            tbody.innerHTML = "";
+            res.dados.slice(0, 30).forEach((c) => {
+              tbody.innerHTML += `
+                <tr class="border-b hover:bg-slate-50 text-xs">
+                  <td class="p-2.5 text-slate-600">${c.data}</td>
+                  <td class="p-2.5 font-mono font-bold text-slate-500">${c.idCompra}</td>
+                  <td class="p-2.5 font-semibold text-slate-700 uppercase">${c.fornecedor}</td>
+                  <td class="p-2.5 font-bold text-slate-800 uppercase">${c.material}</td>
+                  <td class="p-2.5 text-center font-bold text-emerald-700">+${c.quantidade}</td>
+                  <td class="p-2.5 text-right text-blue-700 font-semibold">R$ ${c.valorUnitario.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
+                  <td class="p-2.5 text-right font-bold text-slate-800">R$ ${c.valorTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
+                </tr>
+              `;
+            });
+          })
+          .obterHistoricoCompras();
+      }
 
       function carregarListaClientes() {
         google.script.run
@@ -2999,4 +3183,4 @@
     </script>
   </body>
 </html>
-<!-- 26.10.12 1822 -->
+<!-- 26.10.14 1000 -->
