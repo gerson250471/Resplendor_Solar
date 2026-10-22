@@ -15,7 +15,6 @@
           </p>
         </div>
         <div class="flex flex-wrap gap-2">
-          <!-- NOVO BOTÃO: GERIR ETAPAS (COLUNAS) -->
           <button
             onclick="abrirModalConfigStatus()"
             class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 px-4 py-2.5 rounded-xl font-bold shadow-sm transition-all flex items-center gap-2"
@@ -86,9 +85,7 @@
     <div
       class="overflow-y-auto flex-1 pr-1 space-y-3"
       id="lista-config-quadros"
-    >
-      <!-- Inputs dinâmicos -->
-    </div>
+    ></div>
 
     <button
       onclick="adicionarInputQuadro()"
@@ -115,7 +112,7 @@
   </div>
 </div>
 
-<!-- NOVO: Modal Config Etapas (Colunas do Kanban) -->
+<!-- Modal Config Etapas (Colunas do Kanban) -->
 <div
   id="modal-config-status"
   class="fixed inset-0 bg-slate-900/80 hidden z-[10002] flex items-center justify-center backdrop-blur-sm p-4"
@@ -141,9 +138,10 @@
       apague como preferir.
     </p>
 
-    <div class="overflow-y-auto flex-1 pr-1 space-y-3" id="lista-config-status">
-      <!-- Inputs dinâmicos -->
-    </div>
+    <div
+      class="overflow-y-auto flex-1 pr-1 space-y-3"
+      id="lista-config-status"
+    ></div>
 
     <button
       onclick="adicionarInputStatus()"
@@ -204,9 +202,7 @@
         <select
           id="tar-quadro"
           class="input-field bg-slate-50 font-bold text-purple-700"
-        >
-          <!-- Renderizado via JS -->
-        </select>
+        ></select>
       </div>
 
       <div>
@@ -276,6 +272,9 @@
   let quadrosGlobais = [];
   let quadroAtivo = "";
 
+  // Variável para guardar o cartão arrastado
+  let draggedCard = null;
+
   function carregarQuadroKanban() {
     document.getElementById("kanban-board").innerHTML = `
       <div class="w-80 shrink-0 bg-slate-100 rounded-xl p-4 flex flex-col h-full animate-pulse">
@@ -289,7 +288,6 @@
         if (resQuadros.sucesso) {
           quadrosGlobais =
             resQuadros.dados.length > 0 ? resQuadros.dados : ["GERAL"];
-
           if (!quadrosGlobais.includes(quadroAtivo)) {
             quadroAtivo = quadrosGlobais[0];
           }
@@ -335,9 +333,8 @@
       btn.innerHTML = `<i data-lucide="layout-template" class="w-4 h-4 inline-block mr-1 mb-0.5"></i> ${q}`;
       container.appendChild(btn);
 
-      if (selectModal) {
+      if (selectModal)
         selectModal.innerHTML += `<option value="${q}">${q}</option>`;
-      }
     });
     lucide.createIcons();
   }
@@ -378,16 +375,13 @@
   window.salvarConfigQuadros = function () {
     const inputs = document.querySelectorAll("#lista-config-quadros input");
     const novosQuadros = [];
-
     inputs.forEach((inp) => {
       const val = inp.value.trim().toUpperCase();
       if (val && !novosQuadros.includes(val)) novosQuadros.push(val);
     });
 
-    if (novosQuadros.length === 0) {
-      mostrarToast("Precisa manter pelo menos um quadro.", "erro");
-      return;
-    }
+    if (novosQuadros.length === 0)
+      return mostrarToast("Precisa manter pelo menos um quadro.", "erro");
 
     const btn = document.getElementById("btn-salvar-quadros");
     btn.innerText = "A gravar...";
@@ -438,16 +432,13 @@
   window.salvarConfigStatus = function () {
     const inputs = document.querySelectorAll("#lista-config-status input");
     const novasColunas = [];
-
     inputs.forEach((inp) => {
       const val = inp.value.trim().toUpperCase();
       if (val && !novasColunas.includes(val)) novasColunas.push(val);
     });
 
-    if (novasColunas.length === 0) {
-      mostrarToast("Precisa manter pelo menos uma etapa.", "erro");
-      return;
-    }
+    if (novasColunas.length === 0)
+      return mostrarToast("Precisa manter pelo menos uma etapa.", "erro");
 
     const btn = document.getElementById("btn-salvar-status");
     btn.innerText = "A gravar...";
@@ -460,14 +451,91 @@
         if (res.sucesso) {
           mostrarToast("Etapas atualizadas com sucesso!", "sucesso");
           fecharModalConfigStatus();
-          carregarQuadroKanban(); // Atualiza a tela com as novas colunas
+          carregarQuadroKanban();
         } else {
           mostrarToast(res.mensagem, "erro");
         }
       })
-      .salvarStatusTarefas(novasColunas); // Já existe no main.js
+      .salvarStatusTarefas(novasColunas);
   };
 
+  /* --- EVENTOS DRAG AND DROP --- */
+  function handleDragStart(e) {
+    draggedCard = this;
+    this.classList.add("opacity-50", "scale-95");
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", this.dataset.linha);
+  }
+
+  function handleDragEnd(e) {
+    this.classList.remove("opacity-50", "scale-95");
+    draggedCard = null;
+    document
+      .querySelectorAll(".dropzone")
+      .forEach((z) =>
+        z.classList.remove(
+          "bg-slate-200/60",
+          "border-dashed",
+          "border-2",
+          "border-purple-400",
+        ),
+      );
+  }
+
+  function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    this.classList.add(
+      "bg-slate-200/60",
+      "border-dashed",
+      "border-2",
+      "border-purple-400",
+    );
+  }
+
+  function handleDragLeave(e) {
+    this.classList.remove(
+      "bg-slate-200/60",
+      "border-dashed",
+      "border-2",
+      "border-purple-400",
+    );
+  }
+
+  function handleDrop(e) {
+    e.preventDefault();
+    this.classList.remove(
+      "bg-slate-200/60",
+      "border-dashed",
+      "border-2",
+      "border-purple-400",
+    );
+
+    if (draggedCard && draggedCard.parentElement !== this) {
+      const linhaId = draggedCard.dataset.linha;
+      const novoStatus = this.dataset.status;
+
+      // Atualiza os dados localmente para evitar atraso visual
+      const tarefa = tarefasGlobais.find(
+        (t) => String(t.linha) === String(linhaId),
+      );
+      if (tarefa) tarefa.status = novoStatus;
+
+      // Re-renderiza para atualizar os contadores numéricos
+      renderizarKanban();
+
+      google.script.run
+        .withSuccessHandler((res) => {
+          if (!res.sucesso) {
+            mostrarToast("Erro ao mover: " + res.mensagem, "erro");
+            carregarQuadroKanban(); // Reverte visualmente se falhar no servidor
+          }
+        })
+        .atualizarStatusTarefa(linhaId, novoStatus);
+    }
+  }
+
+  /* --- RENDERIZAÇÃO PRINCIPAL DO KANBAN --- */
   function renderizarKanban() {
     const board = document.getElementById("kanban-board");
     board.innerHTML = "";
@@ -481,14 +549,19 @@
       colDiv.className =
         "w-80 shrink-0 bg-slate-100 rounded-xl flex flex-col max-h-full border border-slate-200/60 shadow-sm";
 
-      // Cores Inteligentes: Pinta o padrão (Fazer, Andamento, Concluído) e deixa as personalizadas em Cinza Escuro elegante
       let headerColor = "border-slate-300 text-slate-700";
-      if (colunaNome === "A FAZER" || colunaNome.includes("FAZER"))
+      if (
+        colunaNome === "A FAZER" ||
+        colunaNome.includes("FAZER") ||
+        colunaNome.includes("PENDENTE")
+      )
         headerColor = "border-amber-400 text-amber-700";
       if (colunaNome === "EM ANDAMENTO" || colunaNome.includes("ANDAMENTO"))
         headerColor = "border-blue-400 text-blue-700";
       if (colunaNome === "CONCLUÍDO" || colunaNome.includes("CONCLU"))
         headerColor = "border-emerald-400 text-emerald-700";
+      if (colunaNome === "CANCELADO" || colunaNome.includes("CANCEL"))
+        headerColor = "border-red-400 text-red-700";
 
       colDiv.innerHTML = `
         <div class="p-3 border-b-2 ${headerColor} flex justify-between items-center bg-white/50 rounded-t-xl shrink-0">
@@ -497,16 +570,28 @@
             ${tarefasDoQuadro.filter((t) => t.status === colunaNome).length}
           </span>
         </div>
-        <div class="p-3 flex-1 overflow-y-auto space-y-3 dropzone" data-status="${colunaNome}"></div>
+        <div class="p-3 flex-1 overflow-y-auto space-y-3 dropzone rounded-b-xl" data-status="${colunaNome}"></div>
       `;
 
       const zonaCartoes = colDiv.querySelector(".dropzone");
 
+      // Eventos Drag and Drop para a Coluna (Zona de Soltar)
+      zonaCartoes.addEventListener("dragover", handleDragOver);
+      zonaCartoes.addEventListener("dragleave", handleDragLeave);
+      zonaCartoes.addEventListener("drop", handleDrop);
+
       tarefasDoQuadro.forEach((tar) => {
         if (tar.status === colunaNome) {
           const card = document.createElement("div");
+
+          // Adicionado: Propriedades para arrastar o cartão
+          card.setAttribute("draggable", "true");
+          card.dataset.linha = tar.linha;
           card.className =
-            "bg-white p-3.5 rounded-lg shadow-sm border border-slate-200 hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing group";
+            "bg-white p-3.5 rounded-lg shadow-sm border border-slate-200 hover:shadow-md transition-all cursor-grab active:cursor-grabbing group";
+
+          card.addEventListener("dragstart", handleDragStart);
+          card.addEventListener("dragend", handleDragEnd);
 
           let htmlAnexos = "";
           if (tar.anexos && tar.anexos.length > 0) {
@@ -522,12 +607,11 @@
               <span class="text-[10px] font-bold text-slate-400">#${tar.linha}</span>
               <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button onclick="prepararEdicaoTarefa(${tar.linha})" class="text-blue-500 hover:bg-blue-50 p-1 rounded" title="Editar"><i data-lucide="edit-2" class="w-3 h-3"></i></button>
-                <button onclick="moverCartaoKanban(${tar.linha}, '${colunaNome}')" class="text-emerald-500 hover:bg-emerald-50 p-1 rounded" title="Avançar Cartão"><i data-lucide="arrow-right" class="w-3 h-3"></i></button>
                 <button onclick="deletarTarefa(${tar.linha})" class="text-red-400 hover:bg-red-50 p-1 rounded" title="Apagar Cartão"><i data-lucide="trash" class="w-3 h-3"></i></button>
               </div>
             </div>
-            <h5 class="font-bold text-slate-800 text-sm mb-1 leading-tight">${tar.titulo}</h5>
-            ${tar.descricao ? `<p class="text-xs text-slate-500 line-clamp-2">${tar.descricao}</p>` : ""}
+            <h5 class="font-bold text-slate-800 text-sm mb-1 leading-tight pointer-events-none">${tar.titulo}</h5>
+            ${tar.descricao ? `<p class="text-xs text-slate-500 line-clamp-2 pointer-events-none">${tar.descricao}</p>` : ""}
             ${htmlAnexos}
           `;
           zonaCartoes.appendChild(card);
@@ -537,21 +621,6 @@
     });
     lucide.createIcons();
   }
-
-  window.moverCartaoKanban = function (linha, statusAtual) {
-    const currentIndex = colunasGlobais.indexOf(statusAtual);
-    if (currentIndex < colunasGlobais.length - 1) {
-      const novoStatus = colunasGlobais[currentIndex + 1];
-      mostrarToast("A mover cartão...", "info");
-      google.script.run
-        .withSuccessHandler((res) => {
-          if (res.sucesso) carregarQuadroKanban();
-        })
-        .atualizarStatusTarefa(linha, novoStatus);
-    } else {
-      mostrarToast("O cartão já está na última fase.", "info");
-    }
-  };
 
   window.abrirModalTarefa = function () {
     document.getElementById("tar-linha").value = "";
@@ -645,4 +714,5 @@
       .excluirTarefaBackend(linha);
   };
 </script>
-<!-- 261022 1233 novo quadro kanban -->
+
+<!-- 261022 1241 novo quadro kanban -->
