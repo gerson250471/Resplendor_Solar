@@ -3,7 +3,7 @@
     <!-- Cabeçalho e Seletores de Quadro -->
     <div class="mb-6">
       <div
-        class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4"
+        class="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-4"
       >
         <div>
           <h2 class="text-2xl font-bold text-slate-800">
@@ -14,7 +14,15 @@
             suas tarefas.
           </p>
         </div>
-        <div class="flex gap-2">
+        <div class="flex flex-wrap gap-2">
+          <!-- NOVO BOTÃO: GERIR ETAPAS (COLUNAS) -->
+          <button
+            onclick="abrirModalConfigStatus()"
+            class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 px-4 py-2.5 rounded-xl font-bold shadow-sm transition-all flex items-center gap-2"
+          >
+            <i data-lucide="columns" class="w-5 h-5"></i> Gerir Etapas
+          </button>
+
           <button
             onclick="abrirModalConfigQuadros()"
             class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2.5 rounded-xl font-bold shadow-sm transition-all flex items-center gap-2"
@@ -54,7 +62,7 @@
   </div>
 </section>
 
-<!-- Modal Config Quadros -->
+<!-- Modal Config Quadros (Abas Superiores) -->
 <div
   id="modal-config-quadros"
   class="fixed inset-0 bg-slate-900/80 hidden z-[10002] flex items-center justify-center backdrop-blur-sm p-4"
@@ -102,6 +110,61 @@
         class="flex-1 bg-slate-800 py-3 rounded-xl font-bold text-white shadow-lg hover:bg-slate-900 transition-colors text-sm"
       >
         Salvar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- NOVO: Modal Config Etapas (Colunas do Kanban) -->
+<div
+  id="modal-config-status"
+  class="fixed inset-0 bg-slate-900/80 hidden z-[10002] flex items-center justify-center backdrop-blur-sm p-4"
+>
+  <div
+    class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]"
+  >
+    <div class="flex justify-between items-center mb-4 border-b pb-3 shrink-0">
+      <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+        <i data-lucide="columns" class="w-5 h-5 text-slate-600"></i> Gerir
+        Etapas (Processos)
+      </h3>
+      <button
+        onclick="fecharModalConfigStatus()"
+        class="text-slate-400 hover:text-red-500 transition-colors"
+      >
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+
+    <p class="text-xs text-slate-500 mb-4">
+      A ordem abaixo é a ordem que as colunas aparecerão no Kanban. Arraste ou
+      apague como preferir.
+    </p>
+
+    <div class="overflow-y-auto flex-1 pr-1 space-y-3" id="lista-config-status">
+      <!-- Inputs dinâmicos -->
+    </div>
+
+    <button
+      onclick="adicionarInputStatus()"
+      class="mt-4 text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 transition-colors"
+    >
+      <i data-lucide="plus-circle" class="w-4 h-4"></i> Adicionar Nova Etapa
+    </button>
+
+    <div class="flex gap-3 pt-4 border-t border-slate-100 shrink-0 mt-4">
+      <button
+        onclick="fecharModalConfigStatus()"
+        class="flex-1 bg-slate-100 py-3 rounded-xl font-bold text-slate-600 hover:bg-slate-200 transition-colors text-sm"
+      >
+        Cancelar
+      </button>
+      <button
+        onclick="salvarConfigStatus()"
+        id="btn-salvar-status"
+        class="flex-1 bg-blue-600 py-3 rounded-xl font-bold text-white shadow-lg hover:bg-blue-700 transition-colors text-sm"
+      >
+        Salvar Etapas
       </button>
     </div>
   </div>
@@ -287,6 +350,7 @@
     renderizarKanban();
   };
 
+  /* --- LÓGICA DE GERIR QUADROS (ABAS SUPERIORES) --- */
   window.abrirModalConfigQuadros = function () {
     const container = document.getElementById("lista-config-quadros");
     container.innerHTML = "";
@@ -321,7 +385,7 @@
     });
 
     if (novosQuadros.length === 0) {
-      mostrarToast("Precisa de manter pelo menos um quadro.", "erro");
+      mostrarToast("Precisa manter pelo menos um quadro.", "erro");
       return;
     }
 
@@ -344,6 +408,66 @@
       .salvarQuadrosKanban(novosQuadros);
   };
 
+  /* --- LÓGICA DE GERIR ETAPAS (COLUNAS DO KANBAN) --- */
+  window.abrirModalConfigStatus = function () {
+    const container = document.getElementById("lista-config-status");
+    container.innerHTML = "";
+    colunasGlobais.forEach((c) => adicionarInputStatus(c));
+    document.getElementById("modal-config-status").classList.remove("hidden");
+    lucide.createIcons();
+  };
+
+  window.fecharModalConfigStatus = function () {
+    document.getElementById("modal-config-status").classList.add("hidden");
+  };
+
+  window.adicionarInputStatus = function (valor = "") {
+    const container = document.getElementById("lista-config-status");
+    const div = document.createElement("div");
+    div.className =
+      "flex gap-2 items-center bg-slate-50 p-2 rounded-lg border border-slate-200";
+    div.innerHTML = `
+      <i data-lucide="grip-vertical" class="w-4 h-4 text-slate-400"></i>
+      <input type="text" class="input-field font-bold uppercase flex-1 bg-white" value="${valor}" placeholder="EX: AGUARDANDO CLIENTE" />
+      <button onclick="this.parentElement.remove()" class="text-slate-300 hover:text-red-500 p-1"><i data-lucide="trash" class="w-4 h-4"></i></button>
+    `;
+    container.appendChild(div);
+    lucide.createIcons();
+  };
+
+  window.salvarConfigStatus = function () {
+    const inputs = document.querySelectorAll("#lista-config-status input");
+    const novasColunas = [];
+
+    inputs.forEach((inp) => {
+      const val = inp.value.trim().toUpperCase();
+      if (val && !novasColunas.includes(val)) novasColunas.push(val);
+    });
+
+    if (novasColunas.length === 0) {
+      mostrarToast("Precisa manter pelo menos uma etapa.", "erro");
+      return;
+    }
+
+    const btn = document.getElementById("btn-salvar-status");
+    btn.innerText = "A gravar...";
+    btn.disabled = true;
+
+    google.script.run
+      .withSuccessHandler((res) => {
+        btn.innerText = "Salvar Etapas";
+        btn.disabled = false;
+        if (res.sucesso) {
+          mostrarToast("Etapas atualizadas com sucesso!", "sucesso");
+          fecharModalConfigStatus();
+          carregarQuadroKanban(); // Atualiza a tela com as novas colunas
+        } else {
+          mostrarToast(res.mensagem, "erro");
+        }
+      })
+      .salvarStatusTarefas(novasColunas); // Já existe no main.js
+  };
+
   function renderizarKanban() {
     const board = document.getElementById("kanban-board");
     board.innerHTML = "";
@@ -357,12 +481,13 @@
       colDiv.className =
         "w-80 shrink-0 bg-slate-100 rounded-xl flex flex-col max-h-full border border-slate-200/60 shadow-sm";
 
+      // Cores Inteligentes: Pinta o padrão (Fazer, Andamento, Concluído) e deixa as personalizadas em Cinza Escuro elegante
       let headerColor = "border-slate-300 text-slate-700";
-      if (colunaNome === "A FAZER")
+      if (colunaNome === "A FAZER" || colunaNome.includes("FAZER"))
         headerColor = "border-amber-400 text-amber-700";
-      if (colunaNome === "EM ANDAMENTO")
+      if (colunaNome === "EM ANDAMENTO" || colunaNome.includes("ANDAMENTO"))
         headerColor = "border-blue-400 text-blue-700";
-      if (colunaNome === "CONCLUÍDO")
+      if (colunaNome === "CONCLUÍDO" || colunaNome.includes("CONCLU"))
         headerColor = "border-emerald-400 text-emerald-700";
 
       colDiv.innerHTML = `
@@ -396,9 +521,9 @@
             <div class="flex justify-between items-start mb-1">
               <span class="text-[10px] font-bold text-slate-400">#${tar.linha}</span>
               <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button onclick="prepararEdicaoTarefa(${tar.linha})" class="text-blue-500 hover:bg-blue-50 p-1 rounded"><i data-lucide="edit-2" class="w-3 h-3"></i></button>
-                <button onclick="moverCartaoKanban(${tar.linha}, '${colunaNome}')" class="text-emerald-500 hover:bg-emerald-50 p-1 rounded"><i data-lucide="arrow-right" class="w-3 h-3"></i></button>
-                <button onclick="deletarTarefa(${tar.linha})" class="text-red-400 hover:bg-red-50 p-1 rounded"><i data-lucide="trash" class="w-3 h-3"></i></button>
+                <button onclick="prepararEdicaoTarefa(${tar.linha})" class="text-blue-500 hover:bg-blue-50 p-1 rounded" title="Editar"><i data-lucide="edit-2" class="w-3 h-3"></i></button>
+                <button onclick="moverCartaoKanban(${tar.linha}, '${colunaNome}')" class="text-emerald-500 hover:bg-emerald-50 p-1 rounded" title="Avançar Cartão"><i data-lucide="arrow-right" class="w-3 h-3"></i></button>
+                <button onclick="deletarTarefa(${tar.linha})" class="text-red-400 hover:bg-red-50 p-1 rounded" title="Apagar Cartão"><i data-lucide="trash" class="w-3 h-3"></i></button>
               </div>
             </div>
             <h5 class="font-bold text-slate-800 text-sm mb-1 leading-tight">${tar.titulo}</h5>
@@ -520,4 +645,4 @@
       .excluirTarefaBackend(linha);
   };
 </script>
-<!-- 261022 1217 novo quadro kanban -->
+<!-- 261022 1233 novo quadro kanban -->
