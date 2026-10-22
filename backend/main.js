@@ -774,7 +774,7 @@ function salvarProjetoNoServidor(obj) {
       // 1. Grava a nova Venda
       abaProjetos.appendRow(arrayDados);
 
-      // 2. BAIXA AUTOMÁTICA DE ESTOQUE (A MÁGICA!)
+      // 2. BAIXA AUTOMÁTICA DE ESTOQUE (A MÁGICA QUE FALTAVA NO SERVIDOR!)
       if (abaEstoque && obj.materiaisJson && obj.materiaisJson !== "[]") {
         try {
           const materiaisUsados = JSON.parse(obj.materiaisJson);
