@@ -1137,6 +1137,46 @@ function obterPastaAnexosKanban() {
   return pasta;
 }
 
+function obterQuadrosKanban() {
+  try {
+    const ss = SpreadsheetApp.openById(getSpreadsheetId());
+    let aba = ss.getSheetByName("QuadrosKanban");
+    if (!aba) {
+      aba = ss.insertSheet("QuadrosKanban");
+      aba.appendRow(["Nome do Quadro"]);
+      aba.appendRow(["OBRAS & PROJETOS"]);
+      aba.appendRow(["AGENDA"]);
+      aba.appendRow(["PÓS-VENDA"]);
+      aba.appendRow(["GERAL"]);
+    }
+    const dados = aba.getDataRange().getValues();
+    const quadros = [];
+    for (let i = 1; i < dados.length; i++) {
+      if (dados[i][0]) quadros.push(String(dados[i][0]).toUpperCase().trim());
+    }
+    return { sucesso: true, dados: quadros };
+  } catch (e) {
+    return { sucesso: false, mensagem: e.message };
+  }
+}
+
+function salvarQuadrosKanban(listaQuadros) {
+  try {
+    const ss = SpreadsheetApp.openById(getSpreadsheetId());
+    let aba = ss.getSheetByName("QuadrosKanban");
+    if (!aba) aba = ss.insertSheet("QuadrosKanban");
+
+    aba.clear();
+    aba.appendRow(["Nome do Quadro"]);
+    listaQuadros.forEach(q => {
+      if (q.trim() !== "") aba.appendRow([q.toUpperCase().trim()]);
+    });
+    return { sucesso: true, mensagem: "Quadros atualizados com sucesso!" };
+  } catch (e) {
+    return { sucesso: false, mensagem: e.message };
+  }
+}
+
 function obterTarefas() {
   try {
     const ss = SpreadsheetApp.openById(getSpreadsheetId());
