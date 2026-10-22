@@ -531,10 +531,19 @@
           class="bg-emerald-50 p-4 rounded-xl border border-emerald-200 mt-4 flex justify-between items-center"
         >
           <div>
-            <h4 class="text-sm font-bold text-emerald-800 uppercase">
-              Lucro Líquido Real
-            </h4>
-            <p class="text-[10px] text-emerald-600">
+            <div class="flex items-center gap-2">
+              <h4 class="text-sm font-bold text-emerald-800 uppercase">
+                Lucro Líquido Real
+              </h4>
+              <!-- NOVO: Crachá da Margem de Lucro -->
+              <span
+                id="proj-margem-badge"
+                class="bg-emerald-200 text-emerald-800 px-2 py-0.5 rounded text-xs font-bold"
+              >
+                0.0%
+              </span>
+            </div>
+            <p class="text-[10px] text-emerald-600 mt-1">
               Total - Kit - Custos Execução - Taxas
             </p>
           </div>

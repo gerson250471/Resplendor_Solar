@@ -2251,6 +2251,31 @@
           }
         }
 
+        // NOVO: Cálculo da Margem de Lucro em Percentagem (%)
+        let margemPercentual = 0;
+        if (total > 0) {
+          margemPercentual = (liquido / total) * 100;
+        }
+
+        const badgeMargem = document.getElementById("proj-margem-badge");
+        if (badgeMargem) {
+          badgeMargem.innerText = margemPercentual.toFixed(1) + "%";
+
+          // Cores inteligentes para o crachá
+          if (liquido < 0) {
+            badgeMargem.className =
+              "bg-red-100 text-red-800 px-2 py-0.5 rounded text-xs font-bold";
+          } else if (margemPercentual < 15) {
+            // Se o lucro for inferior a 15%, fica amarelo (alerta)
+            badgeMargem.className =
+              "bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-xs font-bold";
+          } else {
+            // Se for bom lucro, fica verde
+            badgeMargem.className =
+              "bg-emerald-200 text-emerald-800 px-2 py-0.5 rounded text-xs font-bold";
+          }
+        }
+
         const residual = total - entrada;
         document.getElementById("proj-residual").value =
           "R$ " +
@@ -3183,4 +3208,4 @@
     </script>
   </body>
 </html>
-<!-- 26.10.14 1123 Baixar Estoque-->
+<!-- 26.10.22 1321 Baixar Estoque-->
