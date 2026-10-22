@@ -756,7 +756,7 @@ function salvarProjetoNoServidor(obj) {
   try {
     const ss = SpreadsheetApp.openById(getSpreadsheetId());
     const abaProjetos = ss.getSheetByName("Projetos");
-    const abaEstoque = ss.getSheetByName("Estoque"); // Precisamos referenciar o Estoque
+    const abaEstoque = ss.getSheetByName("Estoque");
 
     const arrayDados = [
       obj.data, obj.cliente, obj.total, obj.kit, obj.servico,
@@ -767,51 +767,85 @@ function salvarProjetoNoServidor(obj) {
       obj.equipeJson || "{}" // Coluna U
     ];
     
-    if (obj.linha && obj.linha !== "") {
-      // Se for uma edição de projeto existente, apenas atualiza
+    let materiaisAntigos = [];
+    const isEdicao = (obj.linha && obj.linha !== "");
+
+    if (isEdicao) {
+      // LÊ OS MATERIAIS ANTIGOS ANTES DE ATUALIZAR A LINHA
+      // A coluna T (materiaisJson) é o índice 19 no array de getValues()
+      const linhaAtual = abaProjetos.getRange(obj.linha, 1, 1, 21).getValues()[0];
+      const rawMateriaisAntigos = linhaAtual[19]; 
+      if (rawMateriaisAntigos && rawMateriaisAntigos !== "[]") {
+        try { materiaisAntigos = JSON.parse(rawMateriaisAntigos); } catch(e) {}
+      }
+      
+      // Salva os novos dados do projeto
       abaProjetos.getRange(obj.linha, 1, 1, arrayDados.length).setValues([arrayDados]);
     } else {
-      // 1. Grava a nova Venda
+      // Se for venda nova, apenas adiciona a linha
       abaProjetos.appendRow(arrayDados);
+    }
 
-      // 2. BAIXA AUTOMÁTICA DE ESTOQUE (A MÁGICA QUE FALTAVA NO SERVIDOR!)
-      if (abaEstoque && obj.materiaisJson && obj.materiaisJson !== "[]") {
-        try {
-          const materiaisUsados = JSON.parse(obj.materiaisJson);
-          const dadosEstoque = abaEstoque.getDataRange().getValues();
-          
-          materiaisUsados.forEach(matUsado => {
-            const descUsada = String(matUsado.descricao).toUpperCase().trim();
-            const qtdUsada = parseFloat(matUsado.quantidade) || 0;
-            
-            if (qtdUsada > 0) {
-              // Procura o material no estoque para abater
-              for (let i = 1; i < dadosEstoque.length; i++) {
-                const descEstoque = String(dadosEstoque[i][1] || "").toUpperCase().trim();
-                if (descEstoque === descUsada) {
-                  let saldoAtual = parseFloat(dadosEstoque[i][4]) || 0;
-                  let novoSaldo = saldoAtual - qtdUsada;
-                  
-                  // Atualiza o valor na planilha (Coluna E / Índice 5)
-                  abaEstoque.getRange(i + 1, 5).setValue(novoSaldo); 
-                  // Atualiza em memória para abater corretamente se o mesmo item se repetir
-                  dadosEstoque[i][4] = novoSaldo; 
-                  break;
-                }
-              }
-            }
-          });
-        } catch (err) {
-          console.error("Erro na baixa de estoque: " + err.message);
-        }
-      }
+    // ========================================================================
+    // BAIXA INTELIGENTE DE ESTOQUE (COMPARAÇÃO ANTIGO VS NOVO)
+    // ========================================================================
+    if (abaEstoque) {
+       let materiaisNovos = [];
+       if (obj.materiaisJson && obj.materiaisJson !== "[]") {
+         try { materiaisNovos = JSON.parse(obj.materiaisJson); } catch(e) {}
+       }
+
+       // Dicionário para calcular a diferença. 
+       // Positivo = retirar do estoque. Negativo = devolver ao estoque.
+       let mapaDiferencas = {};
+
+       // 1. "Devolve" virtualmente todos os materiais antigos ao estoque
+       if (isEdicao) {
+         materiaisAntigos.forEach(m => {
+           const desc = String(m.descricao).toUpperCase().trim();
+           if (!mapaDiferencas[desc]) mapaDiferencas[desc] = 0;
+           mapaDiferencas[desc] -= (parseFloat(m.quantidade) || 0); 
+         });
+       }
+
+       // 2. Retira os materiais novos
+       materiaisNovos.forEach(m => {
+         const desc = String(m.descricao).toUpperCase().trim();
+         if (!mapaDiferencas[desc]) mapaDiferencas[desc] = 0;
+         mapaDiferencas[desc] += (parseFloat(m.quantidade) || 0); 
+       });
+
+       // 3. Aplica apenas as diferenças reais na aba Estoque
+       const dadosEstoque = abaEstoque.getDataRange().getValues();
+
+       for (let desc in mapaDiferencas) {
+         const diferenca = mapaDiferencas[desc];
+         
+         if (diferenca !== 0) { // Só mexe na planilha se houver alteração
+           for (let i = 1; i < dadosEstoque.length; i++) {
+             const descEstoque = String(dadosEstoque[i][1] || "").toUpperCase().trim();
+             if (descEstoque === desc) {
+               let saldoAtual = parseFloat(dadosEstoque[i][4]) || 0;
+               
+               // Se diferença for positiva (+10), subtrai 10. 
+               // Se diferença for negativa (-10), subtrair negativo vira soma (devolve 10).
+               let novoSaldo = saldoAtual - diferenca; 
+               
+               // Grava na Coluna E (Índice 5)
+               abaEstoque.getRange(i + 1, 5).setValue(novoSaldo);
+               dadosEstoque[i][4] = novoSaldo; // Atualiza a memória local para não falhar no loop
+               break;
+             }
+           }
+         }
+       }
     }
 
     return { sucesso: true };
   } catch (e) {
     return { sucesso: false, mensagem: e.message };
   }
-}
+}//alterado no dia 261022 1443
 
 // --- NO ARQUIVO MAIN.GS ---
 function obterDadosRelatorioVendasAbertas(inicioISO, fimISO) {
