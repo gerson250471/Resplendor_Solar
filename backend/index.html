@@ -2246,13 +2246,20 @@
         if (document.getElementById("proj-qtd-placas"))
           document.getElementById("proj-qtd-placas").value = "";
         if (document.getElementById("proj-tam-placa"))
-          document.getElementById("proj-tam-placa").value = "2.60";
+          document.getElementById("proj-tam-placa").value =
+            eq.tamPlaca !== undefined ? eq.tamPlaca : "2.60";
         calcularMetragemPlacas();
-        // Restaurar o KM na tela
+
+        // AQUI: Restaura o KM na tela
         if (document.getElementById("proj-km")) {
           document.getElementById("proj-km").value =
             eq.km !== undefined ? eq.km : "";
         }
+
+        document.getElementById("proj-dias-obra").value =
+          eq.dias !== undefined ? eq.dias : 1;
+        document.getElementById("proj-qtd-eletricista").value =
+          eq.qtdEle !== undefined ? eq.qtdEle : 0;
 
         const engPadrao =
           parametrosProjetos && parametrosProjetos.valorEngenharia
@@ -2390,7 +2397,7 @@
         const totalMaoDeObra =
           eletricistaValor + instaladorValor + pedreiroValor + ajudanteValor;
 
-        // Salva Placas, Metragem, Equipe, Dias e Diárias Históricas tudo junto na Coluna U!
+        // Salva Placas, Metragem, Equipe, Dias, Diárias Históricas e KM tudo junto na Coluna U!
         const equipeJSONString = JSON.stringify({
           qtdPlacas: qtdPlacas,
           tamPlaca: tamPlaca,
@@ -2404,7 +2411,7 @@
           diariaIns: vlrDiariaIns,
           diariaPed: vlrDiariaPed,
           diariaAju: vlrDiariaAju,
-          km: kmObra, // <--- Coloque o KM aqui para ser guardado
+          km: kmObra, // <--- AQUI: O KM é guardado no servidor
         });
 
         const linhasMateriaisDOM = document.querySelectorAll(".linha-material");
@@ -3235,4 +3242,4 @@
     </script>
   </body>
 </html>
-<!-- 26.10.30 1346 Baixar Estoque-->
+<!-- 26.10.30 1413 Baixar Estoque-->
