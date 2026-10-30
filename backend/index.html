@@ -2286,33 +2286,181 @@
         lucide.createIcons();
       };
 
+      // Função para calcular o frete automaticamente se o Renan digitar os KM
+      window.calcularFretePorKm = function () {
+        const km = parseFloat(document.getElementById("proj-km").value) || 0;
+        if (km > 0) {
+          const custoPadraoKM = 1.5; // Exemplo: R$ 1,50 por KM percorrido
+          const custoTotal = km * custoPadraoKM;
+          document.getElementById("proj-frete-estimado").value =
+            custoTotal.toFixed(2);
+        } else {
+          document.getElementById("proj-frete-estimado").value = "";
+        }
+        calcularRentabilidade();
+      };
+
       // 3. O Motor Matemático: Calcula Diárias, Impostos, Taxas e Lucro Líquido Real
-      // Tela de Relatórios
-      if (tela === "relatorios") {
-        carregarListaClientes();
+      function calcularRentabilidade() {
+        if (!parametrosProjetos) return;
 
-        // NOVO: Preenche as datas automaticamente com o mês atual para poupar tempo
-        const hoje = new Date();
-        const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1)
-          .toISOString()
-          .split("T")[0];
-        const ultimoDia = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0)
-          .toISOString()
-          .split("T")[0];
+        const total =
+          parseFloat(document.getElementById("proj-total").value) || 0;
+        const kit = parseFloat(document.getElementById("proj-kit").value) || 0;
+        const entrada =
+          parseFloat(document.getElementById("proj-entrada").value) || 0;
 
-        const camposData = [
-          "data-inicio-aberto",
-          "data-fim-aberto",
-          "data-inicio-recebidos",
-          "data-fim-recebidos",
-          "data-inicio-vendas",
-          "data-fim-vendas",
-        ];
-        camposData.forEach((id) => {
-          const el = document.getElementById(id);
-          if (el && !el.value)
-            el.value = id.includes("inicio") ? primeiroDia : ultimoDia;
-        });
+        const vlrDiariaEle =
+          diariasHistoricasAtivas &&
+          diariasHistoricasAtivas.diariaEle !== undefined
+            ? diariasHistoricasAtivas.diariaEle
+            : parametrosProjetos.diariaEletricista || 0;
+        const vlrDiariaIns =
+          diariasHistoricasAtivas &&
+          diariasHistoricasAtivas.diariaIns !== undefined
+            ? diariasHistoricasAtivas.diariaIns
+            : parametrosProjetos.diariaInstalador || 0;
+        const vlrDiariaPed =
+          diariasHistoricasAtivas &&
+          diariasHistoricasAtivas.diariaPed !== undefined
+            ? diariasHistoricasAtivas.diariaPed
+            : parametrosProjetos.diariaPedreiro || 0;
+        const vlrDiariaAju =
+          diariasHistoricasAtivas &&
+          diariasHistoricasAtivas.diariaAju !== undefined
+            ? diariasHistoricasAtivas.diariaAju
+            : parametrosProjetos.diariaAjudante || 0;
+
+        document.getElementById("label-diaria-ele").innerText =
+          `Diária: R$ ${vlrDiariaEle.toFixed(2)}`;
+        document.getElementById("label-diaria-ins").innerText =
+          `Diária: R$ ${vlrDiariaIns.toFixed(2)}`;
+        document.getElementById("label-diaria-ped").innerText =
+          `Diária: R$ ${vlrDiariaPed.toFixed(2)}`;
+        document.getElementById("label-diaria-aju").innerText =
+          `Diária: R$ ${vlrDiariaAju.toFixed(2)}`;
+
+        const engenharia =
+          parseFloat(document.getElementById("proj-engenharia").value) || 0;
+        const diasObra =
+          parseFloat(document.getElementById("proj-dias-obra").value) || 0;
+        const qtdEle =
+          parseFloat(document.getElementById("proj-qtd-eletricista").value) ||
+          0;
+        const qtdIns =
+          parseFloat(document.getElementById("proj-qtd-instalador").value) || 0;
+        const qtdPed =
+          parseFloat(document.getElementById("proj-qtd-pedreiro").value) || 0;
+        const qtdAju =
+          parseFloat(document.getElementById("proj-qtd-ajudante").value) || 0;
+
+        const somaDiariaEquipe =
+          qtdEle * vlrDiariaEle +
+          qtdIns * vlrDiariaIns +
+          qtdPed * vlrDiariaPed +
+          qtdAju * vlrDiariaAju;
+
+        const custoTotalEle = qtdEle * vlrDiariaEle * diasObra;
+        const custoTotalIns = qtdIns * vlrDiariaIns * diasObra;
+        const custoTotalPed = qtdPed * vlrDiariaPed * diasObra;
+        const custoTotalAju = qtdAju * vlrDiariaAju * diasObra;
+        const maoDeObraTotal = somaDiariaEquipe * diasObra;
+
+        document.getElementById("sub-mo-ele").innerText =
+          `Total: R$ ${custoTotalEle.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+        document.getElementById("sub-mo-ins").innerText =
+          `Total: R$ ${custoTotalIns.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+        document.getElementById("sub-mo-ped").innerText =
+          `Total: R$ ${custoTotalPed.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+        document.getElementById("sub-mo-aju").innerText =
+          `Total: R$ ${custoTotalAju.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+        document.getElementById("mo-custo-dia-display").innerText =
+          `R$ ${somaDiariaEquipe.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} / dia`;
+        document.getElementById("mo-custo-total-display").innerText =
+          `R$ ${maoDeObraTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+
+        // Materiais e Frete (Lê diretamente o que está na tela)
+        const materiais =
+          parseFloat(document.getElementById("proj-materiais").value) || 0;
+        const frete =
+          parseFloat(document.getElementById("proj-frete-estimado").value) || 0;
+        const materiaisTotais = materiais + frete;
+
+        // =========================================================================
+        // CORREÇÃO DO BUG PERCENTUAL: Converte números inteiros (6) em dízimas (0.06)
+        // =========================================================================
+        const formatarTaxa = (valor) => (valor > 1 ? valor / 100 : valor || 0);
+
+        const aplicarComissao =
+          document.getElementById("check-comissao").checked;
+        const opcaoMaquininha =
+          document.getElementById("select-maquininha").value;
+
+        const impostos = total * formatarTaxa(parametrosProjetos.imposto);
+        document.getElementById("proj-impostos").value =
+          "R$ " + impostos.toFixed(2);
+
+        const comissao = aplicarComissao
+          ? total * formatarTaxa(parametrosProjetos.comissao)
+          : 0;
+        document.getElementById("proj-comissao").value =
+          "R$ " + comissao.toFixed(2);
+
+        let maquininha = 0;
+        if (opcaoMaquininha === "6x")
+          maquininha = total * formatarTaxa(parametrosProjetos.taxaCartao6x);
+        else if (opcaoMaquininha === "12x")
+          maquininha = total * formatarTaxa(parametrosProjetos.taxaCartao12x);
+        else if (opcaoMaquininha === "18x")
+          maquininha = total * formatarTaxa(parametrosProjetos.taxaCartao18x);
+        else if (opcaoMaquininha === "21x")
+          maquininha = total * formatarTaxa(parametrosProjetos.taxaCartao21x);
+        document.getElementById("proj-maquininha-valor").value =
+          "R$ " + maquininha.toFixed(2);
+
+        // Saldo Líquido Real
+        const liquido =
+          total -
+          kit -
+          engenharia -
+          maoDeObraTotal -
+          materiaisTotais -
+          impostos -
+          comissao -
+          maquininha;
+
+        const campoLiquido = document.getElementById("proj-liquido");
+        if (campoLiquido) {
+          campoLiquido.value =
+            "R$ " +
+            liquido.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+          if (liquido < 0)
+            campoLiquido.classList.replace("text-emerald-700", "text-red-600");
+          else
+            campoLiquido.classList.replace("text-red-600", "text-emerald-700");
+        }
+
+        let margemPercentual = 0;
+        if (total > 0) margemPercentual = (liquido / total) * 100;
+
+        const badgeMargem = document.getElementById("proj-margem-badge");
+        if (badgeMargem) {
+          badgeMargem.innerText = margemPercentual.toFixed(1) + "%";
+          if (liquido < 0)
+            badgeMargem.className =
+              "bg-red-100 text-red-800 px-2 py-0.5 rounded text-xs font-bold";
+          else if (margemPercentual < 15)
+            badgeMargem.className =
+              "bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-xs font-bold";
+          else
+            badgeMargem.className =
+              "bg-emerald-200 text-emerald-800 px-2 py-0.5 rounded text-xs font-bold";
+        }
+
+        const residual = total - entrada;
+        document.getElementById("proj-residual").value =
+          "R$ " +
+          residual.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
       }
 
       // 4. Salva ou Atualiza o Projeto na Planilha
@@ -3242,4 +3390,4 @@
     </script>
   </body>
 </html>
-<!-- 26.10.30 1429 Baixar Estoque-->
+<!-- 26.10.30 1446 Baixar Estoque-->
