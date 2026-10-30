@@ -570,6 +570,9 @@
     </div>
 
     <script>
+      // Variável global para saber quem está a usar o sistema agora
+      var perfilUsuarioAtual = "ADMIN";
+
       lucide.createIcons();
       google.charts.load("current", { packages: ["corechart"] });
 
@@ -2848,9 +2851,6 @@
           .obterParametrosProjetos();
       }
 
-      // Variável global para saber quem está a usar o sistema agora
-      let perfilUsuarioAtual = "ADMIN";
-
       function aplicarPermissoes(perfil) {
         perfilUsuarioAtual = perfil.toUpperCase();
 
@@ -3242,4 +3242,4 @@
     </script>
   </body>
 </html>
-<!-- 26.10.30 1413 Baixar Estoque-->
+<!-- 26.10.30 1429 Baixar Estoque-->
