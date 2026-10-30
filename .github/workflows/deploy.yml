@@ -55,8 +55,16 @@ jobs:
           echo '{"scriptId":"${{ secrets.SCRIPT_ID_HOMOLOG }}"}' > .clasp.json
           clasp push --force
 
-      - name: Executar Bateria de Testes TDD
-        # Entramos na pasta backend novamente para o clasp achar o .clasp.json!
+      - name: Executar Bateria de Testes TDD via API
         run: |
-          cd backend
-          clasp run rodarTodosOsTestes
+          # Faz a chamada para a Web App e guarda a resposta
+          RES=$(curl -s -L "https://script.google.com/macros/s/AKfycbyqJU3cwz6zYOiudBMNlr11YbtUVPmBV1zYvCYiTsOkvl-PLMC22GXqGJHMynKnUn7m/exec")
+          echo "Resposta do servidor: $RES"
+
+          # Verifica se a palavra "false" está na resposta JSON
+          if [[ "$RES" == *"\"sucesso\":false"* ]]; then
+            echo "⛔ PIPELINE INTERROMPIDO: Os testes falharam!"
+            exit 1
+          else
+            echo "✅ SUCESSO: Todos os testes passaram. Deploy finalizado."
+          fi
