@@ -54,3 +54,11 @@ jobs:
           # Injeta o ID do projeto de testes e envia o código
           echo '{"scriptId":"${{ secrets.SCRIPT_ID_HOMOLOG }}"}' > .clasp.json
           clasp push --force
+
+      - name: Sincronizar código com Homologação (clasp push)
+        run: clasp push -f
+
+      - name: Executar Bateria de Testes TDD
+        # O clasp run executa a função remotamente. Se a função der 'throw new Error',
+        # o terminal recebe um exit code de erro e o GitHub Actions aborta o pipeline.
+        run: clasp run rodarTodosOsTestes

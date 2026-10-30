@@ -11,12 +11,24 @@ function doGet(e) {
   // Passa as configurações para o HTML (Ativa a barra de homologação)
   template.config = configAtual;
 
+  // Rota secreta para o GitHub Actions disparar os testes
+  if (e.parameter.acao === "CI_RUN_TESTS" && e.parameter.token === "SUA_SENHA_SECRETA_DO_GITHUB") {
+    try {
+      rodarTodosOsTestes(); // Se falhar, cai no catch
+      return ContentService.createTextOutput(JSON.stringify({sucesso: true})).setMimeType(ContentService.MimeType.JSON);
+    } catch (erro) {
+      return ContentService.createTextOutput(JSON.stringify({sucesso: false, erro: erro.message})).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+  
   const output = template.evaluate();
   output.setTitle('Resplendor Solar - Gestão Centralizada')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 
   return output;
+
+
 }
 
 function getConfig() {
