@@ -657,6 +657,29 @@
         // Tela de Relatórios
         if (tela === "relatorios") {
           carregarListaClientes();
+
+          // NOVO: Preenche as datas automaticamente com o mês atual para poupar tempo
+          const hoje = new Date();
+          const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1)
+            .toISOString()
+            .split("T")[0];
+          const ultimoDia = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0)
+            .toISOString()
+            .split("T")[0];
+
+          const camposData = [
+            "data-inicio-aberto",
+            "data-fim-aberto",
+            "data-inicio-recebidos",
+            "data-fim-recebidos",
+            "data-inicio-vendas",
+            "data-fim-vendas",
+          ];
+          camposData.forEach((id) => {
+            const el = document.getElementById(id);
+            if (el && !el.value)
+              el.value = id.includes("inicio") ? primeiroDia : ultimoDia;
+          });
         }
       }
 
@@ -2225,6 +2248,11 @@
         if (document.getElementById("proj-tam-placa"))
           document.getElementById("proj-tam-placa").value = "2.60";
         calcularMetragemPlacas();
+        // Restaurar o KM na tela
+        if (document.getElementById("proj-km")) {
+          document.getElementById("proj-km").value =
+            eq.km !== undefined ? eq.km : "";
+        }
 
         const engPadrao =
           parametrosProjetos && parametrosProjetos.valorEngenharia
@@ -2249,176 +2277,32 @@
       };
 
       // 3. O Motor Matemático: Calcula Diárias, Impostos, Taxas e Lucro Líquido Real
-      function calcularRentabilidade() {
-        if (!parametrosProjetos) return;
+      // Tela de Relatórios
+      if (tela === "relatorios") {
+        carregarListaClientes();
 
-        const total =
-          parseFloat(document.getElementById("proj-total").value) || 0;
-        const kit = parseFloat(document.getElementById("proj-kit").value) || 0;
-        const entrada =
-          parseFloat(document.getElementById("proj-entrada").value) || 0;
+        // NOVO: Preenche as datas automaticamente com o mês atual para poupar tempo
+        const hoje = new Date();
+        const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1)
+          .toISOString()
+          .split("T")[0];
+        const ultimoDia = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0)
+          .toISOString()
+          .split("T")[0];
 
-        // INTELIGÊNCIA DE HISTÓRICO: Usa a diária da época (se for edição) ou a atual dos Parâmetros
-        const vlrDiariaEle =
-          diariasHistoricasAtivas &&
-          diariasHistoricasAtivas.diariaEle !== undefined
-            ? diariasHistoricasAtivas.diariaEle
-            : parametrosProjetos.diariaEletricista || 0;
-        const vlrDiariaIns =
-          diariasHistoricasAtivas &&
-          diariasHistoricasAtivas.diariaIns !== undefined
-            ? diariasHistoricasAtivas.diariaIns
-            : parametrosProjetos.diariaInstalador || 0;
-        const vlrDiariaPed =
-          diariasHistoricasAtivas &&
-          diariasHistoricasAtivas.diariaPed !== undefined
-            ? diariasHistoricasAtivas.diariaPed
-            : parametrosProjetos.diariaPedreiro || 0;
-        const vlrDiariaAju =
-          diariasHistoricasAtivas &&
-          diariasHistoricasAtivas.diariaAju !== undefined
-            ? diariasHistoricasAtivas.diariaAju
-            : parametrosProjetos.diariaAjudante || 0;
-
-        document.getElementById("label-diaria-ele").innerText =
-          `Diária: R$ ${vlrDiariaEle.toFixed(2)}`;
-        document.getElementById("label-diaria-ins").innerText =
-          `Diária: R$ ${vlrDiariaIns.toFixed(2)}`;
-        document.getElementById("label-diaria-ped").innerText =
-          `Diária: R$ ${vlrDiariaPed.toFixed(2)}`;
-        document.getElementById("label-diaria-aju").innerText =
-          `Diária: R$ ${vlrDiariaAju.toFixed(2)}`;
-
-        // Lê as Quantidades e Dias
-        const engenharia =
-          parseFloat(document.getElementById("proj-engenharia").value) || 0;
-        const diasObra =
-          parseFloat(document.getElementById("proj-dias-obra").value) || 0;
-        const qtdEle =
-          parseFloat(document.getElementById("proj-qtd-eletricista").value) ||
-          0;
-        const qtdIns =
-          parseFloat(document.getElementById("proj-qtd-instalador").value) || 0;
-        const qtdPed =
-          parseFloat(document.getElementById("proj-qtd-pedreiro").value) || 0;
-        const qtdAju =
-          parseFloat(document.getElementById("proj-qtd-ajudante").value) || 0;
-
-        // Calcula os Totais da Mão de Obra
-        const somaDiariaEquipe =
-          qtdEle * vlrDiariaEle +
-          qtdIns * vlrDiariaIns +
-          qtdPed * vlrDiariaPed +
-          qtdAju * vlrDiariaAju;
-
-        const custoTotalEle = qtdEle * vlrDiariaEle * diasObra;
-        const custoTotalIns = qtdIns * vlrDiariaIns * diasObra;
-        const custoTotalPed = qtdPed * vlrDiariaPed * diasObra;
-        const custoTotalAju = qtdAju * vlrDiariaAju * diasObra;
-
-        const maoDeObraTotal = somaDiariaEquipe * diasObra;
-
-        document.getElementById("sub-mo-ele").innerText =
-          `Total: R$ ${custoTotalEle.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
-        document.getElementById("sub-mo-ins").innerText =
-          `Total: R$ ${custoTotalIns.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
-        document.getElementById("sub-mo-ped").innerText =
-          `Total: R$ ${custoTotalPed.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
-        document.getElementById("sub-mo-aju").innerText =
-          `Total: R$ ${custoTotalAju.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
-
-        document.getElementById("mo-custo-dia-display").innerText =
-          `R$ ${somaDiariaEquipe.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} / dia`;
-        document.getElementById("mo-custo-total-display").innerText =
-          `R$ ${maoDeObraTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
-
-        // Materiais e Frete
-        const materiais =
-          parseFloat(document.getElementById("proj-materiais").value) || 0;
-        const frete = parametrosProjetos.frete || 0;
-        document.getElementById("proj-frete-estimado").value = frete.toFixed(2);
-        const materiaisTotais = materiais + frete;
-
-        // Taxas e Impostos
-        const aplicarComissao =
-          document.getElementById("check-comissao").checked;
-        const opcaoMaquininha =
-          document.getElementById("select-maquininha").value;
-
-        const impostos = total * parametrosProjetos.imposto;
-        document.getElementById("proj-impostos").value =
-          "R$ " + impostos.toFixed(2);
-
-        const comissao = aplicarComissao
-          ? total * parametrosProjetos.comissao
-          : 0;
-        document.getElementById("proj-comissao").value =
-          "R$ " + comissao.toFixed(2);
-
-        let maquininha = 0;
-        if (opcaoMaquininha === "6x")
-          maquininha = total * (parametrosProjetos.taxaCartao6x || 0);
-        else if (opcaoMaquininha === "12x")
-          maquininha = total * (parametrosProjetos.taxaCartao12x || 0);
-        else if (opcaoMaquininha === "18x")
-          maquininha = total * (parametrosProjetos.taxaCartao18x || 0);
-        else if (opcaoMaquininha === "21x")
-          maquininha = total * (parametrosProjetos.taxaCartao21x || 0);
-        document.getElementById("proj-maquininha-valor").value =
-          "R$ " + maquininha.toFixed(2);
-
-        // Saldo Líquido Real
-        const liquido =
-          total -
-          kit -
-          engenharia -
-          maoDeObraTotal -
-          materiaisTotais -
-          impostos -
-          comissao -
-          maquininha;
-
-        const campoLiquido = document.getElementById("proj-liquido");
-        if (campoLiquido) {
-          campoLiquido.value =
-            "R$ " +
-            liquido.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
-          if (liquido < 0) {
-            campoLiquido.classList.replace("text-emerald-700", "text-red-600");
-          } else {
-            campoLiquido.classList.replace("text-red-600", "text-emerald-700");
-          }
-        }
-
-        // NOVO: Cálculo da Margem de Lucro em Percentagem (%)
-        let margemPercentual = 0;
-        if (total > 0) {
-          margemPercentual = (liquido / total) * 100;
-        }
-
-        const badgeMargem = document.getElementById("proj-margem-badge");
-        if (badgeMargem) {
-          badgeMargem.innerText = margemPercentual.toFixed(1) + "%";
-
-          // Cores inteligentes para o crachá
-          if (liquido < 0) {
-            badgeMargem.className =
-              "bg-red-100 text-red-800 px-2 py-0.5 rounded text-xs font-bold";
-          } else if (margemPercentual < 15) {
-            // Se o lucro for inferior a 15%, fica amarelo (alerta)
-            badgeMargem.className =
-              "bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-xs font-bold";
-          } else {
-            // Se for bom lucro, fica verde
-            badgeMargem.className =
-              "bg-emerald-200 text-emerald-800 px-2 py-0.5 rounded text-xs font-bold";
-          }
-        }
-
-        const residual = total - entrada;
-        document.getElementById("proj-residual").value =
-          "R$ " +
-          residual.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+        const camposData = [
+          "data-inicio-aberto",
+          "data-fim-aberto",
+          "data-inicio-recebidos",
+          "data-fim-recebidos",
+          "data-inicio-vendas",
+          "data-fim-vendas",
+        ];
+        camposData.forEach((id) => {
+          const el = document.getElementById(id);
+          if (el && !el.value)
+            el.value = id.includes("inicio") ? primeiroDia : ultimoDia;
+        });
       }
 
       // 4. Salva ou Atualiza o Projeto na Planilha
@@ -2487,6 +2371,9 @@
           parseFloat(document.getElementById("proj-qtd-pedreiro").value) || 0;
         const qtdAju =
           parseFloat(document.getElementById("proj-qtd-ajudante").value) || 0;
+        // 1. Extrair os KM da tela
+        const kmObra =
+          parseFloat(document.getElementById("proj-km").value) || 0;
 
         // Lê os dados de Placas e Metragem
         const qtdPlacas =
@@ -2517,6 +2404,7 @@
           diariaIns: vlrDiariaIns,
           diariaPed: vlrDiariaPed,
           diariaAju: vlrDiariaAju,
+          km: kmObra, // <--- Coloque o KM aqui para ser guardado
         });
 
         const linhasMateriaisDOM = document.querySelectorAll(".linha-material");
@@ -3347,4 +3235,4 @@
     </script>
   </body>
 </html>
-<!-- 26.10.22 1416 Baixar Estoque-->
+<!-- 26.10.30 1346 Baixar Estoque-->
