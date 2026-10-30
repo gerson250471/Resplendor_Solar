@@ -2567,6 +2567,7 @@
 
         const linhasMateriaisDOM = document.querySelectorAll(".linha-material");
         const arrayMateriaisUsados = [];
+        let totalMateriaisSalvar = 0; // Guardamos o total para a matemática
 
         linhasMateriaisDOM.forEach((linha) => {
           const desc = linha.querySelector(".mat-desc").value;
@@ -2580,21 +2581,10 @@
               quantidade: qtd,
               valorTotal: valorTotalMat,
             });
+            totalMateriaisSalvar += valorTotalMat; // Vai somando os materiais
           }
         });
         const materiaisJSONString = JSON.stringify(arrayMateriaisUsados);
-
-        const limparMoeda = (id) => {
-          const el = document.getElementById(id);
-          if (!el) return 0;
-          return (
-            parseFloat(
-              String(el.value)
-                .replace(/[R$\s.]/g, "")
-                .replace(",", "."),
-            ) || 0
-          );
-        };
 
         const totalCalc =
           parseFloat(document.getElementById("proj-total").value) || 0;
@@ -2604,9 +2594,49 @@
           ? parseFloat(document.getElementById("proj-frete-estimado").value) ||
             0
           : 0;
-        const materiaisCalc = document.getElementById("proj-materiais")
-          ? parseFloat(document.getElementById("proj-materiais").value) || 0
+        const entradaCalc =
+          parseFloat(document.getElementById("proj-entrada").value) || 0;
+
+        // === CORREÇÃO: MATEMÁTICA PURA ANTES DE SALVAR (Esquece os formatos de tela) ===
+        const formatarTaxa = (valor) => (valor > 1 ? valor / 100 : valor || 0);
+
+        const impostosCalc =
+          totalCalc * formatarTaxa(parametrosProjetos.imposto);
+
+        const aplicarComissao =
+          document.getElementById("check-comissao").checked;
+        const comissaoCalc = aplicarComissao
+          ? totalCalc * formatarTaxa(parametrosProjetos.comissao)
           : 0;
+
+        let maquininhaCalc = 0;
+        const opcaoMaquininha =
+          document.getElementById("select-maquininha").value;
+        if (opcaoMaquininha === "6x")
+          maquininhaCalc =
+            totalCalc * formatarTaxa(parametrosProjetos.taxaCartao6x);
+        else if (opcaoMaquininha === "12x")
+          maquininhaCalc =
+            totalCalc * formatarTaxa(parametrosProjetos.taxaCartao12x);
+        else if (opcaoMaquininha === "18x")
+          maquininhaCalc =
+            totalCalc * formatarTaxa(parametrosProjetos.taxaCartao18x);
+        else if (opcaoMaquininha === "21x")
+          maquininhaCalc =
+            totalCalc * formatarTaxa(parametrosProjetos.taxaCartao21x);
+
+        const outrosCustos = totalMateriaisSalvar + freteCalc;
+
+        const liquidoCalc =
+          totalCalc -
+          kitCalc -
+          engenharia -
+          totalMaoDeObra -
+          outrosCustos -
+          impostosCalc -
+          comissaoCalc -
+          maquininhaCalc;
+        const residualCalc = totalCalc - entradaCalc;
 
         const obj = {
           linha: document.getElementById("proj-linha").value,
@@ -2615,14 +2645,14 @@
           total: totalCalc,
           kit: kitCalc,
           servico: totalCalc - kitCalc,
-          impostos: limparMoeda("proj-impostos"),
+          impostos: impostosCalc, // Envia número limpo
           maoDeObra: totalMaoDeObra,
-          outros: materiaisCalc + freteCalc,
-          comissao: limparMoeda("proj-comissao"),
-          maquininha: limparMoeda("proj-maquininha-valor"),
-          liquido: document.getElementById("proj-liquido").value,
-          entrada: document.getElementById("proj-entrada").value || 0,
-          residual: document.getElementById("proj-residual").value,
+          outros: outrosCustos,
+          comissao: comissaoCalc, // Envia número limpo
+          maquininha: maquininhaCalc, // Envia número limpo
+          liquido: liquidoCalc, // Envia número limpo
+          entrada: entradaCalc,
+          residual: residualCalc, // Envia número limpo
           status: document.getElementById("proj-status")
             ? document.getElementById("proj-status").value
             : "AGUARDANDO KIT",
@@ -3390,4 +3420,4 @@
     </script>
   </body>
 </html>
-<!-- 26.10.30 1456 Baixar Estoque-->
+<!-- 26.10.30 1521 Corrigir Relatório Venda -->
