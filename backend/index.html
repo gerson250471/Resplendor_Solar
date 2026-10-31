@@ -2121,7 +2121,7 @@
                   <div class="row"><span>Valor do Kit:</span> <strong>- ${moeda(p.kit)}</strong></div>
                   <div class="row"><span>Total Custos Operacionais:</span> <strong>- ${moeda(p.total - p.kit - p.liquido)}</strong></div>
                   <div class="row" style="margin-top: 15px;">
-                    <span>Lucro Líquido Real:</span> 
+                    <span>Lucro Líquido Real:</span>
                     <div style="text-align: right;">
                       <strong class="lucro-valor">${moeda(p.liquido)}</strong>
                       <span class="margem-badge">${margemPct}% Margem</span>
@@ -2563,6 +2563,7 @@
           diariaPed: vlrDiariaPed,
           diariaAju: vlrDiariaAju,
           km: kmObra, // <--- AQUI: O KM é guardado no servidor
+          frete: freteObra, // <--- AQUI: O valor em R$ fica congelado no tempo!
         });
 
         const linhasMateriaisDOM = document.querySelectorAll(".linha-material");
@@ -2757,6 +2758,21 @@
           document.getElementById("proj-tam-placa").value =
             eq.tamPlaca !== undefined ? eq.tamPlaca : "2.60";
         calcularMetragemPlacas();
+
+        // =========================================================
+        // AQUI: Restaura o KM e o Valor do Frete Congelado no Tempo
+        // =========================================================
+        if (document.getElementById("proj-km")) {
+          document.getElementById("proj-km").value = eq.km !== undefined ? eq.km : "";
+        }
+
+        if (document.getElementById("proj-frete-estimado")) {
+          // Injeta o valor exato em R$ que custou na época da obra
+          document.getElementById("proj-frete-estimado").value = eq.frete !== undefined ? eq.frete : "";
+        }
+        // NOTA: Retirámos a chamada 'window.calcularFretePorKm()' daqui propositadamente
+        // para não corromper o preço histórico com taxas futuras!
+        }
 
         document.getElementById("proj-dias-obra").value =
           eq.dias !== undefined ? eq.dias : 1;
@@ -3483,16 +3499,16 @@
                 /* O SEGREDO PARA FORÇAR O RETRATO FICA AQUI (Força a largura para 190mm) */
                 @media print {
                   @page { size: A4 portrait !important; margin: 10mm; }
-                  body { width: 190mm; margin: 0 auto; } 
+                  body { width: 190mm; margin: 0 auto; }
                 }
                 @page { size: A4 portrait; margin: 10mm; }
-                
+
                 body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 8px; color: #334155; }
                 .header { border-bottom: 2px solid #2563eb; padding-bottom: 10px; margin-bottom: 15px; }
                 h1 { font-size: 16px; color: #1e3a8a; margin: 0; text-transform: uppercase; letter-spacing: 0.5px;}
                 .data-geracao { font-size: 8px; color: #64748b; margin-top: 2px; }
                 table { width: 100%; border-collapse: collapse; margin-bottom: 20px; table-layout: fixed;}
-                
+
                 th:nth-child(1) { width: 7%; }  /* Data */
                 th:nth-child(2) { width: 18%; } /* Cliente */
                 th:nth-child(3) { width: 9%; }  /* Contrato */
@@ -3507,7 +3523,7 @@
 
                 th { background: #f1f5f9; color: #0f172a; padding: 6px 2px; text-align: left; font-size: 7.5px; border-bottom: 1px solid #cbd5e1; }
                 td { padding: 6px 2px; border-bottom: 1px solid #f8fafc; overflow: hidden; white-space: nowrap;}
-                
+
                 .text-right { text-align: right; }
                 .font-bold { font-weight: bold; }
                 .font-black { font-weight: 900; }
@@ -3516,7 +3532,7 @@
                 .text-red-600 { color: #dc2626; }
                 .text-amber-600 { color: #d97706; }
                 .text-slate-500 { color: #64748b; }
-                
+
                 .resumo-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; page-break-inside: avoid; margin-top: 10px;}
                 .resumo-title { font-size: 11px; font-weight: bold; color: #0f172a; margin-bottom: 10px; border-bottom: 1px solid #cbd5e1; padding-bottom: 5px;}
                 .resumo-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
@@ -3534,7 +3550,7 @@
                 <p style="margin: 3px 0; font-size: 10px; font-weight: bold; color: #334155;">Período: ${periodo} | MAJB SISTEMAS - Resplendor Solar</p>
                 <div class="data-geracao">Relatório gerado em: ${dataGeracao}</div>
               </div>
-              
+
               <table>
                 <thead>
                   <tr>
@@ -3563,10 +3579,10 @@
                   <div class="r-item"><span class="r-label">Custo de Kits</span><span class="r-valor text-red-600">R$ ${fmt(tKit)}</span></div>
                   <div class="r-item"><span class="r-label">Mão de Obra + Eng.</span><span class="r-valor">R$ ${fmt(tMo)}</span></div>
                   <div class="r-item"><span class="r-label">Materiais + Frete</span><span class="r-valor">R$ ${fmt(tMat + tFrete)}</span></div>
-                  
+
                   <div class="r-item" style="grid-column: span 2;"><span class="r-label">Impostos S/ Venda</span><span class="r-valor text-amber-600">R$ ${fmt(tImposto)}</span></div>
                   <div class="r-item" style="grid-column: span 2;"><span class="r-label">Comissões e Taxas Cartão</span><span class="r-valor text-amber-600">R$ ${fmt(tComissao + tTaxa)}</span></div>
-                  
+
                   <div class="r-item highlight">
                     <span class="r-label" style="font-size: 11px; color: #065f46;">LUCRO LÍQUIDO CONSOLIDADO DO MÊS</span>
                     <span class="r-valor text-emerald-600">R$ ${fmt(tLiquido)} <span class="badge">${margemGlobal}% Margem Global</span></span>
