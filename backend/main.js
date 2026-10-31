@@ -1497,16 +1497,28 @@ function obterRelatorioVendasMesAtual() {
 }
 
 function obterDadosRelatorioVendasPeriodo(inicioISO, fimISO) {
-  const ss = SpreadsheetApp.openById(getSpreadsheetId());
-  const abaProjetos = ss.getSheetByName("Projetos"); // <-- MUDANÇA AQUI
+  const ss = SpreadsheetApp.openById(getSpreadsheetId()); // Use a sua função habitual para chamar o ID
+  const abaProjetos = ss.getSheetByName("Projetos");
   const dados = abaProjetos.getDataRange().getValues();
 
   let limiteInicio = parseInt(inicioISO.replace(/-/g, ""));
   let limiteFim = parseInt(fimISO.replace(/-/g, ""));
 
+  // ===============================================================
+  // NOVO HELPER: "Aspirador" que remove os R$, espaços e pontos do Sheets 
+  // para garantir que o PDF recebe números puros!
+  // ===============================================================
+  const extrairNum = (v) => {
+    if (typeof v === 'number') return v;
+    if (!v) return 0;
+    // Tira R$, espaços, pontos e troca vírgula por ponto decimal
+    const limpo = String(v).replace(/[R$\s\.]/g, '').replace(',', '.');
+    return parseFloat(limpo) || 0;
+  };
+
   let relatorio = [];
   for(let i = 1; i < dados.length; i++) {
-    let dataRaw = dados[i][0]; // Coluna A (Data) no Projetos
+    let dataRaw = dados[i][0];
     let vencNum = 0;
     let dataFormatada = "";
 
@@ -1528,11 +1540,35 @@ function obterDadosRelatorioVendasPeriodo(inicioISO, fimISO) {
     }
 
     if(vencNum >= limiteInicio && vencNum <= limiteFim) {
+      // Separar Materiais do Frete lendo o JSON (Isto já estava em número limpo, não muda)
+      let matJson = dados[i][19] || "[]";
+      let matCusto = 0;
+      try {
+        let mArr = JSON.parse(matJson);
+        matCusto = mArr.reduce((acc, curr) => acc + (parseFloat(curr.valorTotal)||0), 0);
+      } catch(e){}
+
+      let outros = extrairNum(dados[i][13]);
+      let frete = outros - matCusto;
+      if (frete < 0) frete = 0;
+
+      let maoDeObraBruta = extrairNum(dados[i][6]);
+      let engenharia = extrairNum(dados[i][14]);
+
+      // AQUI É ONDE A MAGIA ACONTECE: Tudo passa pelo filtro "extrairNum"
       relatorio.push({
         idVenda: "PROJ-" + (i + 1),
-        cliente: String(dados[i][1]).trim(), // Coluna B (Cliente)
+        cliente: String(dados[i][1]).trim(),
         data: dataFormatada,
-        valor: parseFloat(dados[i][2]) || 0 // Coluna C (Valor Total)
+        total: extrairNum(dados[i][2]),
+        kit: extrairNum(dados[i][3]),
+        mo: maoDeObraBruta + engenharia, // Junta Mão de Obra e Projeto para poupar espaço visual
+        mat: matCusto,
+        frete: frete,
+        comissao: extrairNum(dados[i][7]),
+        imposto: extrairNum(dados[i][5]),
+        taxa: extrairNum(dados[i][8]),
+        liquido: extrairNum(dados[i][9])
       });
     }
   }
@@ -1834,4 +1870,4 @@ function obterHistoricoCompras() {
     return { sucesso: false, mensagem: e.message };
   }
 }
-// 26-10-14 1107 Baixa no Estoque
+// 26-10-31 0810 Novo Relatorio de Vendas
