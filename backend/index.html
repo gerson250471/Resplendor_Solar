@@ -2529,17 +2529,21 @@
           parseFloat(document.getElementById("proj-qtd-pedreiro").value) || 0;
         const qtdAju =
           parseFloat(document.getElementById("proj-qtd-ajudante").value) || 0;
+        // ------------------
         // 1. Extrair os KM da tela
         const kmObra =
           parseFloat(document.getElementById("proj-km").value) || 0;
-
+        // NOVO: Extrair o valor do Frete da tela antes de tentar guardar
+        const freteObra =
+          parseFloat(document.getElementById("proj-frete-estimado").value) || 0;
         // Lê os dados de Placas e Metragem
         const qtdPlacas =
           parseFloat(document.getElementById("proj-qtd-placas")?.value) || 0;
+        // -------------------
         const tamPlaca =
           parseFloat(document.getElementById("proj-tam-placa")?.value) || 2.6;
-        const areaTotalM2 = parseFloat((qtdPlacas * tamPlaca).toFixed(2));
 
+        const areaTotalM2 = parseFloat((qtdPlacas * tamPlaca).toFixed(2));
         const eletricistaValor = qtdEle * vlrDiariaEle * diasObra;
         const instaladorValor = qtdIns * vlrDiariaIns * diasObra;
         const pedreiroValor = qtdPed * vlrDiariaPed * diasObra;
@@ -3603,4 +3607,4 @@
     </script>
   </body>
 </html>
-<!-- 26.10.31 1441 Novo Relatorio de Vendas -->
+<!-- 26.10.31 1449 Novo Relatorio de Vendas -->
