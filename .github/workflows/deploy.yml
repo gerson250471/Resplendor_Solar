@@ -6,7 +6,7 @@ on:
       - develop
 
 jobs:
-  # 1. Envia APENAS o Frontend para a Hostinger
+  # 1. Envia APENAS o Frontend para a Hostinger (MANTIDO INTACTO)
   deploy-hostinger-homologacao:
     runs-on: ubuntu-latest
     steps:
@@ -19,7 +19,7 @@ jobs:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USER_HOMOLOG }}
           password: ${{ secrets.FTP_PASS_HOMOLOG }}
-          timeout: 600000 # Dá 10 minutos de tolerância para a Hostinger não derrubar
+          timeout: 600000
           exclude: |
             **/.git*
             **/.git*/**
@@ -27,9 +27,9 @@ jobs:
             **/node_modules/**
             readme.md
           local-dir: ./frontend/
-          server-dir: /public_html/homologacao/ # Ajuste caso a pasta do subdomínio tenha outro nome
+          server-dir: /public_html/homologacao/
 
-  # 2. Envia APENAS o Backend para o Google Apps Script
+  # 2. Envia APENAS o Backend para o Google Apps Script (ATUALIZADO COM LINT)
   deploy-google-homologacao:
     runs-on: ubuntu-latest
     steps:
@@ -40,6 +40,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "24"
+          cache: "yarn" # NOVO: Ativa o cache do Yarn para acelerar o processo
+
+      - name: 📦 Instalar Dependências (Yarn)
+        run: yarn install --frozen-lockfile
+
+      - name: 🛡️ Análise Estática de Código (ESLint)
+        run: yarn lint
+        # Se houver erros de variáveis ou sintaxe, o GitHub para aqui e não faz o deploy!
 
       - name: Instalar Clasp
         run: npm install -g @google/clasp

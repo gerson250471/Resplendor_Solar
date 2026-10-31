@@ -4,5 +4,13 @@
   "description": "CRM Gestão da Empresa",
   "main": "codigo,js",
   "author": "Gerson Bernardo",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^10.14.0",
+    "eslint-plugin-html": "^8.2.1"
+  },
+  "scripts": {
+      "lint": "eslint *.html",
+      "deploy": "clasp push"
+    }
 }

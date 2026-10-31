@@ -1,0 +1,28 @@
+{
+  "env": {
+    "browser": true,
+    "es2021": true
+  },
+  "extends": "eslint:recommended",
+  "plugins": [
+    "html"
+  ],
+  "parserOptions": {
+    "ecmaVersion": 12,
+    "sourceType": "script"
+  },
+  "globals": {
+    "google": "readonly",
+    "lucide": "readonly",
+    "perfilUsuarioAtual": "writable",
+    "clientesGlobais": "writable",
+    "projetosGlobais": "writable",
+    "catalogoMateriaisGlobais": "writable",
+    "parcelasGlobais": "writable"
+  },
+  "rules": {
+    "no-undef": "error",
+    "no-unused-vars": "warn",
+    "no-unreachable": "error"
+  }
+}
