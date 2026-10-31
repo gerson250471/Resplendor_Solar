@@ -2763,16 +2763,17 @@
         // AQUI: Restaura o KM e o Valor do Frete Congelado no Tempo
         // =========================================================
         if (document.getElementById("proj-km")) {
-          document.getElementById("proj-km").value = eq.km !== undefined ? eq.km : "";
+          document.getElementById("proj-km").value =
+            eq.km !== undefined ? eq.km : "";
         }
 
         if (document.getElementById("proj-frete-estimado")) {
           // Injeta o valor exato em R$ que custou na época da obra
-          document.getElementById("proj-frete-estimado").value = eq.frete !== undefined ? eq.frete : "";
+          document.getElementById("proj-frete-estimado").value =
+            eq.frete !== undefined ? eq.frete : "";
         }
         // NOTA: Retirámos a chamada 'window.calcularFretePorKm()' daqui propositadamente
         // para não corromper o preço histórico com taxas futuras!
-        }
 
         document.getElementById("proj-dias-obra").value =
           eq.dias !== undefined ? eq.dias : 1;
@@ -3602,4 +3603,4 @@
     </script>
   </body>
 </html>
-<!-- 26.10.31 1426 Novo Relatorio de Vendas -->
+<!-- 26.10.31 1441 Novo Relatorio de Vendas -->
