@@ -860,57 +860,66 @@ function salvarProjetoNoServidor(obj) {
 }//alterado no dia 261022 1443
 
 // --- NO ARQUIVO MAIN.GS ---
-function obterDadosRelatorioVendasAbertas(inicioISO, fimISO) {
-  const ss = SpreadsheetApp.openById(getSpreadsheetId()); 
-  const abaVendas = ss.getSheetByName("Vendas");
-  const abaParcelas = ss.getSheetByName("Parcelas");
-  
-  const dadosVendas = abaVendas.getDataRange().getValues();
-  const dadosParcelas = abaParcelas.getDataRange().getValues();
-  
-  let relatorio = [];
-  
-  // Converte a data "2026-06-01" num número inteiro "20260601" para a matemática não falhar
+function obterDadosRelatorioVendasPeriodo(inicioISO, fimISO) {
+  const ss = SpreadsheetApp.openById(getSpreadsheetId());
+  const abaProjetos = ss.getSheetByName("Projetos");
+  const dados = abaProjetos.getDataRange().getValues();
+
   let limiteInicio = parseInt(inicioISO.replace(/-/g, ""));
   let limiteFim = parseInt(fimISO.replace(/-/g, ""));
-  
-  for (let i = 1; i < dadosVendas.length; i++) {
-    let idVenda = dadosVendas[i][0];
-    let cliente = dadosVendas[i][1];
-    
-    let dataRaw = dadosVendas[i][2]; 
-    let dataVendaSegura = (dataRaw instanceof Date) ? Utilities.formatDate(dataRaw, "America/Sao_Paulo", "dd/MM/yyyy") : String(dataRaw);
-    
-    let valorTotal = dadosVendas[i][3]; 
-    let saldoDevedor = 0;
-    
-    for (let j = 1; j < dadosParcelas.length; j++) {
-      if (dadosParcelas[j][0] === idVenda && dadosParcelas[j][5] !== "PAGO") {
-        let vencRaw = dadosParcelas[j][2];
-        let vencNum = 0;
-        
-        // Conversão de qualquer tipo de data da planilha para o formato numérico YYYYMMDD
-        if (vencRaw instanceof Date) {
-          vencNum = parseInt(Utilities.formatDate(vencRaw, "America/Sao_Paulo", "yyyyMMdd"));
-        } else if (typeof vencRaw === "string" && vencRaw.includes("/")) {
-          let p = vencRaw.split("/");
-          vencNum = parseInt(p[2].substring(0,4) + p[1].padStart(2,'0') + p[0].padStart(2,'0'));
-        }
 
-        // Soma apenas se estiver dentro do intervalo do filtro!
-        if (vencNum >= limiteInicio && vencNum <= limiteFim) {
-          saldoDevedor += parseFloat(dadosParcelas[j][3]);
-        }
+  let relatorio = [];
+  for(let i = 1; i < dados.length; i++) {
+    let dataRaw = dados[i][0];
+    let vencNum = 0;
+    let dataFormatada = "";
+
+    if (dataRaw instanceof Date) {
+      vencNum = parseInt(Utilities.formatDate(dataRaw, "America/Sao_Paulo", "yyyyMMdd"));
+      dataFormatada = Utilities.formatDate(dataRaw, "America/Sao_Paulo", "dd/MM/yyyy");
+    } else if (typeof dataRaw === "string" && dataRaw.includes("/")) {
+      let p = dataRaw.split("/");
+      if(p.length === 3) {
+         vencNum = parseInt(p[2].substring(0,4) + p[1].padStart(2,'0') + p[0].padStart(2,'0'));
+         dataFormatada = dataRaw;
       }
+    } else if (typeof dataRaw === "string" && dataRaw.includes("-")) {
+       let p = dataRaw.split("-");
+       if(p.length === 3) {
+         vencNum = parseInt(p[0] + p[1] + p[2].substring(0,2));
+         dataFormatada = `${p[2].substring(0,2)}/${p[1]}/${p[0]}`;
+       }
     }
-    
-    if (saldoDevedor > 0) {
+
+    if(vencNum >= limiteInicio && vencNum <= limiteFim) {
+      // Separar Materiais do Frete lendo o JSON
+      let matJson = dados[i][19] || "[]";
+      let matCusto = 0;
+      try {
+        let mArr = JSON.parse(matJson);
+        matCusto = mArr.reduce((acc, curr) => acc + (parseFloat(curr.valorTotal)||0), 0);
+      } catch(e){}
+
+      let outros = parseFloat(dados[i][13]) || 0;
+      let frete = outros - matCusto;
+      if (frete < 0) frete = 0;
+
+      let maoDeObraBruta = parseFloat(dados[i][6]) || 0;
+      let engenharia = parseFloat(dados[i][14]) || 0;
+
       relatorio.push({
-        idVenda: idVenda,
-        cliente: cliente,
-        dataVenda: dataVendaSegura, 
-        valorTotal: valorTotal,
-        saldoDevedor: saldoDevedor
+        idVenda: "PROJ-" + (i + 1),
+        cliente: String(dados[i][1]).trim(),
+        data: dataFormatada,
+        total: parseFloat(dados[i][2]) || 0,
+        kit: parseFloat(dados[i][3]) || 0,
+        mo: maoDeObraBruta + engenharia, // Junta Mão de Obra e Projeto para poupar espaço
+        mat: matCusto,
+        frete: frete,
+        comissao: parseFloat(dados[i][7]) || 0,
+        imposto: parseFloat(dados[i][5]) || 0,
+        taxa: parseFloat(dados[i][8]) || 0,
+        liquido: parseFloat(dados[i][9]) || 0
       });
     }
   }

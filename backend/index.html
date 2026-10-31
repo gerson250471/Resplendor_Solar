@@ -3210,18 +3210,16 @@
           return;
         }
 
-        mostrarToast("Gerando relatório de vendas...", "info");
+        mostrarToast("Gerando relatório DRE de vendas...", "info");
         google.script.run
           .withSuccessHandler((res) => {
             if (res.sucesso && res.dados.length > 0) {
               let fInicio = inicio.split("-").reverse().join("/");
               let fFim = fim.split("-").reverse().join("/");
               let periodo = fInicio === fFim ? fInicio : `${fInicio} a ${fFim}`;
-              imprimirRelatorioUniversal(
-                res.dados,
-                `Relatório de Vendas: ${periodo}`,
-                "Valor do Contrato",
-              );
+
+              // === AQUI: Chama o novo layout de DRE ===
+              imprimirRelatorioVendasDRE(res.dados, periodo);
             } else {
               mostrarToast("Nenhuma venda encontrada neste período.", "erro");
             }
@@ -3417,7 +3415,169 @@
           janelaPdf.print();
         }, 500);
       }
+
+      function imprimirRelatorioVendasDRE(dados, periodo) {
+        const janelaPdf = window.open("", "_blank");
+        const dataGeracao = new Date().toLocaleString("pt-BR");
+
+        const fmt = (v) =>
+          parseFloat(v).toLocaleString("pt-BR", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          });
+
+        let tTotal = 0,
+          tKit = 0,
+          tMo = 0,
+          tMat = 0,
+          tFrete = 0,
+          tComissao = 0,
+          tImposto = 0,
+          tTaxa = 0,
+          tLiquido = 0;
+
+        let linhasHtml = "";
+        dados.forEach((item) => {
+          tTotal += item.total;
+          tKit += item.kit;
+          tMo += item.mo;
+          tMat += item.mat;
+          tFrete += item.frete;
+          tComissao += item.comissao;
+          tImposto += item.imposto;
+          tTaxa += item.taxa;
+          tLiquido += item.liquido;
+
+          // Encurta o nome do cliente para caber no formato Retrato (ex: RENAN ALAN - 133...)
+          let clienteCurto =
+            item.cliente.length > 20
+              ? item.cliente.substring(0, 20) + "..."
+              : item.cliente;
+
+          linhasHtml += `
+            <tr>
+              <td>${item.data}</td>
+              <td style="font-weight: 600;">${clienteCurto}</td>
+              <td class="text-right text-blue-700 font-bold">${fmt(item.total)}</td>
+              <td class="text-right text-red-600">-${fmt(item.kit)}</td>
+              <td class="text-right text-slate-500">-${fmt(item.mo)}</td>
+              <td class="text-right text-slate-500">-${fmt(item.mat)}</td>
+              <td class="text-right text-slate-500">-${fmt(item.frete)}</td>
+              <td class="text-right text-amber-600">-${fmt(item.comissao)}</td>
+              <td class="text-right text-amber-600">-${fmt(item.imposto)}</td>
+              <td class="text-right text-amber-600">-${fmt(item.taxa)}</td>
+              <td class="text-right font-black text-emerald-600">${fmt(item.liquido)}</td>
+            </tr>
+          `;
+        });
+
+        const margemGlobal =
+          tTotal > 0 ? ((tLiquido / tTotal) * 100).toFixed(1) : "0.0";
+
+        let htmlString = `
+          <html>
+            <head>
+              <title>DRE Mensal de Vendas</title>
+              <style>
+                @page { size: portrait; margin: 10mm; }
+                body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 8px; color: #334155; }
+                .header { border-bottom: 2px solid #2563eb; padding-bottom: 10px; margin-bottom: 15px; }
+                h1 { font-size: 16px; color: #1e3a8a; margin: 0; text-transform: uppercase; letter-spacing: 0.5px;}
+                .data-geracao { font-size: 8px; color: #64748b; margin-top: 2px; }
+                table { width: 100%; border-collapse: collapse; margin-bottom: 20px; table-layout: fixed;}
+                
+                /* Configuração milimétrica das 11 colunas para caber no Retrato */
+                th:nth-child(1) { width: 7%; }  /* Data */
+                th:nth-child(2) { width: 18%; } /* Cliente */
+                th:nth-child(3) { width: 9%; }  /* Contrato */
+                th:nth-child(4) { width: 9%; }  /* Kit */
+                th:nth-child(5) { width: 7%; }  /* M.O */
+                th:nth-child(6) { width: 7%; }  /* Mat */
+                th:nth-child(7) { width: 7%; }  /* Frete */
+                th:nth-child(8) { width: 8%; }  /* Comis */
+                th:nth-child(9) { width: 8%; }  /* Imp */
+                th:nth-child(10) { width: 8%; } /* Taxa */
+                th:nth-child(11) { width: 12%;} /* Liquido */
+
+                th { background: #f1f5f9; color: #0f172a; padding: 6px 2px; text-align: left; font-size: 7.5px; border-bottom: 1px solid #cbd5e1; }
+                td { padding: 6px 2px; border-bottom: 1px solid #f8fafc; overflow: hidden; white-space: nowrap;}
+                
+                .text-right { text-align: right; }
+                .font-bold { font-weight: bold; }
+                .font-black { font-weight: 900; }
+                .text-blue-700 { color: #1d4ed8; }
+                .text-emerald-600 { color: #059669; }
+                .text-red-600 { color: #dc2626; }
+                .text-amber-600 { color: #d97706; }
+                .text-slate-500 { color: #64748b; }
+                
+                .resumo-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; page-break-inside: avoid; margin-top: 10px;}
+                .resumo-title { font-size: 11px; font-weight: bold; color: #0f172a; margin-bottom: 10px; border-bottom: 1px solid #cbd5e1; padding-bottom: 5px;}
+                .resumo-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+                .r-item { display: flex; flex-direction: column; }
+                .r-label { font-size: 8px; color: #64748b; text-transform: uppercase; font-weight: bold;}
+                .r-valor { font-size: 12px; font-weight: bold; color: #0f172a; }
+                .highlight { background: #ecfdf5; border-color: #a7f3d0; padding: 10px; border-radius: 6px; grid-column: span 4; display: flex; flex-direction: row !important; justify-content: space-between; align-items: center;}
+                .highlight .r-valor { color: #059669; font-size: 16px; font-weight: 900;}
+                .badge { background: #059669; color: white; padding: 2px 6px; border-radius: 10px; font-size: 9px; font-weight: normal; margin-left: 5px;}
+              </style>
+            </head>
+            <body>
+              <div class="header">
+                <h1>Demonstrativo Mensal de Vendas (DRE)</h1>
+                <p style="margin: 3px 0; font-size: 10px; font-weight: bold; color: #334155;">Período: ${periodo} | MAJB SISTEMAS - Resplendor Solar</p>
+                <div class="data-geracao">Relatório gerado em: ${dataGeracao}</div>
+              </div>
+              
+              <table>
+                <thead>
+                  <tr>
+                    <th>DATA</th>
+                    <th>CLIENTE</th>
+                    <th class="text-right">CONTRATO</th>
+                    <th class="text-right">KIT</th>
+                    <th class="text-right">M.O+ENG</th>
+                    <th class="text-right">MAT.</th>
+                    <th class="text-right">FRETE</th>
+                    <th class="text-right">COMIS.</th>
+                    <th class="text-right">IMP.</th>
+                    <th class="text-right">TX.CART</th>
+                    <th class="text-right">LÍQUIDO (R$)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${linhasHtml}
+                </tbody>
+              </table>
+
+              <div class="resumo-card">
+                <div class="resumo-title">Consolidado do Período</div>
+                <div class="resumo-grid">
+                  <div class="r-item"><span class="r-label">Faturamento Total</span><span class="r-valor text-blue-700">R$ ${fmt(tTotal)}</span></div>
+                  <div class="r-item"><span class="r-label">Custo de Kits</span><span class="r-valor text-red-600">R$ ${fmt(tKit)}</span></div>
+                  <div class="r-item"><span class="r-label">Mão de Obra + Eng.</span><span class="r-valor">R$ ${fmt(tMo)}</span></div>
+                  <div class="r-item"><span class="r-label">Materiais + Frete</span><span class="r-valor">R$ ${fmt(tMat + tFrete)}</span></div>
+                  
+                  <div class="r-item" style="grid-column: span 2;"><span class="r-label">Impostos S/ Venda</span><span class="r-valor text-amber-600">R$ ${fmt(tImposto)}</span></div>
+                  <div class="r-item" style="grid-column: span 2;"><span class="r-label">Comissões e Taxas Cartão</span><span class="r-valor text-amber-600">R$ ${fmt(tComissao + tTaxa)}</span></div>
+                  
+                  <div class="r-item highlight">
+                    <span class="r-label" style="font-size: 11px; color: #065f46;">LUCRO LÍQUIDO CONSOLIDADO DO MÊS</span>
+                    <span class="r-valor text-emerald-600">R$ ${fmt(tLiquido)} <span class="badge">${margemGlobal}% Margem Global</span></span>
+                  </div>
+                </div>
+              </div>
+            </body>
+          </html>
+        `;
+
+        janelaPdf.document.write(htmlString);
+        janelaPdf.document.close();
+        setTimeout(() => {
+          janelaPdf.print();
+        }, 800);
+      }
     </script>
   </body>
 </html>
-<!-- 26.10.30 1521 Corrigir Relatório Venda -->
+<!-- 26.10.31 Novo Relatorio de Vendas -->
