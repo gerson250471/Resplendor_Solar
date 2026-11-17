@@ -12,7 +12,7 @@
     "globals": "^17.14.0"
   },
   "scripts": {
-    "lint": "eslint *.html",
+    "lint": "eslint \"**/*.html\"",
     "deploy": "clasp push"
   }
 }
