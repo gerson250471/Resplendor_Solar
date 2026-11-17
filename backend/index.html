@@ -3211,8 +3211,12 @@
       function aplicarPermissoes(perfil, permissoesJsonStr) {
         perfilUsuarioAtual = perfil.toUpperCase();
 
-        // 1. ADMIN tem acesso absoluto a tudo
-        if (perfilUsuarioAtual === "ADMIN") {
+        // 1. Acesso absoluto para a Engenharia e Direção
+        if (
+          perfilUsuarioAtual === "ADMIN" ||
+          perfilUsuarioAtual === "ADMINISTRADOR" ||
+          perfilUsuarioAtual === "PROGRAMADOR"
+        ) {
           window.permissoesGlobaisAtivas = "ALL";
           document
             .querySelectorAll("#menu-lateral button")
@@ -3923,4 +3927,4 @@
     </script>
   </body>
 </html>
-<!-- 26.11.17 1106 Tela de Permissões de Usuários -->
+<!-- 26.11.17 1250 Tela de Permissões de Usuários -->
