@@ -331,6 +331,34 @@
       include('parametros'); ?><?!= include('tarefas'); ?><?!=
       include('estoque'); ?>
 
+      <!-- TELA DE ESPERA PARA USUÁRIOS SEM PERMISSÃO -->
+      <section id="view-boas-vindas" class="page-view active">
+        <div
+          class="flex flex-col items-center justify-center h-full text-center p-6 mt-20"
+        >
+          <div
+            class="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-6 shadow-sm border border-slate-200"
+          >
+            <i data-lucide="shield-alert" class="w-12 h-12 text-slate-400"></i>
+          </div>
+          <h2 class="text-3xl font-bold text-slate-800 mb-4">
+            Bem-vindo ao MAJB CRM
+          </h2>
+          <p class="text-slate-500 max-w-md text-lg leading-relaxed">
+            O seu perfil foi autenticado, mas a sua conta ainda
+            <strong>não possui acessos atribuídos</strong> aos módulos do
+            sistema.
+          </p>
+          <p
+            class="text-blue-600 max-w-md mt-6 font-medium bg-blue-50 p-4 rounded-lg border border-blue-100"
+          >
+            Por favor, contacte o Administrador (Renan) para que ele configure
+            as permissões do seu perfil.
+          </p>
+        </div>
+      </section>
+
+      <!--  -->
       <section id="view-troca-senha" class="page-view">
         <div class="finance-card max-w-md mx-auto mt-10">
           <h2 class="text-2xl font-bold text-slate-800 mb-2 text-center">
@@ -746,28 +774,54 @@
       }
 
       function navegarPara(tela) {
-        // --- FECHA O MENU NO TELEMÓVEL AUTOMATICAMENTE ---
+        // Fecha o menu no celular automaticamente
         const menu = document.getElementById("menu-lateral");
-        if (menu) {
-          menu.classList.add("-translate-x-full");
-        }
-        // --------------------------------------------------
-        // --- INÍCIO DA TRAVA DE SEGURANÇA ---
-        if (perfilUsuarioAtual === "COLABORADOR") {
-          // Removido o 'financeiro' e corrigido 'usuario' para 'usuarios'
-          if (
-            tela === "dashboard" ||
-            tela === "relatorios" ||
-            tela === "usuarios" ||
-            tela === "pagamentos" ||
-            tela === "parametros" ||
-            tela === "financeiro"
-          ) {
-            mostrarToast("Acesso restrito a administradores.", "erro");
+        if (menu) menu.classList.add("-translate-x-full");
+
+        // ==================================================
+        // NOVA TRAVA DE SEGURANÇA BASEADA NO RBAC (JSON)
+        // ==================================================
+        const isGestor =
+          perfilUsuarioAtual === "ADMIN" ||
+          perfilUsuarioAtual === "ADMINISTRADOR" ||
+          perfilUsuarioAtual === "PROGRAMADOR";
+
+        if (!isGestor) {
+          // Telas absolutamente proibidas para colaboradores
+          if (tela === "usuarios" || tela === "parametros") {
+            mostrarToast("Área restrita à Direção.", "erro");
             return;
           }
+
+          // Verifica se a tela solicitada está no pacote de permissões dele!
+          const telasControladas = [
+            "dashboard",
+            "clientes",
+            "projetos",
+            "financeiro",
+            "pagamentos",
+            "estoque",
+            "relatorios",
+          ];
+          if (telasControladas.includes(tela)) {
+            let temAcesso = false;
+            if (
+              window.permissoesGlobaisAtivas &&
+              window.permissoesGlobaisAtivas.telas
+            ) {
+              temAcesso = window.permissoesGlobaisAtivas.telas.includes(tela);
+            }
+            if (!temAcesso) {
+              mostrarToast(
+                "O seu perfil não tem acesso a este módulo.",
+                "erro",
+              );
+              return;
+            }
+          }
         }
-        // --- FIM DA TRAVA DE SEGURANÇA ---
+        // ==================================================
+
         // Esconde todas as telas
         document
           .querySelectorAll(".page-view")
@@ -777,7 +831,7 @@
         const view = document.getElementById(`view-${tela}`);
         if (view) view.classList.add("active");
 
-        // Dispara os eventos corretos conforme a aba aberta
+        // Dispara os carregamentos de dados
         if (tela === "dashboard") carregarDashboard();
         if (tela === "clientes") {
           carregarProximoIdCliente();
@@ -788,50 +842,22 @@
           carregarListaClientes();
         }
         if (tela === "pagamentos") carregarParcelasPendentes();
-        // Tela Usuarios
         if (tela === "usuarios") carregarListaUsuarios();
-        // Tela das Vendas
         if (tela === "projetos") {
           carregarListaProjetos();
           carregarParametrosProjetos();
-          carregarListaClientes(); // <-- ADICIONE ESTA LINHA AQUI
+          carregarListaClientes();
           carregarCatalogoMateriais();
         }
-        // Tela de estoque
         if (tela === "estoque") carregarCatalogoMateriais();
-        // Tela de Parametros
         if (tela === "parametros") carregarTelaParametros();
-        // Tela Simulador
         if (tela === "simulador") carregarDadosSimulador();
-        // Quadro kanban
         if (tela === "tarefas") carregarQuadroKanban();
-        // Tela de Relatórios
         if (tela === "relatorios") {
           carregarListaClientes();
-
-          // NOVO: Preenche as datas automaticamente com o mês atual para poupar tempo
-          const hoje = new Date();
-          const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1)
-            .toISOString()
-            .split("T")[0];
-          const ultimoDia = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0)
-            .toISOString()
-            .split("T")[0];
-
-          const camposData = [
-            "data-inicio-aberto",
-            "data-fim-aberto",
-            "data-inicio-recebidos",
-            "data-fim-recebidos",
-            "data-inicio-vendas",
-            "data-fim-vendas",
-          ];
-          camposData.forEach((id) => {
-            const el = document.getElementById(id);
-            if (el && !el.value)
-              el.value = id.includes("inicio") ? primeiroDia : ultimoDia;
-          });
         }
+
+        lucide.createIcons();
       }
 
       /**
@@ -856,7 +882,7 @@
             if (res.sucesso) {
               document.getElementById("login-overlay").style.display = "none";
 
-              // === AQUI: Injeta o JSON lido do banco de dados na trava de segurança ===
+              // Injeta o JSON lido do banco de dados na trava de segurança
               aplicarPermissoes(res.nivel, res.permissoesJson);
 
               if (res.precisaTrocar) {
@@ -866,14 +892,28 @@
                   "info",
                 );
               } else {
-                if (res.nivel === "COLABORADOR") {
-                  // Pode enviar para Dashboard se ele tiver permissão, ou clientes como fallback
-                  navegarPara("clientes");
-                  mostrarToast("Bem-vindo, " + res.nome);
+                // === LÓGICA DE REDIRECIONAMENTO INTELIGENTE ===
+                let telaDestino = "boas-vindas"; // Cai aqui se não tiver permissão a nada
+                const isGestor =
+                  res.nivel === "ADMIN" ||
+                  res.nivel === "ADMINISTRADOR" ||
+                  res.nivel === "PROGRAMADOR";
+
+                if (isGestor) {
+                  telaDestino = "dashboard"; // Chefia vai sempre para o painel principal
                 } else {
-                  navegarPara("dashboard");
-                  mostrarToast("Bem-vindo, " + res.nome);
+                  // Se for Colaborador, vai para a PRIMEIRA tela que o Renan lhe libertou
+                  if (
+                    window.permissoesGlobaisAtivas &&
+                    window.permissoesGlobaisAtivas.telas &&
+                    window.permissoesGlobaisAtivas.telas.length > 0
+                  ) {
+                    telaDestino = window.permissoesGlobaisAtivas.telas[0];
+                  }
                 }
+
+                navegarPara(telaDestino);
+                mostrarToast("Bem-vindo, " + res.nome);
               }
             } else {
               mostrarToast(res.mensagem, "erro");
@@ -3927,4 +3967,4 @@
     </script>
   </body>
 </html>
-<!-- 26.11.17 1250 Tela de Permissões de Usuários -->
+<!-- 26.11.17 1317 Tela de Permissões de Usuários -->
