@@ -2193,11 +2193,15 @@
         let eq = {};
         try {
           eq = JSON.parse(p.equipeJson || "{}");
-        } catch (e) {}
+        } catch (e) {
+          /* Mantém o objeto vazio se falhar */
+        }
         let matUsados = [];
         try {
           matUsados = JSON.parse(p.materiaisJson || "[]");
-        } catch (e) {}
+        } catch (e) {
+          /* Mantém o array vazio se falhar */
+        }
 
         const margemPct =
           p.total > 0 ? ((p.liquido / p.total) * 100).toFixed(1) : "0.0";
@@ -2892,7 +2896,7 @@
         try {
           eq = JSON.parse(p.equipeJson || "{}");
         } catch (e) {
-          eq = {};
+          /* O fallback já foi declarado no 'let eq' acima */
         }
 
         if (eq.diariaEle !== undefined) {
@@ -2943,10 +2947,14 @@
 
         // RESTAURAÇÃO DOS MATERIAIS DINÂMICOS
         document.getElementById("lista-materiais-obra").innerHTML = "";
-        let matUsados = [];
+
+        let matUsados; // 1. Apenas reserva o nome, sem gastar memória
+
         try {
+          // 2. Tenta preencher com os dados da base de dados
           matUsados = JSON.parse(p.materiaisJson);
         } catch (e) {
+          // 3. Se falhar (ex: histórico antigo sem JSON), aí sim cria o array vazio
           matUsados = [];
         }
 
