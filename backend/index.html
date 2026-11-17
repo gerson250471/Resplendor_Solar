@@ -568,6 +568,18 @@
         </div>
       </div>
     </div>
+    // ========================================== // LÓGICA DO MODAL DE
+    PERMISSÕES // ==========================================
+    window.abrirModalPermissoes = function (login, nome) {
+    document.getElementById("perm-login").value = login;
+    document.getElementById("perm-nome-display").innerText = "Colaborador: " +
+    nome; // Futuramente, aqui leremos o JSON do servidor para marcar/desmarcar
+    as checkboxes. // Por enquanto, marcamos tudo como falso só para apresentar
+    o UI limpo. document.querySelectorAll("#modal-permissoes
+    input[type='checkbox']").forEach(chk => chk.checked = false);
+    document.getElementById("modal-permissoes").classList.remove("hidden");
+    lucide.createIcons(); }; window.fecharModalPermissoes = function () {
+    document.getElementById("modal-permissoes").classList.add("hidden"); };
 
     <script>
         // Variável global para saber quem está a usar o sistema agora
@@ -3702,25 +3714,6 @@
             janelaPdf.print();
           }, 800);
         }
-
-      // ==========================================
-      // LÓGICA DO MODAL DE PERMISSÕES
-      // ==========================================
-      window.abrirModalPermissoes = function (login, nome) {
-        document.getElementById("perm-login").value = login;
-        document.getElementById("perm-nome-display").innerText = "Colaborador: " + nome;
-
-        // Futuramente, aqui leremos o JSON do servidor para marcar/desmarcar as checkboxes.
-        // Por enquanto, marcamos tudo como falso só para apresentar o UI limpo.
-        document.querySelectorAll("#modal-permissoes input[type='checkbox']").forEach(chk => chk.checked = false);
-
-        document.getElementById("modal-permissoes").classList.remove("hidden");
-        lucide.createIcons();
-      };
-
-      window.fecharModalPermissoes = function () {
-        document.getElementById("modal-permissoes").classList.add("hidden");
-      };
     </script>
   </body>
 </html>
