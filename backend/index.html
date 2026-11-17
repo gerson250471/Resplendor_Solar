@@ -706,10 +706,12 @@
             Cancelar
           </button>
           <button
+            id="btn-salvar-permissoes"
+            onclick="salvarPermissoesAtuais()"
             type="button"
             class="flex-1 bg-slate-800 text-white font-bold py-3 rounded-lg hover:bg-slate-900 shadow-md transition-colors text-sm flex justify-center items-center gap-2"
           >
-            <i data-lucide="save" class="w-4 h-4"></i> Guardar Acessos
+            <i data-lucide="save" class="w-4 h-4"></i> Salvar Acessos
           </button>
         </div>
       </div>
@@ -852,23 +854,20 @@
         google.script.run
           .withSuccessHandler((res) => {
             if (res.sucesso) {
-              // === A CORREÇÃO ESTÁ AQUI: Esconde a cortina de login! ===
               document.getElementById("login-overlay").style.display = "none";
-              // =========================================================
 
-              // 1. APLICA A BLINDAGEM IMEDIATAMENTE
-              aplicarPermissoes(res.nivel);
+              // === AQUI: Injeta o JSON lido do banco de dados na trava de segurança ===
+              aplicarPermissoes(res.nivel, res.permissoesJson);
 
               if (res.precisaTrocar) {
-                // Abre a tela de troca de senha
                 navegarPara("troca-senha");
                 mostrarToast(
                   "Alerta de Segurança: Altere sua senha inicial.",
                   "info",
                 );
               } else {
-                // Fluxo normal
                 if (res.nivel === "COLABORADOR") {
+                  // Pode enviar para Dashboard se ele tiver permissão, ou clientes como fallback
                   navegarPara("clientes");
                   mostrarToast("Bem-vindo, " + res.nome);
                 } else {
@@ -3209,29 +3208,70 @@
           .obterParametrosProjetos();
       }
 
-      function aplicarPermissoes(perfil) {
+      function aplicarPermissoes(perfil, permissoesJsonStr) {
         perfilUsuarioAtual = perfil.toUpperCase();
 
-        const btnDashboard = document.getElementById("btn-menu-dashboard");
-        const btnRelatorios = document.getElementById("btn-menu-relatorios");
-        const btnUsuarios = document.getElementById("btn-menu-usuario");
-        const btnPagamentos = document.getElementById("btn-menu-pagamentos"); // Captura o botão de Baixas
-        const btnParametros = document.getElementById("btn-menu-parametros"); // NOVO
-        const btnFinanceiro = document.getElementById("btn-menu-financeiro"); // <-- Captura o botão de Lançamento
-        if (perfilUsuarioAtual === "COLABORADOR") {
-          if (btnDashboard) btnDashboard.classList.add("hidden");
-          if (btnRelatorios) btnRelatorios.classList.add("hidden");
-          if (btnUsuarios) btnUsuarios.classList.add("hidden");
-          if (btnPagamentos) btnPagamentos.classList.add("hidden"); // Oculta Pagamentos para Colaborador
-          if (btnParametros) btnParametros.classList.add("hidden"); // BLOQUEIA
-          if (btnFinanceiro) btnFinanceiro.classList.add("hidden"); // <-- Esconde do Colaborador
-        } else {
-          if (btnDashboard) btnDashboard.classList.remove("hidden");
-          if (btnRelatorios) btnRelatorios.classList.remove("hidden");
-          if (btnUsuarios) btnUsuarios.classList.remove("hidden");
-          if (btnPagamentos) btnPagamentos.classList.remove("hidden");
-          if (btnParametros) btnParametros.classList.remove("hidden"); // LIBERA
-          if (btnFinanceiro) btnFinanceiro.classList.remove("hidden"); // <-- Mostra para o Admi
+        // 1. ADMIN tem acesso absoluto a tudo
+        if (perfilUsuarioAtual === "ADMIN") {
+          window.permissoesGlobaisAtivas = "ALL";
+          document
+            .querySelectorAll("#menu-lateral button")
+            .forEach((btn) => btn.classList.remove("hidden"));
+          return;
+        }
+
+        // 2. Colaborador: Lê o pacote de acessos
+        let p = { telas: [], kanban: [], especiais: [] };
+        try {
+          if (permissoesJsonStr) p = JSON.parse(permissoesJsonStr);
+        } catch (e) {}
+
+        window.permissoesGlobaisAtivas = p;
+
+        // Esconde TODAS as rotas mapeáveis inicialmente
+        const telasSeguras = [
+          "dashboard",
+          "clientes",
+          "projetos",
+          "financeiro",
+          "pagamentos",
+          "estoque",
+          "relatorios",
+        ];
+        telasSeguras.forEach((tela) => {
+          const btn = document.querySelector(
+            `button[onclick="navegarPara('${tela}')"]`,
+          );
+          if (btn) btn.classList.add("hidden");
+        });
+
+        // Configurações e Usuários são SEMPRE bloqueados para Colaboradores
+        if (document.getElementById("btn-menu-usuario"))
+          document.getElementById("btn-menu-usuario").classList.add("hidden");
+        if (document.getElementById("btn-menu-parametros"))
+          document
+            .getElementById("btn-menu-parametros")
+            .classList.add("hidden");
+
+        // Oculta o Kanban por padrão
+        const btnTarefas = document.querySelector(
+          `button[onclick="navegarPara('tarefas')"]`,
+        );
+        if (btnTarefas) btnTarefas.classList.add("hidden");
+
+        // 3. Liberta apenas o que está marcado no JSON
+        if (p.telas) {
+          p.telas.forEach((telaPermitida) => {
+            const btn = document.querySelector(
+              `button[onclick="navegarPara('${telaPermitida}')"]`,
+            );
+            if (btn) btn.classList.remove("hidden");
+          });
+        }
+
+        // Se tiver pelo menos um quadro Kanban libertado, mostra o botão do Kanban
+        if (p.kanban && p.kanban.length > 0) {
+          if (btnTarefas) btnTarefas.classList.remove("hidden");
         }
       }
 
@@ -3763,21 +3803,122 @@
         }, 800);
       }
       // ==========================================
-      // LÓGICA DO MODAL DE PERMISSÕES
+      // MOTOR DE PERMISSÕES GRANULARES (RBAC)
       // ==========================================
+
+      window.permissoesGlobaisAtivas = null;
+
       window.abrirModalPermissoes = function (login, nome) {
         document.getElementById("perm-login").value = login;
         document.getElementById("perm-nome-display").innerText =
           "Colaborador: " + nome;
+
+        // Limpa todas as checkboxes
         document
           .querySelectorAll("#modal-permissoes input[type='checkbox']")
           .forEach((chk) => (chk.checked = false));
+
+        // Busca o utilizador e o seu JSON na memória
+        const u = listaUsuariosGlobais.find((user) => user.login === login);
+        if (u && u.permissoesJson) {
+          try {
+            const p = JSON.parse(u.permissoesJson);
+
+            // 1. Telas
+            if (p.telas) {
+              if (p.telas.includes("dashboard"))
+                document.getElementById("chk-tela-dashboard").checked = true;
+              if (p.telas.includes("clientes"))
+                document.getElementById("chk-tela-clientes").checked = true;
+              if (p.telas.includes("projetos"))
+                document.getElementById("chk-tela-vendas").checked = true;
+              if (p.telas.includes("financeiro"))
+                document.getElementById("chk-tela-financeiro").checked = true;
+              if (p.telas.includes("pagamentos"))
+                document.getElementById("chk-tela-pagamentos").checked = true;
+              if (p.telas.includes("estoque"))
+                document.getElementById("chk-tela-estoque").checked = true;
+              if (p.telas.includes("relatorios"))
+                document.getElementById("chk-tela-relatorios").checked = true;
+            }
+            // 2. Kanban
+            if (p.kanban) {
+              if (p.kanban.includes("comercial"))
+                document.getElementById("chk-kanban-comercial").checked = true;
+              if (p.kanban.includes("obras"))
+                document.getElementById("chk-kanban-obras").checked = true;
+            }
+            // 3. Especiais
+            if (p.especiais) {
+              if (p.especiais.includes("excluir"))
+                document.getElementById("chk-esp-excluir").checked = true;
+              if (p.especiais.includes("lucro"))
+                document.getElementById("chk-esp-ver-lucro").checked = true;
+            }
+          } catch (e) {
+            /* JSON vazio ou inválido, mantém checkboxes desmarcadas */
+          }
+        }
+
         document.getElementById("modal-permissoes").classList.remove("hidden");
         lucide.createIcons();
       };
 
       window.fecharModalPermissoes = function () {
         document.getElementById("modal-permissoes").classList.add("hidden");
+      };
+
+      window.salvarPermissoesAtuais = function () {
+        const login = document.getElementById("perm-login").value;
+        const obj = { telas: [], kanban: [], especiais: [] };
+
+        if (document.getElementById("chk-tela-dashboard").checked)
+          obj.telas.push("dashboard");
+        if (document.getElementById("chk-tela-clientes").checked)
+          obj.telas.push("clientes");
+        if (document.getElementById("chk-tela-vendas").checked)
+          obj.telas.push("projetos");
+        if (document.getElementById("chk-tela-financeiro").checked)
+          obj.telas.push("financeiro");
+        if (document.getElementById("chk-tela-pagamentos").checked)
+          obj.telas.push("pagamentos");
+        if (document.getElementById("chk-tela-estoque").checked)
+          obj.telas.push("estoque");
+        if (document.getElementById("chk-tela-relatorios").checked)
+          obj.telas.push("relatorios");
+
+        if (document.getElementById("chk-kanban-comercial").checked)
+          obj.kanban.push("comercial");
+        if (document.getElementById("chk-kanban-obras").checked)
+          obj.kanban.push("obras");
+
+        if (document.getElementById("chk-esp-excluir").checked)
+          obj.especiais.push("excluir");
+        if (document.getElementById("chk-esp-ver-lucro").checked)
+          obj.especiais.push("lucro");
+
+        const btnSalvar = document.getElementById("btn-salvar-permissoes");
+        btnSalvar.innerHTML = "A processar...";
+        btnSalvar.disabled = true;
+
+        mostrarToast("A guardar acessos no servidor...", "info");
+
+        google.script.run
+          .withSuccessHandler((res) => {
+            btnSalvar.innerHTML =
+              '<i data-lucide="save" class="w-4 h-4"></i> Guardar Acessos';
+            btnSalvar.disabled = false;
+            lucide.createIcons();
+
+            if (res.sucesso) {
+              mostrarToast(res.mensagem, "sucesso");
+              fecharModalPermissoes();
+              carregarListaUsuarios();
+            } else {
+              mostrarToast(res.mensagem, "erro");
+            }
+          })
+          .salvarPermissoesUsuario(login, obj);
       };
     </script>
   </body>

@@ -451,7 +451,8 @@ function validarAcesso(usuario, senha) {
           sucesso: true,
           nome: dados[i][0],
           nivel: dados[i][3],
-          precisaTrocar: (dados[i][4] || "").toString().toUpperCase().trim() === "SIM"
+          precisaTrocar: (dados[i][4] || "").toString().toUpperCase().trim() === "SIM",
+          permissoesJson: dados[i][6] || "" // <-- NOVO: Envia as permissões no Login
         };
       }
     }
@@ -478,6 +479,32 @@ function atualizarSenhaDefinitiva(usuario, novaSenha) {
   } catch (e) {
     return false;
   }
+}
+
+function salvarPermissoesUsuario(login, permissoesObj) {
+  const plan = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Usuários");
+  const dados = plan.getDataRange().getValues();
+  
+  if (dados.length < 1) return { sucesso: false, mensagem: "Planilha vazia." };
+
+  const cabecalhos = dados[0];
+  let colJSON = cabecalhos.indexOf("PermissoesJSON") + 1;
+
+  // Se a coluna ainda não existir, cria-a no final
+  if (colJSON === 0) {
+    colJSON = cabecalhos.length + 1;
+    plan.getRange(1, colJSON).setValue("PermissoesJSON");
+  }
+
+  // Procura o utilizador pelo Login (assumindo que o Login está na Coluna B - índice 1)
+  for (let i = 1; i < dados.length; i++) {
+    if (dados[i][1] === login) {
+      plan.getRange(i + 1, colJSON).setValue(JSON.stringify(permissoesObj));
+      return { sucesso: true, mensagem: "Acessos granulares atualizados!" };
+    }
+  }
+  
+  return { sucesso: false, mensagem: "Utilizador não encontrado." };
 }
 
 /**
@@ -683,7 +710,8 @@ function obterUsuarios() {
     login: r[1],
     nivel: r[3],
     trocar: r[4],
-    email: r[5] || "" // <-- NOVO: Captura o e-mail
+    email: r[5] || "", // <-- NOVO: Captura o e-mail
+    permissoesJson: r[6] || "" // <-- NOVO: Envia as permissões para a tabela
   }));
 }
 
@@ -1870,4 +1898,6 @@ function obterHistoricoCompras() {
     return { sucesso: false, mensagem: e.message };
   }
 }
-// 26-10-31 0810 Novo Relatorio de Vendas
+
+
+// 26-11-17 1204 Quadro de Permissão Granular
