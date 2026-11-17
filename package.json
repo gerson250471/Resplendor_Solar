@@ -6,11 +6,13 @@
   "author": "Gerson Bernardo",
   "license": "MIT",
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "eslint": "^10.14.0",
-    "eslint-plugin-html": "^8.2.1"
+    "eslint-plugin-html": "^8.2.1",
+    "globals": "^17.14.0"
   },
   "scripts": {
-      "lint": "eslint *.html",
-      "deploy": "clasp push"
-    }
+    "lint": "eslint *.html",
+    "deploy": "clasp push"
+  }
 }
