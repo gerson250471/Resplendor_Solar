@@ -669,6 +669,16 @@
                 ><input type="checkbox" class="w-4 h-4 text-blue-600 rounded" />
                 Relatórios</label
               >
+              <label
+                class="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700 hover:bg-slate-50 p-2.5 rounded-lg border border-slate-200"
+              >
+                <input
+                  type="checkbox"
+                  id="chk-tela-simulador"
+                  class="w-4 h-4 text-blue-600 rounded"
+                />
+                Simulador
+              </label>
             </div>
           </div>
           <!-- SEÇÃO 2: KANBAN -->
@@ -802,6 +812,7 @@
             "pagamentos",
             "estoque",
             "relatorios",
+            "simulador",
           ];
           if (telasControladas.includes(tela)) {
             let temAcesso = false;
@@ -3281,6 +3292,7 @@
           "pagamentos",
           "estoque",
           "relatorios",
+          "simulador",
         ];
         telasSeguras.forEach((tela) => {
           const btn = document.querySelector(
@@ -3884,6 +3896,8 @@
                 document.getElementById("chk-tela-estoque").checked = true;
               if (p.telas.includes("relatorios"))
                 document.getElementById("chk-tela-relatorios").checked = true;
+              if (p.telas.includes("simulador"))
+                document.getElementById("chk-tela-simulador").checked = true;
             }
             // 2. Kanban
             if (p.kanban) {
@@ -3940,6 +3954,8 @@
           obj.especiais.push("excluir");
         if (document.getElementById("chk-esp-ver-lucro").checked)
           obj.especiais.push("lucro");
+        if (document.getElementById("chk-tela-simulador").checked)
+          obj.telas.push("simulador");
 
         const btnSalvar = document.getElementById("btn-salvar-permissoes");
         btnSalvar.innerHTML = "A processar...";
@@ -3967,4 +3983,4 @@
     </script>
   </body>
 </html>
-<!-- 26.11.17 1317 Tela de Permissões de Usuários -->
+<!-- 26.11.17 1430 Tela de Permissões de Usuários -->
