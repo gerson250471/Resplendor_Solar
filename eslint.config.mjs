@@ -30,9 +30,18 @@ export default [
       }
     },
     rules: {
-      "no-undef": "error",
-      "no-unused-vars": "warn",
-      "no-unreachable": "error"
+      // 1. DESLIGA O ALERTA DE FUNÇÕES NÃO USADAS (porque o HTML as usa no onclick)
+      "no-unused-vars": "off",
+
+      // 2. DESLIGA O ALERTA DE FUNÇÕES/VARIÁVEIS NÃO DEFINIDAS (porque estão em outros arquivos HTML)
+      "no-undef": "off",
+
+      // 3. DESLIGA O ALERTA DE VARIÁVEIS REDECLARADAS (causado pelos globals do Apps Script)
+      "no-redeclare": "off",
+
+      // 4. MANTÉM OS ERROS CRÍTICOS ATIVOS
+      "no-unreachable": "error",
+      "no-empty": "warn"
     }
   }
 ];
