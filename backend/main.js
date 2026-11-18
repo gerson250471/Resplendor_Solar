@@ -482,29 +482,35 @@ function atualizarSenhaDefinitiva(usuario, novaSenha) {
 }
 
 function salvarPermissoesUsuario(login, permissoesObj) {
-  const plan = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Usuários");
-  const dados = plan.getDataRange().getValues();
-  
-  if (dados.length < 1) return { sucesso: false, mensagem: "Planilha vazia." };
+  try {
+    const ss = SpreadsheetApp.openById(getSpreadsheetId());
+    const plan = ss.getSheetByName("Usuarios");
+    if (!plan) return { sucesso: false, mensagem: "Aba 'Usuarios' não encontrada." };
 
-  const cabecalhos = dados[0];
-  let colJSON = cabecalhos.indexOf("PermissoesJSON") + 1;
+    const dados = plan.getDataRange().getValues();
+    if (dados.length < 1) return { sucesso: false, mensagem: "Planilha vazia." };
 
-  // Se a coluna ainda não existir, cria-a no final
-  if (colJSON === 0) {
-    colJSON = cabecalhos.length + 1;
-    plan.getRange(1, colJSON).setValue("PermissoesJSON");
-  }
+    const cabecalhos = dados[0];
+    let colJSON = cabecalhos.indexOf("PermissoesJSON") + 1;
 
-  // Procura o utilizador pelo Login (assumindo que o Login está na Coluna B - índice 1)
-  for (let i = 1; i < dados.length; i++) {
-    if (dados[i][1] === login) {
-      plan.getRange(i + 1, colJSON).setValue(JSON.stringify(permissoesObj));
-      return { sucesso: true, mensagem: "Acessos granulares atualizados!" };
+    // Se a coluna ainda não existir, cria no final
+    if (colJSON === 0) {
+      colJSON = cabecalhos.length + 1;
+      plan.getRange(1, colJSON).setValue("PermissoesJSON");
     }
+
+    // Procura o usuário pelo Login (Coluna B - índice 1)
+    for (let i = 1; i < dados.length; i++) {
+      if (dados[i][1] === login) {
+        plan.getRange(i + 1, colJSON).setValue(JSON.stringify(permissoesObj));
+        return { sucesso: true, mensagem: "Acessos granulares atualizados!" };
+      }
+    }
+
+    return { sucesso: false, mensagem: "Usuário não encontrado." };
+  } catch (e) {
+    return { sucesso: false, mensagem: "Erro ao salvar permissões: " + e.message };
   }
-  
-  return { sucesso: false, mensagem: "Utilizador não encontrado." };
 }
 
 /**
