@@ -636,39 +636,74 @@
             <div class="grid grid-cols-2 gap-3">
               <label
                 class="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700 hover:bg-slate-50 p-2.5 rounded-lg border border-slate-200"
-                ><input type="checkbox" class="w-4 h-4 text-blue-600 rounded" />
-                Dashboard</label
               >
+                <input
+                  type="checkbox"
+                  id="chk-tela-dashboard"
+                  class="w-4 h-4 text-blue-600 rounded"
+                />
+                Dashboard
+              </label>
               <label
                 class="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700 hover:bg-slate-50 p-2.5 rounded-lg border border-slate-200"
-                ><input type="checkbox" class="w-4 h-4 text-blue-600 rounded" />
-                Clientes</label
               >
+                <input
+                  type="checkbox"
+                  id="chk-tela-clientes"
+                  class="w-4 h-4 text-blue-600 rounded"
+                />
+                Clientes
+              </label>
               <label
                 class="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700 hover:bg-slate-50 p-2.5 rounded-lg border border-slate-200"
-                ><input type="checkbox" class="w-4 h-4 text-blue-600 rounded" />
-                Vendas</label
               >
+                <input
+                  type="checkbox"
+                  id="chk-tela-vendas"
+                  class="w-4 h-4 text-blue-600 rounded"
+                />
+                Vendas
+              </label>
               <label
                 class="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700 hover:bg-slate-50 p-2.5 rounded-lg border border-slate-200"
-                ><input type="checkbox" class="w-4 h-4 text-blue-600 rounded" />
-                Financeiro</label
               >
+                <input
+                  type="checkbox"
+                  id="chk-tela-financeiro"
+                  class="w-4 h-4 text-blue-600 rounded"
+                />
+                Financeiro
+              </label>
               <label
                 class="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700 hover:bg-slate-50 p-2.5 rounded-lg border border-slate-200"
-                ><input type="checkbox" class="w-4 h-4 text-blue-600 rounded" />
-                Baixas</label
               >
+                <input
+                  type="checkbox"
+                  id="chk-tela-pagamentos"
+                  class="w-4 h-4 text-blue-600 rounded"
+                />
+                Baixas
+              </label>
               <label
                 class="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700 hover:bg-slate-50 p-2.5 rounded-lg border border-slate-200"
-                ><input type="checkbox" class="w-4 h-4 text-blue-600 rounded" />
-                Estoque</label
               >
+                <input
+                  type="checkbox"
+                  id="chk-tela-estoque"
+                  class="w-4 h-4 text-blue-600 rounded"
+                />
+                Estoque
+              </label>
               <label
                 class="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700 hover:bg-slate-50 p-2.5 rounded-lg border border-slate-200"
-                ><input type="checkbox" class="w-4 h-4 text-blue-600 rounded" />
-                Relatórios</label
               >
+                <input
+                  type="checkbox"
+                  id="chk-tela-relatorios"
+                  class="w-4 h-4 text-blue-600 rounded"
+                />
+                Relatórios
+              </label>
               <label
                 class="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700 hover:bg-slate-50 p-2.5 rounded-lg border border-slate-200"
               >
@@ -681,6 +716,7 @@
               </label>
             </div>
           </div>
+
           <!-- SEÇÃO 2: KANBAN -->
           <div>
             <h4
@@ -692,22 +728,27 @@
             <div class="grid grid-cols-1 gap-3">
               <label
                 class="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700 hover:bg-purple-50 p-2.5 rounded-lg border border-slate-200"
-                ><input
+              >
+                <input
                   type="checkbox"
+                  id="chk-kanban-comercial"
                   class="w-4 h-4 text-purple-600 rounded"
                 />
-                Quadro Comercial (Pré-Venda)</label
-              >
+                Quadro Comercial (Pré-Venda)
+              </label>
               <label
                 class="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700 hover:bg-purple-50 p-2.5 rounded-lg border border-slate-200"
-                ><input
+              >
+                <input
                   type="checkbox"
+                  id="chk-kanban-obras"
                   class="w-4 h-4 text-purple-600 rounded"
                 />
-                Quadro de Instalação / Obras</label
-              >
+                Quadro de Instalação / Obras
+              </label>
             </div>
           </div>
+
           <!-- SEÇÃO 3: PERMISSÕES ESPECIAIS -->
           <div>
             <h4
@@ -719,20 +760,34 @@
             <div class="grid grid-cols-1 gap-3">
               <label
                 class="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700 hover:bg-amber-50 p-2.5 rounded-lg border border-slate-200"
-                ><input
+              >
+                <input
                   type="checkbox"
+                  id="chk-esp-excluir"
                   class="w-4 h-4 text-amber-600 rounded"
                 />
-                Pode excluir registos</label
-              >
+                Pode excluir registos
+              </label>
               <label
                 class="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700 hover:bg-amber-50 p-2.5 rounded-lg border border-slate-200"
-                ><input
+              >
+                <input
                   type="checkbox"
+                  id="chk-esp-editar"
                   class="w-4 h-4 text-amber-600 rounded"
                 />
-                Pode ver Lucro Líquido</label
+                Pode editar registros
+              </label>
+              <label
+                class="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700 hover:bg-amber-50 p-2.5 rounded-lg border border-slate-200"
               >
+                <input
+                  type="checkbox"
+                  id="chk-esp-ver-lucro"
+                  class="w-4 h-4 text-amber-600 rounded"
+                />
+                Pode ver Lucro Líquido
+              </label>
             </div>
           </div>
         </div>
@@ -1153,11 +1208,22 @@
           );
         });
 
+        const podeEditar = temPermissaoEspecial("editar");
+        const podeExcluir = temPermissaoEspecial("excluir");
+
         filtrados.forEach((m) => {
           const alertaBaixo = m.estoqueAtual <= m.estoqueMinimo;
           const corSaldo = alertaBaixo
             ? "bg-red-100 text-red-700 border border-red-200"
             : "bg-emerald-50 text-emerald-700 border border-emerald-200";
+
+          const btnEditar = podeEditar
+            ? `<button onclick="prepararEdicaoEstoque('${m.id}')" class="text-blue-600 hover:bg-blue-50 p-1.5 rounded" title="Editar ou Lançar Compra"><i data-lucide="edit-3" class="w-4 h-4"></i></button>`
+            : "";
+
+          const btnExcluir = podeExcluir
+            ? `<button onclick="removerItemEstoque('${m.id}')" class="text-red-500 hover:bg-red-50 p-1.5 rounded" title="Excluir"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`
+            : "";
 
           tbody.innerHTML += `
               <tr class="border-b hover:bg-slate-50 transition-colors">
@@ -1170,12 +1236,8 @@
                   </span>
                 </td>
                 <td class="p-3 text-center flex justify-center gap-2">
-                  <button onclick="prepararEdicaoEstoque('${m.id}')" class="text-blue-600 hover:bg-blue-50 p-1.5 rounded" title="Editar ou Lançar Compra">
-                    <i data-lucide="edit-3" class="w-4 h-4"></i>
-                  </button>
-                  <button onclick="removerItemEstoque('${m.id}')" class="text-red-500 hover:bg-red-50 p-1.5 rounded" title="Excluir">
-                    <i data-lucide="trash-2" class="w-4 h-4"></i>
-                  </button>
+                  ${btnEditar}
+                  ${btnExcluir}
                 </td>
               </tr>
             `;
@@ -1759,6 +1821,10 @@
           if (p.status === "EM ATRASO") corStatus = "text-red-600 font-bold";
           if (p.status === "URGENTE") corStatus = "text-amber-600 font-bold";
 
+          const btnExcluir = temPermissaoEspecial("excluir")
+            ? `<button onclick="abrirModalExcluirLancamento('${p.idVenda}')" class="bg-red-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-red-700 shadow-md transition-colors">Excluir</button>`
+            : "";
+
           // NOVO: HTML da linha com a coluna Parcela exibindo número e a nova coluna de Status
           tr.innerHTML = `
                   <td class="p-3 text-sm font-mono">${p.idVenda}</td>
@@ -1773,9 +1839,7 @@
                     <button onclick="iniciarBaixa(${p.linha}, '${p.valor}')" class="bg-blue-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-blue-700 shadow-md transition-colors">
                       BAIXAR
                     </button>
-                    <button onclick="abrirModalExcluirLancamento('${p.idVenda}')" class="bg-red-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-red-700 shadow-md transition-colors">
-                      Excluir
-                    </button>
+                    ${btnExcluir}
                   </td>
                 `;
           tabela.appendChild(tr);
@@ -1878,6 +1942,13 @@
       };
 
       window.confirmarSalvarCliente = function () {
+        const isEdicao = !document
+          .getElementById("botoes-cliente-edicao")
+          .classList.contains("hidden");
+        if (isEdicao && !temPermissaoEspecial("editar")) {
+          mostrarToast("Sem permissão para editar clientes.", "erro");
+          return;
+        }
         const obj = {
           id: document.getElementById("cli-id").value.trim(),
           nome: document.getElementById("cli-nome").value.trim(),
@@ -1942,6 +2013,10 @@
 
       // 1. Abre o modal de confirmação
       window.confirmarExclusaoCliente = function () {
+        if (!temPermissaoEspecial("excluir")) {
+          mostrarToast("Sem permissão para excluir clientes.", "erro");
+          return;
+        }
         const id = document.getElementById("cli-id").value;
         const nome = document.getElementById("cli-nome").value;
 
@@ -2213,21 +2288,41 @@
           );
         });
 
+        const podeEditar = temPermissaoEspecial("editar");
+        const podeExcluir = temPermissaoEspecial("excluir");
+        const podeVerLucro = temPermissaoEspecial("lucro");
+
         filtrados.forEach((p) => {
+          const valorLiquidoHtml = podeVerLucro
+            ? typeof p.liquido === "number"
+              ? "R$ " +
+                p.liquido.toLocaleString("pt-BR", { minimumFractionDigits: 2 })
+              : p.liquido
+            : '<span class="text-slate-400 font-normal">---</span>';
+
+          const btnEditar = podeEditar
+            ? `<button onclick="editarProjeto(${p.linha})" class="text-blue-600 hover:bg-blue-50 p-2 rounded transition-colors" title="Editar"><i data-lucide="edit" class="w-4 h-4"></i></button>`
+            : "";
+
+          const btnImprimir = podeVerLucro
+            ? `<button onclick="imprimirFechoObra(${p.linha})" class="text-emerald-600 hover:bg-emerald-50 p-2 rounded transition-colors" title="Relatório de Fecho de Obra"><i data-lucide="printer" class="w-4 h-4"></i></button>`
+            : "";
+
+          const btnExcluir = podeExcluir
+            ? `<button onclick="confirmarExclusaoProjeto(${p.linha})" class="text-red-500 hover:bg-red-50 p-2 rounded transition-colors" title="Excluir"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`
+            : "";
+
           tbody.innerHTML += `
                         <tr class="border-b hover:bg-slate-50 transition-colors">
                           <td class="p-3 text-sm">${p.dataBR}</td>
                           <td class="p-3 text-sm font-medium uppercase">${p.cliente}</td>
                           <td class="p-3 text-sm font-bold">R$ ${p.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</td>
-                          <td class="p-3 text-sm text-emerald-600 font-bold">${typeof p.liquido === "number" ? "R$ " + p.liquido.toLocaleString("pt-BR", { minimumFractionDigits: 2 }) : p.liquido}</td>
+                          <td class="p-3 text-sm text-emerald-600 font-bold">${valorLiquidoHtml}</td>
                           <td class="p-3 text-xs hidden"><span class="bg-slate-100 px-2 py-1 rounded-full font-bold uppercase text-slate-600">${p.status}</span></td>
                           <td class="p-3 text-center">
-                             <button onclick="editarProjeto(${p.linha})" class="text-blue-600 hover:bg-blue-50 p-2 rounded transition-colors" title="Editar"><i data-lucide="edit" class="w-4 h-4"></i></button>
-                             <!-- NOVO BOTÃO DE RELATÓRIO -->
-                             <button onclick="imprimirFechoObra(${p.linha})" class="text-emerald-600 hover:bg-emerald-50 p-2 rounded transition-colors" title="Relatório de Fecho de Obra"><i data-lucide="printer" class="w-4 h-4"></i></button>
-                             <button onclick="confirmarExclusaoProjeto(${p.linha})" class="text-red-500 hover:bg-red-50 p-2 rounded transition-colors" title="Excluir">
-                                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                             </button>
+                             ${btnEditar}
+                             ${btnImprimir}
+                             ${btnExcluir}
                           </td>
                         </tr>
                       `;
@@ -3279,7 +3374,9 @@
         let p = { telas: [], kanban: [], especiais: [] };
         try {
           if (permissoesJsonStr) p = JSON.parse(permissoesJsonStr);
-        } catch (e) {}
+        } catch (e) {
+          /* Mantém permissões vazias se o JSON for inválido */
+        }
 
         window.permissoesGlobaisAtivas = p;
 
@@ -3864,6 +3961,17 @@
 
       window.permissoesGlobaisAtivas = null;
 
+      window.temPermissaoEspecial = function (acao) {
+        if (window.permissoesGlobaisAtivas === "ALL") return true;
+        if (
+          window.permissoesGlobaisAtivas &&
+          Array.isArray(window.permissoesGlobaisAtivas.especiais)
+        ) {
+          return window.permissoesGlobaisAtivas.especiais.includes(acao);
+        }
+        return false;
+      };
+
       window.abrirModalPermissoes = function (login, nome) {
         document.getElementById("perm-login").value = login;
         document.getElementById("perm-nome-display").innerText =
@@ -3908,6 +4016,8 @@
             }
             // 3. Especiais
             if (p.especiais) {
+              if (p.especiais.includes("editar"))
+                document.getElementById("chk-esp-editar").checked = true;
               if (p.especiais.includes("excluir"))
                 document.getElementById("chk-esp-excluir").checked = true;
               if (p.especiais.includes("lucro"))
@@ -3950,6 +4060,8 @@
         if (document.getElementById("chk-kanban-obras").checked)
           obj.kanban.push("obras");
 
+        if (document.getElementById("chk-esp-editar").checked)
+          obj.especiais.push("editar");
         if (document.getElementById("chk-esp-excluir").checked)
           obj.especiais.push("excluir");
         if (document.getElementById("chk-esp-ver-lucro").checked)
@@ -3983,4 +4095,4 @@
     </script>
   </body>
 </html>
-<!-- 26.11.17 1430 Tela de Permissões de Usuários -->
+<!-- 26.11.18 1950 Permissão de Editar Registro -->

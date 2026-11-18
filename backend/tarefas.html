@@ -16,6 +16,7 @@
         </div>
         <div class="flex flex-wrap gap-2">
           <button
+            id="btn-kanban-gerir-etapas"
             onclick="abrirModalConfigStatus()"
             class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 px-4 py-2.5 rounded-xl font-bold shadow-sm transition-all flex items-center gap-2"
           >
@@ -23,6 +24,7 @@
           </button>
 
           <button
+            id="btn-kanban-gerir-quadros"
             onclick="abrirModalConfigQuadros()"
             class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2.5 rounded-xl font-bold shadow-sm transition-all flex items-center gap-2"
           >
@@ -276,6 +278,14 @@
   let draggedCard = null;
 
   function carregarQuadroKanban() {
+    const isGestor = window.permissoesGlobaisAtivas === "ALL";
+
+    // Esconde botões de estrutura (Gerir Etapas e Quadros) para colaboradores
+    const btnEtapas = document.getElementById("btn-kanban-gerir-etapas");
+    const btnQuadros = document.getElementById("btn-kanban-gerir-quadros");
+    if (btnEtapas) btnEtapas.classList.toggle("hidden", !isGestor);
+    if (btnQuadros) btnQuadros.classList.toggle("hidden", !isGestor);
+
     document.getElementById("kanban-board").innerHTML = `
       <div class="w-80 shrink-0 bg-slate-100 rounded-xl p-4 flex flex-col h-full animate-pulse">
         <div class="h-4 bg-slate-200 rounded w-1/2 mb-4"></div>
@@ -286,8 +296,46 @@
     google.script.run
       .withSuccessHandler((resQuadros) => {
         if (resQuadros.sucesso) {
-          quadrosGlobais =
+          let todosQuadros =
             resQuadros.dados.length > 0 ? resQuadros.dados : ["GERAL"];
+
+          // Aplica o filtro de quadros se não for Gestor/Admin
+          if (!isGestor) {
+            const permsKanban =
+              (window.permissoesGlobaisAtivas &&
+                window.permissoesGlobaisAtivas.kanban) ||
+              [];
+
+            todosQuadros = todosQuadros.filter((nomeQuadro) => {
+              const q = nomeQuadro.toUpperCase();
+              const isObras =
+                q.includes("OBRA") ||
+                q.includes("INSTALA") ||
+                q.includes("PROJETO");
+              const isComercial =
+                q.includes("COMERCIAL") ||
+                q.includes("VENDA") ||
+                q.includes("AGENDA") ||
+                q.includes("GERAL");
+
+              if (permsKanban.includes("obras") && isObras) return true;
+              if (permsKanban.includes("comercial") && isComercial) return true;
+              return false;
+            });
+          }
+
+          quadrosGlobais = todosQuadros;
+
+          if (quadrosGlobais.length === 0) {
+            document.getElementById("abas-quadros").innerHTML = "";
+            document.getElementById("kanban-board").innerHTML = `
+              <div class="w-full text-center py-16 text-slate-400 font-medium">
+                Nenhum quadro Kanban liberado para o seu perfil.
+              </div>
+            `;
+            return;
+          }
+
           if (!quadrosGlobais.includes(quadroAtivo)) {
             quadroAtivo = quadrosGlobais[0];
           }
@@ -601,6 +649,30 @@
               </a>
             </div>`;
           }
+
+          const podeEditar = temPermissaoEspecial("editar");
+          const podeExcluir = temPermissaoEspecial("excluir");
+
+          const btnEditarCard = podeEditar
+            ? `<button onclick="prepararEdicaoTarefa(${tar.linha})" class="text-blue-500 hover:bg-blue-50 p-1 rounded" title="Editar"><i data-lucide="edit-2" class="w-3 h-3"></i></button>`
+            : "";
+
+          const btnExcluirCard = podeExcluir
+            ? `<button onclick="deletarTarefa(${tar.linha})" class="text-red-400 hover:bg-red-50 p-1 rounded" title="Apagar Cartão"><i data-lucide="trash" class="w-3 h-3"></i></button>`
+            : "";
+
+          card.innerHTML = `
+            <div class="flex justify-between items-start mb-1">
+              <span class="text-[10px] font-bold text-slate-400">#${tar.linha}</span>
+              <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                ${btnEditarCard}
+                ${btnExcluirCard}
+              </div>
+            </div>
+            <h5 class="font-bold text-slate-800 text-sm mb-1 leading-tight pointer-events-none">${tar.titulo}</h5>
+            ${tar.descricao ? `<p class="text-xs text-slate-500 line-clamp-2 pointer-events-none">${tar.descricao}</p>` : ""}
+            ${htmlAnexos}
+          `;
 
           card.innerHTML = `
             <div class="flex justify-between items-start mb-1">
