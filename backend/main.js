@@ -241,7 +241,6 @@ function obterListaParcelas() {
   try {
     const ss = SpreadsheetApp.openById(getSpreadsheetId());
     const abaParcelas = ss.getSheetByName("Parcelas");
-    // Vamos buscar os nomes à aba que tem o cabeçalho 'CLIENTES DEVEDORES' (aba Vendas)
     const abaVendas = ss.getSheetByName("Vendas");
 
     if (!abaParcelas || !abaVendas) {
@@ -254,36 +253,46 @@ function obterListaParcelas() {
     // 1. DICIONÁRIO EXATO (PK -> NOME)
     const mapaClientes = {};
     for (let v = 1; v < dadosVendas.length; v++) {
-      let idVendaPk = String(dadosVendas[v][0]).trim(); // Coluna A: ID Venda
-      let nomeCliente = String(dadosVendas[v][1]).trim(); // Coluna B: CLIENTES DEVEDORES
-
+      let idVendaPk = String(dadosVendas[v][0]).trim();
+      let nomeCliente = String(dadosVendas[v][1]).trim();
       if (idVendaPk !== "") {
-        mapaClientes[idVendaPk] = nomeCliente; // Ex: "2025-001" = "ADAUTO / CARIRE"
+        mapaClientes[idVendaPk] = nomeCliente;
       }
     }
 
+    // 2. MONTA A LISTA (INCLUINDO PAGAS PARA ESTORNO)
     const lista = [];
     for (let i = 1; i < dadosParcelas.length; i++) {
       const status = (dadosParcelas[i][5] || "").toString().toUpperCase().trim();
 
-      if (status !== "" && status !== "PAGO") {
-        let idVendaFk = String(dadosParcelas[i][0]).trim(); // Coluna A: ID Vend
-        let numeroParcela = String(dadosParcelas[i][1]).trim(); // Coluna B: Número (1, 2, 3...)
+      if (status !== "") {
+        let idVendaFk = String(dadosParcelas[i][0]).trim();
+        let numeroParcela = String(dadosParcelas[i][1]).trim();
+        let nomeFinal = mapaClientes[idVendaFk]
+          ? mapaClientes[idVendaFk]
+          : "Não encontrado (" + idVendaFk + ")";
 
-        // Faz a correspondência exata! Se não achar, avisa o ID.
-        let nomeFinal = mapaClientes[idVendaFk] ? mapaClientes[idVendaFk] : "Não encontrado (" + idVendaFk + ")";
+        const pgtoRaw = dadosParcelas[i][4];
+        const pagoEm =
+          pgtoRaw instanceof Date
+            ? Utilities.formatDate(pgtoRaw, "America/Sao_Paulo", "dd/MM/yyyy")
+            : String(pgtoRaw || "");
 
         lista.push({
           linha: i + 1,
           idVenda: idVendaFk,
           cliente: nomeFinal,
-          parcela: numeroParcela, // Guardamos o número da parcela para exibir no HTML!
-          vencimento: new Date(dadosParcelas[i][2]).toLocaleDateString('pt-BR'),
-          valor: (parseFloat(dadosParcelas[i][3]) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
-          status: status
+          parcela: numeroParcela,
+          vencimento: new Date(dadosParcelas[i][2]).toLocaleDateString("pt-BR"),
+          valor: (parseFloat(dadosParcelas[i][3]) || 0).toLocaleString("pt-BR", {
+            minimumFractionDigits: 2,
+          }),
+          pagoEm: pagoEm,
+          status: status,
         });
       }
     }
+
     return { sucesso: true, dados: lista };
   } catch (e) {
     return { sucesso: false, mensagem: "Erro no servidor: " + e.message };
@@ -592,6 +601,60 @@ function registrarBaixaParcela(linhaPlanilha, valorPago) {
 
   } catch (e) {
     return { sucesso: false, mensagem: "Erro ao dar baixa: " + e.message };
+  }
+}
+
+// Solicitação para Editar uma Baixa
+
+function estornarBaixaParcela(linhaPlanilha) {
+  try {
+    const ss = SpreadsheetApp.openById(getSpreadsheetId());
+    const abaParcelas = ss.getSheetByName("Parcelas");
+    if (!abaParcelas) {
+      return { sucesso: false, mensagem: "Aba Parcelas não encontrada." };
+    }
+
+    const dadosLinha = abaParcelas.getRange(linhaPlanilha, 1, 1, 6).getValues()[0];
+    const idVenda = dadosLinha[0];
+    const valorEstornado = parseFloat(dadosLinha[3]) || 0;
+    const statusAtual = String(dadosLinha[5] || "").toUpperCase().trim();
+
+    if (statusAtual !== "PAGO") {
+      return { sucesso: false, mensagem: "Esta parcela não está marcada como PAGO." };
+    }
+
+    // 1. Limpa a data de pagamento (Coluna E) e reabre o status (Coluna F)
+    abaParcelas.getRange(linhaPlanilha, 5).setValue("");
+    abaParcelas.getRange(linhaPlanilha, 6).setValue("EM ABERTO");
+
+    // Recalcula se a parcela já está URGENTE ou EM ATRASO
+    atualizarStatusParcelas();
+
+    // 2. Recompõe o Saldo Devedor na aba Vendas
+    const abaVendas = ss.getSheetByName("Vendas");
+    if (abaVendas) {
+      const dadosVendas = abaVendas.getDataRange().getValues();
+      const idProcurado = String(idVenda).trim().toUpperCase();
+
+      for (let v = 1; v < dadosVendas.length; v++) {
+        const idNaPlanilha = String(dadosVendas[v][0]).trim().toUpperCase();
+        if (idNaPlanilha === idProcurado) {
+          const saldoAtual = parseFloat(dadosVendas[v][5]) || 0;
+          const novoSaldo = Math.round((saldoAtual + valorEstornado) * 100) / 100;
+
+          abaVendas.getRange(v + 1, 6).setValue(novoSaldo);
+          abaVendas.getRange(v + 1, 7).setValue("EM ABERTO");
+          break;
+        }
+      }
+    }
+
+    return {
+      sucesso: true,
+      mensagem: "Baixa estornada! Parcela reaberta e saldo devedor atualizado.",
+    };
+  } catch (e) {
+    return { sucesso: false, mensagem: "Erro ao estornar: " + e.message };
   }
 }
 
@@ -1906,4 +1969,4 @@ function obterHistoricoCompras() {
 }
 
 
-// 26-11-17 1204 Quadro de Permissão Granular
+// 26-11-25 1935 Editar uma Baixa

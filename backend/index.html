@@ -460,6 +460,43 @@
         </div>
       </div>
     </div>
+    <!--  -->
+    <div
+      id="modal-estorno"
+      class="fixed inset-0 bg-slate-900/80 z-[10000] hidden flex items-center justify-center backdrop-blur-sm transition-all"
+    >
+      <div
+        class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-sm text-center"
+      >
+        <div
+          class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4"
+        >
+          <i data-lucide="rotate-ccw" class="w-8 h-8 text-amber-600"></i>
+        </div>
+        <h3 class="text-xl font-bold text-slate-800 mb-2">
+          Estornar Pagamento?
+        </h3>
+        <p class="text-sm text-slate-500 mb-6" id="texto-modal-estorno">
+          A parcela voltará para pendente e o valor será somado novamente ao
+          saldo devedor da venda.
+        </p>
+        <input type="hidden" id="modal-estorno-linha" />
+        <div class="flex gap-3">
+          <button
+            onclick="fecharModalEstorno()"
+            class="flex-1 bg-slate-100 text-slate-600 font-bold py-3 rounded-lg hover:bg-slate-200 transition-colors text-sm"
+          >
+            Cancelar
+          </button>
+          <button
+            onclick="confirmarEstornoModal()"
+            class="flex-1 bg-amber-600 text-white font-bold py-3 rounded-lg hover:bg-amber-700 shadow-md transition-colors text-sm"
+          >
+            Sim, Estornar
+          </button>
+        </div>
+      </div>
+    </div>
 
     <div
       id="modal-exclusao"
@@ -1776,7 +1813,10 @@
         tabela.innerHTML = "";
 
         const filtradas = parcelasGlobais.filter((p) => {
-          const matchStatus = filtroSelect === "" || p.status === filtroSelect;
+          const matchStatus =
+            filtroSelect === ""
+              ? p.status !== "PAGO"
+              : p.status === filtroSelect;
           const clienteTexto = String(p.cliente).toUpperCase();
           const idTexto = String(p.idVenda).toUpperCase();
           const matchTexto =
@@ -1817,9 +1857,19 @@
           const tr = document.createElement("tr");
           tr.className = "border-b hover:bg-slate-50 transition-colors";
 
+          const isGestor = window.permissoesGlobaisAtivas === "ALL";
+          const isPago = p.status === "PAGO";
+
           let corStatus = "text-emerald-600 font-bold";
           if (p.status === "EM ATRASO") corStatus = "text-red-600 font-bold";
           if (p.status === "URGENTE") corStatus = "text-amber-600 font-bold";
+          if (isPago) corStatus = "text-blue-600 font-bold";
+
+          const btnAcaoPrincipal = isPago
+            ? isGestor
+              ? `<button onclick="iniciarEstorno(${p.linha}, '${p.cliente}', '${p.parcela}', '${p.valor}')" class="bg-amber-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-amber-600 shadow-md transition-colors">ESTORNAR</button>`
+              : `<span class="text-xs text-slate-400 font-medium">Liquidada</span>`
+            : `<button onclick="iniciarBaixa(${p.linha}, '${p.valor}')" class="bg-blue-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-blue-700 shadow-md transition-colors">BAIXAR</button>`;
 
           const btnExcluir = temPermissaoEspecial("excluir")
             ? `<button onclick="abrirModalExcluirLancamento('${p.idVenda}')" class="bg-red-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-red-700 shadow-md transition-colors">Excluir</button>`
@@ -1836,9 +1886,7 @@
                   <td class="p-3 text-sm text-center">${p.vencimento}</td>
                   <td class="p-3 text-sm font-bold text-right">R$ ${p.valor}</td>
                   <td class="p-3 text-center flex items-center justify-center gap-2">
-                    <button onclick="iniciarBaixa(${p.linha}, '${p.valor}')" class="bg-blue-600 text-white px-3 py-1 rounded text-xs font-bold hover:bg-blue-700 shadow-md transition-colors">
-                      BAIXAR
-                    </button>
+                    ${btnAcaoPrincipal}
                     ${btnExcluir}
                   </td>
                 `;
@@ -1912,6 +1960,46 @@
           })
           .registrarBaixaParcela(linhaPlanilha, valorPago);
       };
+      // ----------------
+      window.iniciarEstorno = function (
+        linhaPlanilha,
+        cliente,
+        parcela,
+        valor,
+      ) {
+        document.getElementById("modal-estorno-linha").value = linhaPlanilha;
+        document.getElementById("texto-modal-estorno").innerText =
+          `Deseja estornar a ${parcela}ª parcela de ${cliente} (R$ ${valor})? O valor voltará para o saldo devedor.`;
+        document.getElementById("modal-estorno").classList.remove("hidden");
+        lucide.createIcons();
+      };
+
+      window.fecharModalEstorno = function () {
+        document.getElementById("modal-estorno").classList.add("hidden");
+      };
+
+      window.confirmarEstornoModal = function () {
+        const linhaPlanilha = document.getElementById(
+          "modal-estorno-linha",
+        ).value;
+        fecharModalEstorno();
+        mostrarToast("Estornando pagamento...", "info");
+
+        google.script.run
+          .withSuccessHandler((res) => {
+            if (res.sucesso) {
+              mostrarToast(res.mensagem, "sucesso");
+              carregarParcelasPendentes();
+            } else {
+              mostrarToast(res.mensagem, "erro");
+            }
+          })
+          .withFailureHandler((err) => {
+            mostrarToast("Erro de comunicação: " + err.message, "erro");
+          })
+          .estornarBaixaParcela(linhaPlanilha);
+      };
+      // ----------------
 
       // 1. Ao clicar na Lupa
 
@@ -4095,4 +4183,4 @@
     </script>
   </body>
 </html>
-<!-- 26.11.18 1950 Permissão de Editar Registro -->
+<!-- 26.11.25 1944 Estorno de Baixa Financeira -->
