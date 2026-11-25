@@ -357,12 +357,13 @@
     document.getElementById("exec-cliente-titulo").innerText = p.cliente;
     document.getElementById("exec-data-badge").innerText = p.dataBR;
 
-    let eq = {};
+    let eq;
     try {
       eq = JSON.parse(p.equipeJson || "{}");
     } catch (e) {
       eq = {};
     }
+
     execEquipeHistorica = eq;
 
     document.getElementById("exec-dias").value =
@@ -386,7 +387,8 @@
 
     const matContainer = document.getElementById("exec-lista-materiais");
     matContainer.innerHTML = "";
-    let mats = [];
+
+    let mats;
     try {
       mats = JSON.parse(p.materiaisJson || "[]");
     } catch (e) {
