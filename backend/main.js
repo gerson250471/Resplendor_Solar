@@ -1968,5 +1968,147 @@ function obterHistoricoCompras() {
   }
 }
 
+/**
+ * ============================================================================
+ * MÓDULO DE EXECUÇÃO DE OBRA (CUSTOS BLINDADOS - SEM DADOS FINANCEIROS)
+ * ============================================================================
+ */
+
+function obterProjetosParaExecucao() {
+  try {
+    const ss = SpreadsheetApp.openById(getSpreadsheetId());
+    const aba = ss.getSheetByName("Projetos");
+    if (!aba) return { sucesso: false, mensagem: "Aba Projetos não encontrada." };
+
+    const dados = aba.getDataRange().getValues();
+    dados.shift(); // Remove cabeçalho
+
+    const lista = dados.map((r, index) => {
+      let dataBR = "---";
+      if (r[0]) {
+        let d = new Date(r[0]);
+        if (!isNaN(d.getTime())) {
+          d.setMinutes(d.getMinutes() + d.getTimezoneOffset());
+          dataBR = d.toLocaleDateString("pt-BR");
+        }
+      }
+
+      // Retorna APENAS dados operacionais (zero informação sensível)
+      return {
+        linha: index + 2,
+        dataBR: dataBR,
+        cliente: r[1] || "",
+        status: r[12] || "AGUARDANDO KIT",
+        engenharia: parseFloat(r[14]) || 0,
+        materiaisJson: r[19] || "[]",
+        equipeJson: r[20] || "{}",
+      };
+    });
+
+    return { sucesso: true, dados: lista.reverse() };
+  } catch (e) {
+    return { sucesso: false, mensagem: e.message };
+  }
+}
+
+function salvarCustosExecucao(obj) {
+  try {
+    const ss = SpreadsheetApp.openById(getSpreadsheetId());
+    const abaProjetos = ss.getSheetByName("Projetos");
+    const abaEstoque = ss.getSheetByName("Estoque");
+
+    if (!abaProjetos || !obj.linha) {
+      return { sucesso: false, mensagem: "Projeto não identificado." };
+    }
+
+    const linhaNum = parseInt(obj.linha, 10);
+    const linhaAtual = abaProjetos.getRange(linhaNum, 1, 1, 21).getValues()[0];
+
+    // Lê os materiais antigos para fazer o ajuste inteligente de estoque
+    let materiaisAntigos = [];
+    if (linhaAtual[19] && linhaAtual[19] !== "[]") {
+      try {
+        materiaisAntigos = JSON.parse(linhaAtual[19]);
+      } catch (e) {
+        materiaisAntigos = [];
+      }
+    }
+
+    // Valores financeiros já gravados no servidor (nunca expostos à tela)
+    const total = parseFloat(linhaAtual[2]) || 0;
+    const kit = parseFloat(linhaAtual[3]) || 0;
+    const impostos = parseFloat(linhaAtual[5]) || 0;
+    const comissao = parseFloat(linhaAtual[7]) || 0;
+    const maquininha = parseFloat(linhaAtual[8]) || 0;
+
+    // Novos custos operacionais vindos da tela de Execução
+    const engenharia = parseFloat(obj.engenharia) || 0;
+    const eletricista = parseFloat(obj.eletricista) || 0;
+    const instalador = parseFloat(obj.instaladorDetalhe) || 0;
+    const pedreiro = parseFloat(obj.pedreiro) || 0;
+    const ajudante = parseFloat(obj.ajudante) || 0;
+    const maoDeObra = eletricista + instalador + pedreiro + ajudante;
+    const outros = parseFloat(obj.outros) || 0; // Materiais + Frete
+
+    // Recalcula o Lucro Líquido com segurança no servidor
+    const novoLiquido =
+      total - kit - engenharia - maoDeObra - outros - impostos - comissao - maquininha;
+
+    // Atualiza apenas as colunas de execução e o lucro recalculado
+    abaProjetos.getRange(linhaNum, 7).setValue(maoDeObra);        // Col G: Mão de Obra
+    abaProjetos.getRange(linhaNum, 10).setValue(novoLiquido);     // Col J: Saldo Líquido
+    abaProjetos.getRange(linhaNum, 14).setValue(outros);          // Col N: Outros (Mat + Frete)
+    abaProjetos.getRange(linhaNum, 15).setValue(engenharia);      // Col O: Engenharia
+    abaProjetos.getRange(linhaNum, 16).setValue(eletricista);     // Col P: Eletricista
+    abaProjetos.getRange(linhaNum, 17).setValue(instalador);      // Col Q: Instalador
+    abaProjetos.getRange(linhaNum, 18).setValue(pedreiro);        // Col R: Pedreiro
+    abaProjetos.getRange(linhaNum, 19).setValue(ajudante);        // Col S: Ajudante
+    abaProjetos.getRange(linhaNum, 20).setValue(obj.materiaisJson || "[]"); // Col T
+    abaProjetos.getRange(linhaNum, 21).setValue(obj.equipeJson || "{}");    // Col U
+
+    // Baixa inteligente de estoque (Antigo vs Novo)
+    if (abaEstoque) {
+      let materiaisNovos = [];
+      if (obj.materiaisJson && obj.materiaisJson !== "[]") {
+        try {
+          materiaisNovos = JSON.parse(obj.materiaisJson);
+        } catch (e) {
+          materiaisNovos = [];
+        }
+      }
+
+      const mapaDiferencas = {};
+      materiaisAntigos.forEach((m) => {
+        const desc = String(m.descricao).toUpperCase().trim();
+        mapaDiferencas[desc] = (mapaDiferencas[desc] || 0) - (parseFloat(m.quantidade) || 0);
+      });
+      materiaisNovos.forEach((m) => {
+        const desc = String(m.descricao).toUpperCase().trim();
+        mapaDiferencas[desc] = (mapaDiferencas[desc] || 0) + (parseFloat(m.quantidade) || 0);
+      });
+
+      const dadosEstoque = abaEstoque.getDataRange().getValues();
+      for (let desc in mapaDiferencas) {
+        const diferenca = mapaDiferencas[desc];
+        if (diferenca !== 0) {
+          for (let i = 1; i < dadosEstoque.length; i++) {
+            const descEstoque = String(dadosEstoque[i][1] || "").toUpperCase().trim();
+            if (descEstoque === desc) {
+              const novoSaldo = (parseFloat(dadosEstoque[i][4]) || 0) - diferenca;
+              abaEstoque.getRange(i + 1, 5).setValue(novoSaldo);
+              dadosEstoque[i][4] = novoSaldo;
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    return { sucesso: true, mensagem: "Custos de execução salvos com sucesso!" };
+  } catch (e) {
+    return { sucesso: false, mensagem: "Erro ao salvar execução: " + e.message };
+  }
+}
+
 
 // 26-11-25 1935 Editar uma Baixa

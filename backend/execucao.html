@@ -1,0 +1,605 @@
+<section id="view-execucao" class="page-view">
+  <div
+    class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6"
+  >
+    <div>
+      <h2 class="text-2xl font-bold text-slate-800">Execução de Obra</h2>
+      <p class="text-slate-500 text-sm">
+        Lançamento de equipe, materiais de almoxarifado e deslocamento por
+        projeto.
+      </p>
+    </div>
+    <button
+      onclick="carregarTelaExecucao()"
+      class="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
+    >
+      <i data-lucide="refresh-cw" class="w-4 h-4"></i> Atualizar Obras
+    </button>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <!-- Lista de Projetos -->
+    <div class="lg:col-span-4 finance-card">
+      <h3 class="text-sm font-bold text-slate-700 uppercase mb-3">
+        Selecione o Projeto
+      </h3>
+      <input
+        type="text"
+        id="filtro-execucao"
+        onkeyup="renderizarListaExecucao()"
+        placeholder="Buscar cliente..."
+        class="input-field mb-4 text-sm"
+      />
+      <div
+        id="lista-projetos-execucao"
+        class="space-y-2 max-h-[60vh] overflow-y-auto pr-1"
+      >
+        <p class="text-xs text-slate-400 text-center py-6">
+          Carregando obras...
+        </p>
+      </div>
+    </div>
+
+    <!-- Formulário de Custos -->
+    <div class="lg:col-span-8 finance-card">
+      <div id="exec-placeholder" class="text-center py-20 text-slate-400">
+        <i
+          data-lucide="hard-hat"
+          class="w-12 h-12 mx-auto mb-3 text-slate-300"
+        ></i>
+        <p class="font-medium">
+          Selecione uma obra ao lado para lançar os custos de execução.
+        </p>
+      </div>
+
+      <div id="exec-form-container" class="hidden space-y-6">
+        <input type="hidden" id="exec-linha" />
+
+        <div
+          class="flex flex-wrap justify-between items-center border-b pb-3 gap-2"
+        >
+          <div>
+            <span class="text-xs font-bold text-blue-600 uppercase"
+              >Obra Selecionada</span
+            >
+            <h3
+              id="exec-cliente-titulo"
+              class="text-lg font-bold text-slate-800 uppercase"
+            >
+              ---
+            </h3>
+          </div>
+          <span
+            id="exec-data-badge"
+            class="text-xs bg-slate-100 text-slate-600 px-3 py-1 rounded-full font-bold"
+          >
+            --/--/----
+          </span>
+        </div>
+
+        <!-- Equipe e Dias -->
+        <div
+          class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4"
+        >
+          <div class="flex justify-between items-center">
+            <h4
+              class="text-xs font-bold text-slate-600 uppercase flex items-center gap-2"
+            >
+              <i data-lucide="users" class="w-4 h-4 text-blue-600"></i> Equipe e
+              Dias de Obra
+            </h4>
+            <div class="flex items-center gap-2">
+              <label class="text-xs font-bold text-slate-500 uppercase"
+                >Dias:</label
+              >
+              <input
+                type="number"
+                id="exec-dias"
+                min="0"
+                step="0.5"
+                value="1"
+                oninput="recalcularCustosExecucao()"
+                class="input-field w-20 text-center font-bold py-1"
+              />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div>
+              <label
+                class="block text-[11px] font-bold text-slate-500 uppercase mb-1"
+                >Eletricistas</label
+              >
+              <input
+                type="number"
+                id="exec-ele"
+                min="0"
+                value="0"
+                oninput="recalcularCustosExecucao()"
+                class="input-field text-center font-bold"
+              />
+              <span id="exec-sub-ele" class="text-[10px] text-slate-400"
+                >R$ 0,00</span
+              >
+            </div>
+            <div>
+              <label
+                class="block text-[11px] font-bold text-slate-500 uppercase mb-1"
+                >Instaladores</label
+              >
+              <input
+                type="number"
+                id="exec-ins"
+                min="0"
+                value="0"
+                oninput="recalcularCustosExecucao()"
+                class="input-field text-center font-bold"
+              />
+              <span id="exec-sub-ins" class="text-[10px] text-slate-400"
+                >R$ 0,00</span
+              >
+            </div>
+            <div>
+              <label
+                class="block text-[11px] font-bold text-slate-500 uppercase mb-1"
+                >Pedreiros</label
+              >
+              <input
+                type="number"
+                id="exec-ped"
+                min="0"
+                value="0"
+                oninput="recalcularCustosExecucao()"
+                class="input-field text-center font-bold"
+              />
+              <span id="exec-sub-ped" class="text-[10px] text-slate-400"
+                >R$ 0,00</span
+              >
+            </div>
+            <div>
+              <label
+                class="block text-[11px] font-bold text-slate-500 uppercase mb-1"
+                >Ajudantes</label
+              >
+              <input
+                type="number"
+                id="exec-aju"
+                min="0"
+                value="0"
+                oninput="recalcularCustosExecucao()"
+                class="input-field text-center font-bold"
+              />
+              <span id="exec-sub-aju" class="text-[10px] text-slate-400"
+                >R$ 0,00</span
+              >
+            </div>
+          </div>
+
+          <div
+            class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 border-t border-slate-200"
+          >
+            <div>
+              <label
+                class="block text-[11px] font-bold text-slate-500 uppercase mb-1"
+                >Engenharia (R$)</label
+              >
+              <input
+                type="number"
+                step="0.01"
+                id="exec-engenharia"
+                oninput="recalcularCustosExecucao()"
+                class="input-field font-bold"
+              />
+            </div>
+            <div>
+              <label
+                class="block text-[11px] font-bold text-slate-500 uppercase mb-1"
+                >Distância (KM)</label
+              >
+              <input
+                type="number"
+                step="1"
+                id="exec-km"
+                oninput="calcularFreteExecucao()"
+                class="input-field font-bold"
+                placeholder="Ex: 120"
+              />
+            </div>
+            <div>
+              <label
+                class="block text-[11px] font-bold text-slate-500 uppercase mb-1"
+                >Frete / Combustível (R$)</label
+              >
+              <input
+                type="number"
+                step="0.01"
+                id="exec-frete"
+                oninput="recalcularCustosExecucao()"
+                class="input-field font-bold"
+                placeholder="0.00"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Materiais de Almoxarifado -->
+        <div
+          class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3"
+        >
+          <div class="flex justify-between items-center">
+            <h4
+              class="text-xs font-bold text-slate-600 uppercase flex items-center gap-2"
+            >
+              <i data-lucide="package" class="w-4 h-4 text-emerald-600"></i>
+              Materiais Utilizados
+            </h4>
+            <button
+              type="button"
+              onclick="adicionarLinhaMaterialExec()"
+              class="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg font-bold hover:bg-blue-700 transition-colors"
+            >
+              + Adicionar Material
+            </button>
+          </div>
+
+          <div id="exec-lista-materiais" class="space-y-2"></div>
+
+          <div
+            class="flex justify-end pt-2 border-t border-slate-200 text-sm font-bold text-slate-700"
+          >
+            Total Materiais:
+            <span id="exec-total-mat-display" class="ml-2 text-blue-700"
+              >R$ 0,00</span
+            >
+          </div>
+        </div>
+
+        <!-- Resumo Operacional e Botão Salvar -->
+        <div
+          class="flex flex-col sm:flex-row justify-between items-center gap-4 pt-2 border-t border-slate-200"
+        >
+          <div class="text-sm text-slate-600">
+            Total Custos de Execução:
+            <strong id="exec-total-geral" class="text-lg text-slate-900 ml-1"
+              >R$ 0,00</strong
+            >
+          </div>
+          <button
+            id="btn-salvar-execucao"
+            onclick="salvarExecucaoObra()"
+            class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
+          >
+            <i data-lucide="save" class="w-4 h-4"></i> Salvar Custos de Execução
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  let projetosExecucaoGlobais = [];
+  let execEquipeHistorica = {};
+
+  window.carregarTelaExecucao = function () {
+    carregarParametrosProjetos();
+    carregarCatalogoMateriais();
+
+    const listaEl = document.getElementById("lista-projetos-execucao");
+    if (listaEl) {
+      listaEl.innerHTML =
+        '<p class="text-xs text-slate-400 text-center py-6 animate-pulse">Carregando obras...</p>';
+    }
+
+    google.script.run
+      .withSuccessHandler((res) => {
+        if (res.sucesso) {
+          projetosExecucaoGlobais = res.dados;
+          renderizarListaExecucao();
+        } else {
+          mostrarToast("Erro ao carregar obras: " + res.mensagem, "erro");
+        }
+      })
+      .obterProjetosParaExecucao();
+  };
+
+  window.renderizarListaExecucao = function () {
+    const container = document.getElementById("lista-projetos-execucao");
+    if (!container) return;
+
+    const filtro = (
+      document.getElementById("filtro-execucao")?.value || ""
+    ).toUpperCase();
+    const filtrados = projetosExecucaoGlobais.filter((p) =>
+      String(p.cliente || "")
+        .toUpperCase()
+        .includes(filtro),
+    );
+
+    if (filtrados.length === 0) {
+      container.innerHTML =
+        '<p class="text-xs text-slate-400 text-center py-6">Nenhuma obra encontrada.</p>';
+      return;
+    }
+
+    const linhaAtiva = document.getElementById("exec-linha").value;
+    container.innerHTML = "";
+    filtrados.forEach((p) => {
+      const ativo = String(p.linha) === String(linhaAtiva);
+      const classeAtivo = ativo
+        ? "bg-blue-50 border-blue-400"
+        : "bg-white border-slate-200 hover:bg-slate-50";
+
+      container.innerHTML += `
+        <button
+          type="button"
+          onclick="selecionarProjetoExecucao(${p.linha})"
+          class="w-full text-left p-3 rounded-lg border ${classeAtivo} transition-colors"
+        >
+          <div class="text-xs font-bold text-slate-800 uppercase truncate">${p.cliente}</div>
+          <div class="flex justify-between items-center mt-1 text-[11px] text-slate-500">
+            <span>${p.dataBR}</span>
+            <span class="bg-slate-100 px-2 py-0.5 rounded font-semibold text-[10px]">${p.status}</span>
+          </div>
+        </button>
+      `;
+    });
+  };
+
+  window.selecionarProjetoExecucao = function (linha) {
+    const p = projetosExecucaoGlobais.find((x) => x.linha === linha);
+    if (!p) return;
+
+    document.getElementById("exec-placeholder").classList.add("hidden");
+    document.getElementById("exec-form-container").classList.remove("hidden");
+
+    document.getElementById("exec-linha").value = p.linha;
+    document.getElementById("exec-cliente-titulo").innerText = p.cliente;
+    document.getElementById("exec-data-badge").innerText = p.dataBR;
+
+    let eq = {};
+    try {
+      eq = JSON.parse(p.equipeJson || "{}");
+    } catch (e) {
+      eq = {};
+    }
+    execEquipeHistorica = eq;
+
+    document.getElementById("exec-dias").value =
+      eq.dias !== undefined ? eq.dias : 1;
+    document.getElementById("exec-ele").value =
+      eq.qtdEle !== undefined ? eq.qtdEle : 0;
+    document.getElementById("exec-ins").value =
+      eq.qtdIns !== undefined ? eq.qtdIns : 0;
+    document.getElementById("exec-ped").value =
+      eq.qtdPed !== undefined ? eq.qtdPed : 0;
+    document.getElementById("exec-aju").value =
+      eq.qtdAju !== undefined ? eq.qtdAju : 0;
+    document.getElementById("exec-km").value = eq.km !== undefined ? eq.km : "";
+    document.getElementById("exec-frete").value =
+      eq.frete !== undefined ? eq.frete : "";
+
+    const engPadrao =
+      (parametrosProjetos && parametrosProjetos.valorEngenharia) || 400;
+    document.getElementById("exec-engenharia").value =
+      p.engenharia > 0 ? p.engenharia : engPadrao;
+
+    const matContainer = document.getElementById("exec-lista-materiais");
+    matContainer.innerHTML = "";
+    let mats = [];
+    try {
+      mats = JSON.parse(p.materiaisJson || "[]");
+    } catch (e) {
+      mats = [];
+    }
+
+    if (mats.length > 0) {
+      mats.forEach((m) =>
+        adicionarLinhaMaterialExec(m.descricao, m.quantidade, m.valorTotal),
+      );
+    } else {
+      adicionarLinhaMaterialExec();
+    }
+
+    renderizarListaExecucao();
+    recalcularCustosExecucao();
+    lucide.createIcons();
+  };
+
+  window.adicionarLinhaMaterialExec = function (
+    descricao = "",
+    qtd = 1,
+    valor = "",
+  ) {
+    const container = document.getElementById("exec-lista-materiais");
+    const div = document.createElement("div");
+    div.className = "exec-linha-mat grid grid-cols-12 gap-2 items-center";
+    div.innerHTML = `
+      <div class="col-span-6">
+        <input type="text" class="exec-mat-desc input-field text-xs py-1.5 font-bold uppercase" list="materiais-list" placeholder="Buscar material..." value="${descricao}" oninput="aoMudarMaterialExec(this)" />
+      </div>
+      <div class="col-span-2">
+        <input type="number" class="exec-mat-qtd input-field text-xs py-1.5 text-center font-bold" value="${qtd}" min="1" oninput="aoMudarMaterialExec(this)" />
+      </div>
+      <div class="col-span-3">
+        <input type="number" step="0.01" class="exec-mat-valor input-field text-xs py-1.5 text-right font-bold text-blue-700" placeholder="0.00" value="${valor}" oninput="recalcularCustosExecucao()" />
+      </div>
+      <div class="col-span-1 text-center">
+        <button type="button" onclick="this.closest('.exec-linha-mat').remove(); recalcularCustosExecucao();" class="text-slate-300 hover:text-red-500">
+          <i data-lucide="trash-2" class="w-4 h-4"></i>
+        </button>
+      </div>
+    `;
+    container.appendChild(div);
+    lucide.createIcons();
+  };
+
+  window.aoMudarMaterialExec = function (inputEl) {
+    const linha = inputEl.closest(".exec-linha-mat");
+    if (!linha) return;
+    const desc = linha
+      .querySelector(".exec-mat-desc")
+      .value.trim()
+      .toUpperCase();
+    const qtd = parseFloat(linha.querySelector(".exec-mat-qtd").value) || 0;
+    const campoVal = linha.querySelector(".exec-mat-valor");
+    const item = catalogoMateriaisGlobais.find(
+      (m) => m.descricao.toUpperCase() === desc,
+    );
+    if (item && item.valorUnitario > 0) {
+      campoVal.value = (qtd * item.valorUnitario).toFixed(2);
+    }
+    recalcularCustosExecucao();
+  };
+
+  window.calcularFreteExecucao = function () {
+    const km = parseFloat(document.getElementById("exec-km").value) || 0;
+    document.getElementById("exec-frete").value =
+      km > 0 ? (km * 1.5).toFixed(2) : "";
+    recalcularCustosExecucao();
+  };
+
+  window.recalcularCustosExecucao = function () {
+    const dEle =
+      execEquipeHistorica.diariaEle !== undefined
+        ? execEquipeHistorica.diariaEle
+        : (parametrosProjetos && parametrosProjetos.diariaEletricista) || 150;
+    const dIns =
+      execEquipeHistorica.diariaIns !== undefined
+        ? execEquipeHistorica.diariaIns
+        : (parametrosProjetos && parametrosProjetos.diariaInstalador) || 120;
+    const dPed =
+      execEquipeHistorica.diariaPed !== undefined
+        ? execEquipeHistorica.diariaPed
+        : (parametrosProjetos && parametrosProjetos.diariaPedreiro) || 150;
+    const dAju =
+      execEquipeHistorica.diariaAju !== undefined
+        ? execEquipeHistorica.diariaAju
+        : (parametrosProjetos && parametrosProjetos.diariaAjudante) || 80;
+
+    const dias = parseFloat(document.getElementById("exec-dias").value) || 0;
+    const cEle =
+      (parseFloat(document.getElementById("exec-ele").value) || 0) *
+      dEle *
+      dias;
+    const cIns =
+      (parseFloat(document.getElementById("exec-ins").value) || 0) *
+      dIns *
+      dias;
+    const cPed =
+      (parseFloat(document.getElementById("exec-ped").value) || 0) *
+      dPed *
+      dias;
+    const cAju =
+      (parseFloat(document.getElementById("exec-aju").value) || 0) *
+      dAju *
+      dias;
+
+    const fmt = (v) =>
+      "R$ " + v.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+    document.getElementById("exec-sub-ele").innerText = fmt(cEle);
+    document.getElementById("exec-sub-ins").innerText = fmt(cIns);
+    document.getElementById("exec-sub-ped").innerText = fmt(cPed);
+    document.getElementById("exec-sub-aju").innerText = fmt(cAju);
+
+    let totalMat = 0;
+    document.querySelectorAll(".exec-mat-valor").forEach((el) => {
+      totalMat += parseFloat(el.value) || 0;
+    });
+    document.getElementById("exec-total-mat-display").innerText = fmt(totalMat);
+
+    const eng =
+      parseFloat(document.getElementById("exec-engenharia").value) || 0;
+    const frete = parseFloat(document.getElementById("exec-frete").value) || 0;
+    const totalGeral = cEle + cIns + cPed + cAju + eng + frete + totalMat;
+    document.getElementById("exec-total-geral").innerText = fmt(totalGeral);
+  };
+
+  window.salvarExecucaoObra = function () {
+    const linha = document.getElementById("exec-linha").value;
+    if (!linha) return mostrarToast("Selecione uma obra primeiro.", "erro");
+
+    const dEle =
+      execEquipeHistorica.diariaEle !== undefined
+        ? execEquipeHistorica.diariaEle
+        : (parametrosProjetos && parametrosProjetos.diariaEletricista) || 150;
+    const dIns =
+      execEquipeHistorica.diariaIns !== undefined
+        ? execEquipeHistorica.diariaIns
+        : (parametrosProjetos && parametrosProjetos.diariaInstalador) || 120;
+    const dPed =
+      execEquipeHistorica.diariaPed !== undefined
+        ? execEquipeHistorica.diariaPed
+        : (parametrosProjetos && parametrosProjetos.diariaPedreiro) || 150;
+    const dAju =
+      execEquipeHistorica.diariaAju !== undefined
+        ? execEquipeHistorica.diariaAju
+        : (parametrosProjetos && parametrosProjetos.diariaAjudante) || 80;
+
+    const dias = parseFloat(document.getElementById("exec-dias").value) || 0;
+    const qtdEle = parseFloat(document.getElementById("exec-ele").value) || 0;
+    const qtdIns = parseFloat(document.getElementById("exec-ins").value) || 0;
+    const qtdPed = parseFloat(document.getElementById("exec-ped").value) || 0;
+    const qtdAju = parseFloat(document.getElementById("exec-aju").value) || 0;
+    const km = parseFloat(document.getElementById("exec-km").value) || 0;
+    const frete = parseFloat(document.getElementById("exec-frete").value) || 0;
+    const engenharia =
+      parseFloat(document.getElementById("exec-engenharia").value) || 0;
+
+    const materiais = [];
+    let totalMat = 0;
+    document.querySelectorAll(".exec-linha-mat").forEach((row) => {
+      const desc = row.querySelector(".exec-mat-desc").value.trim();
+      const qtd = parseFloat(row.querySelector(".exec-mat-qtd").value) || 0;
+      const val = parseFloat(row.querySelector(".exec-mat-valor").value) || 0;
+      if (desc !== "") {
+        materiais.push({ descricao: desc, quantidade: qtd, valorTotal: val });
+        totalMat += val;
+      }
+    });
+
+    const equipeAtualizada = Object.assign({}, execEquipeHistorica, {
+      dias: dias,
+      qtdEle: qtdEle,
+      qtdIns: qtdIns,
+      qtdPed: qtdPed,
+      qtdAju: qtdAju,
+      diariaEle: dEle,
+      diariaIns: dIns,
+      diariaPed: dPed,
+      diariaAju: dAju,
+      km: km,
+      frete: frete,
+    });
+
+    const btn = document.getElementById("btn-salvar-execucao");
+    btn.innerText = "A salvar...";
+    btn.disabled = true;
+
+    google.script.run
+      .withSuccessHandler((res) => {
+        btn.innerHTML =
+          '<i data-lucide="save" class="w-4 h-4"></i> Salvar Custos de Execução';
+        btn.disabled = false;
+        lucide.createIcons();
+
+        if (res.sucesso) {
+          mostrarToast(res.mensagem, "sucesso");
+          carregarTelaExecucao();
+        } else {
+          mostrarToast(res.mensagem, "erro");
+        }
+      })
+      .salvarCustosExecucao({
+        linha: linha,
+        engenharia: engenharia,
+        eletricista: qtdEle * dEle * dias,
+        instaladorDetalhe: qtdIns * dIns * dias,
+        pedreiro: qtdPed * dPed * dias,
+        ajudante: qtdAju * dAju * dias,
+        outros: totalMat + frete,
+        materiaisJson: JSON.stringify(materiais),
+        equipeJson: JSON.stringify(equipeAtualizada),
+      });
+  };
+</script>

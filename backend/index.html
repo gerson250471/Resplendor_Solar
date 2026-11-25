@@ -182,6 +182,14 @@
         </button>
 
         <button
+          onclick="navegarPara('execucao')"
+          class="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors text-left text-sm font-medium"
+        >
+          <i data-lucide="hard-hat" class="w-4 h-4 text-amber-400"></i> Execução
+          de Obra
+        </button>
+
+        <button
           onclick="navegarPara('tarefas')"
           class="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-slate-800 transition-colors text-left text-sm font-medium"
         >
@@ -329,7 +337,7 @@
       include('usuario'); ?><?!= include('projetos'); ?><?!=
       include('relatorios'); ?><?!= include('simulador'); ?><?!=
       include('parametros'); ?><?!= include('tarefas'); ?><?!=
-      include('estoque'); ?>
+      include('estoque'); ?>;<?!= include('execucao'); ?>
 
       <!-- TELA DE ESPERA PARA USUÁRIOS SEM PERMISSÃO -->
       <section id="view-boas-vindas" class="page-view active">
@@ -751,6 +759,16 @@
                 />
                 Simulador
               </label>
+              <label
+                class="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700 hover:bg-slate-50 p-2.5 rounded-lg border border-slate-200"
+              >
+                <input
+                  type="checkbox"
+                  id="chk-tela-execucao"
+                  class="w-4 h-4 text-blue-600 rounded"
+                />
+                Execução de Obra
+              </label>
             </div>
           </div>
 
@@ -959,6 +977,7 @@
         if (tela === "relatorios") {
           carregarListaClientes();
         }
+        if (tela === "execucao") carregarTelaExecucao();
 
         lucide.createIcons();
       }
@@ -3478,6 +3497,7 @@
           "estoque",
           "relatorios",
           "simulador",
+          "execucao",
         ];
         telasSeguras.forEach((tela) => {
           const btn = document.querySelector(
@@ -4094,6 +4114,8 @@
                 document.getElementById("chk-tela-relatorios").checked = true;
               if (p.telas.includes("simulador"))
                 document.getElementById("chk-tela-simulador").checked = true;
+              if (p.telas.includes("execucao"))
+                document.getElementById("chk-tela-execucao").checked = true;
             }
             // 2. Kanban
             if (p.kanban) {
@@ -4156,6 +4178,8 @@
           obj.especiais.push("lucro");
         if (document.getElementById("chk-tela-simulador").checked)
           obj.telas.push("simulador");
+        if (document.getElementById("chk-tela-execucao").checked)
+          obj.telas.push("execucao");
 
         const btnSalvar = document.getElementById("btn-salvar-permissoes");
         btnSalvar.innerHTML = "A processar...";
@@ -4183,4 +4207,4 @@
     </script>
   </body>
 </html>
-<!-- 26.11.25 1944 Estorno de Baixa Financeira -->
+<!-- 26.11.25 2046 tela para Lançamento dos materiais -->
